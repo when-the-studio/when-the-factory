@@ -1,0 +1,5 @@
+# Build files
+bin
+build
+
+.vscode
