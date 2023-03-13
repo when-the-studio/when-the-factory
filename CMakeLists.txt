@@ -18,7 +18,7 @@ add_compile_options(
 	-Wextra
 	-pedantic
 	-O2
-	-std=c++20
+	-std=c17
 )
 add_executable(wtf
 	${SRC_FILES}
