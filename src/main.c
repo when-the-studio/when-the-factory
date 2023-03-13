@@ -43,6 +43,9 @@ int main() {
 	for(int i = 0; i < N_TILES; ++i) {
 		grid[i].type = rand() % TILE_TYPE_NUM;
 	}
+
+	bool render_lines = true;
+
 	/* Main game loop */
 	bool running = true;
 	while (running) {
@@ -59,6 +62,9 @@ int main() {
 					switch (event.key.keysym.sym) {
 						case SDLK_ESCAPE:
 							running = false;
+						break;
+						case SDLK_l:
+							render_lines = !render_lines;
 						break;
 					}
 				break;
@@ -92,17 +98,19 @@ int main() {
 			SDL_RenderCopy(g_renderer, g_spritesheet, &rect_in_spritesheet, &rect);
 		}
 		/* Draw lines */
-		SDL_SetRenderDrawColor(g_renderer, 0, 0, 0, 255);
-		int x0, y0, xf, yf;
-		x0 = 0; xf = WINDOW_W;
-		y0 = 0; yf = WINDOW_H;
-		for (int row = 1; row < N_TILES_W; ++row) {
-			int xi = row * TILE_SIZE;
-			SDL_RenderDrawLine(g_renderer, xi, y0, xi, yf);
-		}
-		for (int col = 1; col < N_TILES_H; ++col) {
-			int yi = col * TILE_SIZE;
-			SDL_RenderDrawLine(g_renderer, x0, yi, xf, yi);
+		if (render_lines) {
+			SDL_SetRenderDrawColor(g_renderer, 0, 0, 0, 255);
+			int x0, y0, xf, yf;
+			x0 = 0; xf = WINDOW_W;
+			y0 = 0; yf = WINDOW_H;
+			for (int row = 1; row < N_TILES_W; ++row) {
+				int xi = row * TILE_SIZE;
+				SDL_RenderDrawLine(g_renderer, xi, y0, xi, yf);
+			}
+			for (int col = 1; col < N_TILES_H; ++col) {
+				int yi = col * TILE_SIZE;
+				SDL_RenderDrawLine(g_renderer, x0, yi, xf, yi);
+			}
 		}
 		SDL_RenderPresent(g_renderer);
 	}
