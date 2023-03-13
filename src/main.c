@@ -14,7 +14,7 @@ int main() {
 	/* Game variables init*/
 	init_map();
 
-	coord_t offset;
+	coord_t offset = {0, 0};
 	/* Main game loop */
 	bool running = true;
 	while (running) {
@@ -38,15 +38,28 @@ int main() {
 						case SDLK_LEFT:  offset.x -= 10; break;
 					}
 				break;
+				// case SDL_MOUSEBUTTONUP:
+				// break;
+				// case SDL_MOUSEBUTTONDOWN:
+				// break;
+				case SDL_MOUSEMOTION:
+					if (SDL_GetMouseState(NULL, NULL) & SDL_BUTTON_LMASK) {
+						offset.x += event.motion.xrel;
+						offset.y += event.motion.yrel;
+					}
+				break;
 			}
 		}
 
+		/* Background*/
+		SDL_SetRenderDrawColor(g_renderer, 255, 255, 255, 255);
+		SDL_RenderClear(g_renderer);
 		/* Draw tiles */
 		for (int i = 0; i < N_TILES; ++i) {
 			int x = (i % N_TILES_W) * TILE_SIZE + offset.x;
 			int y = (i / N_TILES_W) * TILE_SIZE + offset.y;
 			SDL_Rect rect = {x, y, TILE_SIZE, TILE_SIZE};
-			switch (grid[i].type) {
+			switch (g_grid[i].type) {
 			case TILE_PLAIN:
 				SDL_SetRenderDrawColor(g_renderer, 103, 184,  74, 255);
 				break;
