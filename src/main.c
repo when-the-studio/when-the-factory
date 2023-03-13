@@ -6,11 +6,11 @@
 
 #include "renderer.h"
 
-#define TILE_H 100
-#define TILE_W 100
 
-#define N_TILES_H 8
-#define N_TILES_W 8
+#define TILE_SIZE 100
+
+#define N_TILES_H (WINDOW_H / TILE_SIZE)
+#define N_TILES_W (WINDOW_W / TILE_SIZE)
 
 #define N_TILES N_TILES_H * N_TILES_W
 
@@ -46,10 +46,9 @@ int main() {
 	for(int i = 0; i < N_TILES; ++i) {
 		grid[i].type = rand() % TILE_TYPE_NUM;
 	}
-    /* Main game loop*/
+    /* Main game loop */
     bool running = true;
 	while (running) {
-		
 		SDL_Event event;
 		while (SDL_PollEvent(&event)) {
 			if ((event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) && event.key.repeat) {
@@ -68,14 +67,14 @@ int main() {
 				break;
 			}
 		}
-        SDL_SetRenderDrawColor(g_renderer, 0, 200, 200, 255);
-		SDL_RenderClear(g_renderer);
-		/* Draw tiles*/
+		/* Background color */
+        // SDL_SetRenderDrawColor(g_renderer, 0, 200, 200, 255);
+		// SDL_RenderClear(g_renderer);
+		/* Draw tiles */
 		for (int i = 0; i < N_TILES; ++i) {
-			int x = (i % N_TILES_H) * TILE_W;
-			int y = (i / N_TILES_W) * TILE_H;
-			SDL_Rect rect = {x, y, TILE_H, TILE_W};
-			printf("i = %d, (x, y) = (%d, %d), grid type : %d\n", i, x, y, grid[i].type);
+			int x = (i % N_TILES_W) * TILE_SIZE;
+			int y = (i / N_TILES_W) * TILE_SIZE;
+			SDL_Rect rect = {x, y, TILE_SIZE, TILE_SIZE};
 			switch (grid[i].type) {
 			case TILE_PLAIN:
 				SDL_SetRenderDrawColor(g_renderer, 103, 184,  74, 255);
@@ -96,16 +95,5 @@ int main() {
 		}
         SDL_RenderPresent(g_renderer);
     }
-    printf("Yo!\n");
-    printf("tilen %d\n",N_TILES);
-	// for (int i = 0; i < N_TILES; i++) {
-	// 	printf("%d", grid[i].type);
-	// 	if (i%8 == 7) {printf("\n");}
-	// }
-	// printf("\n");
-	int x = 800/100;
-	int y = 35 % 10;
-	int z = 43 / 4;
-	printf("%d, %d, %d\n", x, y ,z);
     return 0;
 }
