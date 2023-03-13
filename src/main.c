@@ -15,10 +15,10 @@
 #define N_TILES N_TILES_H * N_TILES_W
 
 enum tile_type_t {
-    TILE_PLAIN,
-    TILE_MOUTAIN,
-    TILE_RIVER,
-    TILE_FOREST,
+	TILE_PLAIN,
+	TILE_MOUTAIN,
+	TILE_RIVER,
+	TILE_FOREST,
 	TILE_TYPE_NUM
 };
 typedef enum tile_type_t tile_type_t;
@@ -35,16 +35,16 @@ typedef struct tile_t tile_t;
 tile_t* grid;
 
 int main() {
-    /* Renderer initialisation*/
-    renderer_init();
+	/* Renderer initialisation*/
+	renderer_init();
 
 	/* Game variables init*/
 	grid = malloc(N_TILES * sizeof(tile_t));
 	for(int i = 0; i < N_TILES; ++i) {
 		grid[i].type = rand() % TILE_TYPE_NUM;
 	}
-    /* Main game loop */
-    bool running = true;
+	/* Main game loop */
+	bool running = true;
 	while (running) {
 		SDL_Event event;
 		while (SDL_PollEvent(&event)) {
@@ -65,30 +65,31 @@ int main() {
 			}
 		}
 		/* Background color */
-        // SDL_SetRenderDrawColor(g_renderer, 0, 200, 200, 255);
+		// SDL_SetRenderDrawColor(g_renderer, 0, 200, 200, 255);
 		// SDL_RenderClear(g_renderer);
 		/* Draw tiles */
 		for (int i = 0; i < N_TILES; ++i) {
 			int x = (i % N_TILES_W) * TILE_SIZE;
 			int y = (i / N_TILES_W) * TILE_SIZE;
 			SDL_Rect rect = {x, y, TILE_SIZE, TILE_SIZE};
+			SDL_Rect rect_in_spritesheet = {.x = 0, .y = 0, .w = 8, .h = 8};
 			switch (grid[i].type) {
 			case TILE_PLAIN:
-				SDL_SetRenderDrawColor(g_renderer, 103, 184,  74, 255);
+				rect_in_spritesheet.x = 0;
 				break;
 			case TILE_MOUTAIN:
-				SDL_SetRenderDrawColor(g_renderer, 144, 144, 144, 255);
+				rect_in_spritesheet.x = 16;
 				break;
 			case TILE_RIVER:
-				SDL_SetRenderDrawColor(g_renderer,  38,  53, 176, 255);
+				rect_in_spritesheet.x = 8;
 				break;
 			case TILE_FOREST:
-				SDL_SetRenderDrawColor(g_renderer,  61, 101,  40, 255);
+				rect_in_spritesheet.x = 24;
 				break;
 			default:
 				break;
 			}
-			SDL_RenderFillRect(g_renderer, &rect);
+			SDL_RenderCopy(g_renderer, g_spritesheet, &rect_in_spritesheet, &rect);
 		}
 		/* Draw lines */
 		SDL_SetRenderDrawColor(g_renderer, 0, 0, 0, 255);
@@ -103,7 +104,7 @@ int main() {
 			int yi = col * TILE_SIZE;
 			SDL_RenderDrawLine(g_renderer, x0, yi, xf, yi);
 		}
-        SDL_RenderPresent(g_renderer);
-    }
-    return 0;
+		SDL_RenderPresent(g_renderer);
+	}
+	return 0;
 }
