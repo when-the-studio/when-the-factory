@@ -2,6 +2,6 @@
 #include "utils.h"
 
 int main() {
-    printf("Yo!\n");
-    return 0;
+	printf("Yo!\n");
+	return 0;
 }
