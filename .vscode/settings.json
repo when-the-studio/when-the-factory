@@ -1,0 +1,16 @@
+{
+	"files.associations": {
+		"*.h": "c",
+	},
+	"files.exclude": {
+		"**/.git/objects/**": true,
+		"**/.git/subtree-cache/**": true,
+		"**/node_modules/*/**": true,
+		"**/.hg/store/**": true,
+		"**/LICENSE": true,
+		"**/build": true,
+		"**/bin": true
+	},
+	"editor.insertSpaces": false,
+	"editor.detectIndentation": false
+}
