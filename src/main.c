@@ -14,8 +14,9 @@ int main() {
 	renderer_init();
 	/* Game variables init*/
 	init_map();
-
-	coord_t offset = {0, 0};
+	
+	/* Position of the top left corner of the grid in the window */
+	coord_t offset = {-1000, -1000};
 
 	bool render_lines = true;
 	/* Main game loop */
