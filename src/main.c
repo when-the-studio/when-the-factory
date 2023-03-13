@@ -14,9 +14,6 @@
 
 #define N_TILES N_TILES_H * N_TILES_W
 
-SDL_Window* g_window = NULL;
-SDL_Renderer* g_renderer = NULL;
-
 enum tile_type_t {
     TILE_PLAIN,
     TILE_MOUTAIN,

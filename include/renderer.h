@@ -6,5 +6,8 @@
 #define WINDOW_W 1400
 #define WINDOW_H 800
 
-void renderer_init(SDL_Window** g_window, SDL_Renderer** g_renderer);
+extern SDL_Window* g_window;
+extern SDL_Renderer* g_renderer;
+
+void renderer_init();
 #endif // WHEN_THE_FACTORY_RENDERER_
