@@ -93,6 +93,19 @@ int main() {
 			}
 			SDL_RenderFillRect(g_renderer, &rect);
 		}
+		/* Draw lines */
+		SDL_SetRenderDrawColor(g_renderer, 0, 0, 0, 255);
+		int x0, y0, xf, yf;
+		x0 = 0; xf = WINDOW_W;
+		y0 = 0; yf = WINDOW_H;
+		for (int row = 1; row < N_TILES_W; ++row) {
+			int xi = row * TILE_SIZE;
+			SDL_RenderDrawLine(g_renderer, xi, y0, xi, yf);
+		}
+		for (int col = 1; col < N_TILES_H; ++col) {
+			int yi = col * TILE_SIZE;
+			SDL_RenderDrawLine(g_renderer, x0, yi, xf, yi);
+		}
         SDL_RenderPresent(g_renderer);
     }
     return 0;
