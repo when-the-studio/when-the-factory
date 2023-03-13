@@ -6,7 +6,7 @@ SDL_Renderer* g_renderer = NULL;
 
 /* Initialises the rendering, maybe a ugly to put pointers to renderers?
  * TODO: Discuss ?*/
-void renderer_init() {
+void renderer_init(void) {
     int init_res = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER);
 	assert(init_res == 0);
 	g_window = SDL_CreateWindow("When the Factory", 

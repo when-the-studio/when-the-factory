@@ -36,7 +36,7 @@ tile_t* grid;
 
 int main() {
     /* Renderer initialisation*/
-    renderer_init(&g_window, &g_renderer);
+    renderer_init();
 
 	/* Game variables init*/
 	grid = malloc(N_TILES * sizeof(tile_t));
