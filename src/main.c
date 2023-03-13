@@ -8,6 +8,7 @@
 #include "map.h"
 
 
+
 int main() {
 	/* Renderer initialisation*/
 	renderer_init();
@@ -15,6 +16,8 @@ int main() {
 	init_map();
 
 	coord_t offset = {0, 0};
+
+	bool render_lines = true;
 	/* Main game loop */
 	bool running = true;
 	while (running) {
@@ -36,6 +39,9 @@ int main() {
 						case SDLK_UP:    offset.y -= 10; break;
 						case SDLK_RIGHT: offset.x += 10; break;
 						case SDLK_LEFT:  offset.x -= 10; break;
+						case SDLK_l:
+							render_lines = !render_lines;
+						break;
 					}
 				break;
 				// case SDL_MOUSEBUTTONUP:
@@ -59,36 +65,39 @@ int main() {
 			int x = (i % N_TILES_W) * TILE_SIZE + offset.x;
 			int y = (i / N_TILES_W) * TILE_SIZE + offset.y;
 			SDL_Rect rect = {x, y, TILE_SIZE, TILE_SIZE};
+			SDL_Rect rect_in_spritesheet = {.x = 0, .y = 0, .w = 8, .h = 8};
 			switch (g_grid[i].type) {
 			case TILE_PLAIN:
-				SDL_SetRenderDrawColor(g_renderer, 103, 184,  74, 255);
+				rect_in_spritesheet.x = 0;
 				break;
 			case TILE_MOUTAIN:
-				SDL_SetRenderDrawColor(g_renderer, 144, 144, 144, 255);
+				rect_in_spritesheet.x = 16;
 				break;
 			case TILE_RIVER:
-				SDL_SetRenderDrawColor(g_renderer,  38,  53, 176, 255);
+				rect_in_spritesheet.x = 8;
 				break;
 			case TILE_FOREST:
-				SDL_SetRenderDrawColor(g_renderer,  61, 101,  40, 255);
+				rect_in_spritesheet.x = 24;
 				break;
 			default:
 				break;
 			}
-			SDL_RenderFillRect(g_renderer, &rect);
+			SDL_RenderCopy(g_renderer, g_spritesheet, &rect_in_spritesheet, &rect);
 		}
 		/* Draw lines */
-		SDL_SetRenderDrawColor(g_renderer, 0, 0, 0, 255);
-		int x0, y0, xf, yf;
-		x0 = 0; xf = WINDOW_W;
-		y0 = 0; yf = WINDOW_H;
-		for (int row = 1; row < N_TILES_W; ++row) {
-			int xi = row * TILE_SIZE + offset.x;
-			SDL_RenderDrawLine(g_renderer, xi, y0, xi, yf);
-		}
-		for (int col = 1; col < N_TILES_H; ++col) {
-			int yi = col * TILE_SIZE + offset.y;
-			SDL_RenderDrawLine(g_renderer, x0, yi, xf, yi);
+		if (render_lines) {
+			SDL_SetRenderDrawColor(g_renderer, 0, 0, 0, 255);
+			int x0, y0, xf, yf;
+			x0 = 0; xf = WINDOW_W;
+			y0 = 0; yf = WINDOW_H;
+			for (int row = 1; row < N_TILES_W; ++row) {
+				int xi = row * TILE_SIZE + offset.x;
+				SDL_RenderDrawLine(g_renderer, xi, y0, xi, yf);
+			}
+			for (int col = 1; col < N_TILES_H; ++col) {
+				int yi = col * TILE_SIZE + offset.y;
+				SDL_RenderDrawLine(g_renderer, x0, yi, xf, yi);
+			}
 		}
 		SDL_RenderPresent(g_renderer);
 	}

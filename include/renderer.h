@@ -8,6 +8,7 @@
 
 extern SDL_Window* g_window;
 extern SDL_Renderer* g_renderer;
+extern SDL_Texture* g_spritesheet;
 
 void renderer_init(void);
 #endif // WHEN_THE_FACTORY_RENDERER_
