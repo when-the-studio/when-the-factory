@@ -22,7 +22,7 @@ int main() {
 	/* Main game loop */
 	bool running = true;
 
-	double dt = 0;  // delta time in ms
+	double dt = 0;  /* delta time in ms */
 	Uint64 timer = SDL_GetPerformanceCounter();
 	Uint64 lastTimer = 0;
 	while (running) {
@@ -75,11 +75,11 @@ int main() {
 					}
 					break;
 				case SDL_MOUSEWHEEL:
-					float oldZoom = camera.zoom;
-					if (event.wheel.y > 0){
-						camera.targetZoom /= 0.8;
-					} else {
-						camera.targetZoom *= 0.8;
+					if (event.wheel.y > 0 && camera.target_zoom < 4 ){
+						camera.target_zoom /= 0.8;
+						
+					} else if (event.wheel.y < 0 && camera.target_zoom > 0.1) {
+						camera.target_zoom *= 0.8;
 					}
 					break;
 				break;
@@ -94,7 +94,7 @@ int main() {
 		for (int i = 0; i < N_TILES; ++i) {
 			int x = (i % N_TILES_W) * tileRenderSize - camera.pos.x;
 			int y = (i / N_TILES_W) * tileRenderSize - camera.pos.y;
-			SDL_Rect rect = {x, y, tileRenderSize, tileRenderSize};
+			SDL_Rect rect = {x, y, ceilf(tileRenderSize), ceilf(tileRenderSize)};
 			SDL_Rect rect_in_spritesheet = {.x = 0, .y = 0, .w = 8, .h = 8};
 			switch (g_grid[i].type) {
 			case TILE_PLAIN:
