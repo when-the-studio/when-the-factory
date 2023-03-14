@@ -8,6 +8,26 @@
 #include "map.h"
 #include "camera.h"
 
+Coord window_pixel_to_tile_coords(Camera const* camera, int x, int y) {
+	#if 0
+	float tileRenderSize = TILE_SIZE * camera->zoom;
+	int x = (i % N_TILES_W) * tileRenderSize - camera->pos.x;
+	int y = (i / N_TILES_W) * tileRenderSize - camera->pos.y;
+	SDL_Rect rect = {x, y, ceilf(tileRenderSize), ceilf(tileRenderSize)};
+	#endif
+	float tileRenderSize = TILE_SIZE * camera->zoom;
+	return (Coord){
+		.x = (x + camera->pos.x) / tileRenderSize,
+		.y = (y + camera->pos.y) / tileRenderSize,
+	};
+}
+
+bool tile_coords_are_valid(Coord coords) {
+	return
+		0 <= coords.x && coords.x < N_TILES_W &&
+		0 <= coords.y && coords.y < N_TILES_H;
+}
+
 int main() {
 	/* Renderer initialisation*/
 	renderer_init();
@@ -19,6 +39,10 @@ int main() {
 	Camera camera = {{1000,1000}, {1000,1000}, {0,0}, 1, 1};
 
 	bool render_lines = true;
+
+	bool selected_tile_exists = false;
+	Coord selected_tile_coords = {0, 0};
+
 	/* Main game loop */
 	bool running = true;
 
@@ -55,8 +79,19 @@ int main() {
 				break;
 				// case SDL_MOUSEBUTTONUP:
 				// break;
-				// case SDL_MOUSEBUTTONDOWN:
-				// break;
+				case SDL_MOUSEBUTTONDOWN:
+					selected_tile_exists = false;
+					switch (event.button.button) {
+						case SDL_BUTTON_LEFT: {
+							Coord tile_coords = window_pixel_to_tile_coords(&camera,
+								event.button.x, event.button.y);
+							if (tile_coords_are_valid(tile_coords)) {
+								selected_tile_exists = true;
+								selected_tile_coords = tile_coords;
+							}
+						} break;
+					}
+				break;
 				case SDL_KEYUP:
 					switch (event.key.keysym.sym) {
 						case SDLK_DOWN:  if (camera.speed.y > 0) {cam_speed(&camera, camera.speed.x, 0);}; break;
@@ -130,6 +165,15 @@ int main() {
 				SDL_RenderDrawLine(g_renderer, x0, yi, xf, yi);
 				SDL_RenderDrawLine(g_renderer, x0, yi-1, xf, yi-1);
 			}
+		}
+		if (selected_tile_exists) {
+			SDL_Rect rect = {
+				.x = selected_tile_coords.x * tileRenderSize - camera.pos.x,
+				.y = selected_tile_coords.y * tileRenderSize - camera.pos.y,
+				.w = ceilf(tileRenderSize),
+				.h = ceilf(tileRenderSize)};
+			SDL_SetRenderDrawColor(g_renderer, 255, 255, 0, 255);
+			SDL_RenderDrawRect(g_renderer, &rect);
 		}
 		render_text("Gaming", 10, 10, (SDL_Color){0, 0, 255, 255});
 		SDL_RenderPresent(g_renderer);
