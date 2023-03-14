@@ -18,12 +18,14 @@ void cam_update(Camera * camera, double dt){
 		camera->pos.y *=zoomFactor;
 		camera->target_pos.x *=zoomFactor;
 		camera->target_pos.y *=zoomFactor;
-		
-		// Add offset to zoom in the middle of the screen
-		camera->target_pos.x += WINDOW_W*(dZoom)/(2*camera->zoom);
-		camera->target_pos.y += WINDOW_H*(dZoom)/(2*camera->zoom);
-		camera->pos.x += WINDOW_W*(dZoom)/(2*camera->zoom);
-		camera->pos.y += WINDOW_H*(dZoom)/(2*camera->zoom);
+
+		// Add offset to zoom in the mouse cursor
+		int mouse_x, mouse_y;
+		SDL_GetMouseState(&mouse_x, &mouse_y);
+		camera->target_pos.x += (float)mouse_x*(dZoom)/(camera->zoom);
+		camera->target_pos.y += (float)mouse_y*(dZoom)/(camera->zoom);
+		camera->pos.x += (float)mouse_x*(dZoom)/(camera->zoom);
+		camera->pos.y += (float)mouse_y*(dZoom)/(camera->zoom);
 		
 		camera->zoom += dZoom;
 
