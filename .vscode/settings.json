@@ -1,6 +1,9 @@
 {
 	"files.associations": {
 		"*.h": "c",
+		"ctime": "c",
+		"condition_variable": "c",
+		"shared_mutex": "c"
 	},
 	"files.exclude": {
 		"**/.git/objects/**": true,
