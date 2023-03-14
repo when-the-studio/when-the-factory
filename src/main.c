@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <SDL2/SDL.h>
 #include <time.h>
-#include "utils.h"
 
 #include "renderer.h"
 #include "map.h"
