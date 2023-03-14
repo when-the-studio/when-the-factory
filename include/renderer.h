@@ -12,6 +12,22 @@ extern SDL_Texture* g_spritesheet;
 
 void renderer_init(void);
 
-void render_text(char const* text, int x, int y, SDL_Color color);
+struct PinPoint {
+	float x, y;
+};
+typedef struct PinPoint PinPoint;
+
+#define PP_TOP_LEFT      ((PinPoint){.x = 0.0f, .y = 0.0f})
+#define PP_TOP_CENTER    ((PinPoint){.x = 0.5f, .y = 0.0f})
+#define PP_TOP_RIGHT     ((PinPoint){.x = 1.0f, .y = 0.0f})
+#define PP_CENTER_LEFT   ((PinPoint){.x = 0.0f, .y = 0.5f})
+#define PP_CENTER_CENTER ((PinPoint){.x = 0.5f, .y = 0.5f})
+#define PP_CENTER_RIGHT  ((PinPoint){.x = 1.0f, .y = 0.5f})
+#define PP_BOTTOM_LEFT   ((PinPoint){.x = 0.0f, .y = 1.0f})
+#define PP_BOTTOM_CENTER ((PinPoint){.x = 0.5f, .y = 1.0f})
+#define PP_BOTTOM_RIGHT  ((PinPoint){.x = 1.0f, .y = 1.0f})
+
+/* Renders the given text so that its pin point is as the given window coordinates. */
+void render_text(char const* text, int x, int y, SDL_Color color, PinPoint pin_point);
 
 #endif // WHEN_THE_FACTORY_RENDERER_

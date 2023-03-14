@@ -43,13 +43,17 @@ void renderer_init(void) {
 	assert(g_font != NULL);
 }
 
-void render_text(char const* text, int x, int y, SDL_Color color) {
+void render_text(char const* text, int x, int y, SDL_Color color, PinPoint pin_point) {
 	/* Note that this is extremely wasteful if the same string is rendered every frame
 	 * to create and destroy a surface and a texture representing this string every frame.
 	 * TODO: Optimize (but later). */
 	SDL_Surface* surface = TTF_RenderText_Blended(g_font, text, color);
 	SDL_Texture* texture = SDL_CreateTextureFromSurface(g_renderer, surface);
-	SDL_Rect rect = {.x = x, .y = y, .w = surface->w, .h = surface->h};
+	SDL_Rect rect = {
+		.x = x - pin_point.x * (float)surface->w,
+		.y = y - pin_point.y * (float)surface->h,
+		.w = surface->w,
+		.h = surface->h};
 	SDL_FreeSurface(surface);
 	SDL_RenderCopy(g_renderer, texture, NULL, &rect);
 	SDL_DestroyTexture(texture);

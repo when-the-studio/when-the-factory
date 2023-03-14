@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
-#include <SDL2/SDL.h>
 #include <time.h>
+#include <assert.h>
+#include <SDL2/SDL.h>
 
 #include "renderer.h"
 #include "map.h"
@@ -174,8 +175,55 @@ int main() {
 				.h = ceilf(tileRenderSize)};
 			SDL_SetRenderDrawColor(g_renderer, 255, 255, 0, 255);
 			SDL_RenderDrawRect(g_renderer, &rect);
+
+			rect = (SDL_Rect){.x = 10, .y = WINDOW_H - 190, .w = 150, .h = 180};
+			SDL_SetRenderDrawColor(g_renderer, 200, 200, 200, 255);
+			SDL_RenderFillRect(g_renderer, &rect);
+			SDL_SetRenderDrawColor(g_renderer, 0, 0, 0, 255);
+			SDL_RenderDrawRect(g_renderer, &rect);
+
+			Tile const* selected_tile = 
+				&g_grid[selected_tile_coords.y * N_TILES_W + selected_tile_coords.x];
+
+			rect = (SDL_Rect){.x = 35, .y = WINDOW_H - 135, .w = 100, .h = 100};
+			SDL_Rect rect_in_spritesheet = {.x = 0, .y = 0, .w = 8, .h = 8};
+			switch (selected_tile->type) {
+				case TILE_PLAIN:
+					rect_in_spritesheet.x = 0;
+				break;
+				case TILE_MOUTAIN:
+					rect_in_spritesheet.x = 16;
+				break;
+				case TILE_RIVER:
+					rect_in_spritesheet.x = 8;
+				break;
+				case TILE_FOREST:
+					rect_in_spritesheet.x = 24;
+				break;
+				default: assert(false);
+			}
+			SDL_RenderCopy(g_renderer, g_spritesheet, &rect_in_spritesheet, &rect);
+
+			char const* name;
+			switch (selected_tile->type) {
+				case TILE_PLAIN:
+					name = "Plain";
+				break;
+				case TILE_MOUTAIN:
+					name = "Mountain";
+				break;
+				case TILE_RIVER:
+					name = "River";
+				break;
+				case TILE_FOREST:
+					name = "Forest";
+				break;
+				default: assert(false);
+			}
+			render_text(name,
+				10 + 150/2, WINDOW_H - 175, (SDL_Color){0, 0, 0, 255},
+				PP_TOP_CENTER);
 		}
-		render_text("Gaming", 10, 10, (SDL_Color){0, 0, 255, 255});
 		SDL_RenderPresent(g_renderer);
 	}
 	return 0;
