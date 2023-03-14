@@ -37,7 +37,7 @@ int main() {
 	// coord_t offset = {-1000, -1000}; // Replaced with camera.pos
 	Camera camera = {{1000,1000}, {1000,1000}, {0,0}, 1, 1};
 
-	bool render_lines = true;
+	bool render_lines = false;
 
 	bool selected_tile_exists = false;
 	Coord selected_tile_coords = {0, 0};
