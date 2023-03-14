@@ -22,7 +22,7 @@ int main() {
 	/* Main game loop */
 	bool running = true;
 
-	double dt = 0;  // delta time in ms
+	double dt = 0;  /* delta time in ms */
 	Uint64 timer = SDL_GetPerformanceCounter();
 	Uint64 lastTimer = 0;
 	while (running) {
@@ -75,11 +75,11 @@ int main() {
 					}
 					break;
 				case SDL_MOUSEWHEEL:
-					float oldZoom = camera.zoom;
-					if (event.wheel.y > 0){
-						camera.targetZoom /= 0.8;
-					} else {
-						camera.targetZoom *= 0.8;
+					if (event.wheel.y > 0 && camera.target_zoom < 4 ){
+						camera.target_zoom /= 0.8;
+						
+					} else if (event.wheel.y < 0 && camera.target_zoom > 0.1) {
+						camera.target_zoom *= 0.8;
 					}
 					break;
 				break;

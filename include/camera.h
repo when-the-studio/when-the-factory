@@ -9,7 +9,7 @@ struct Camera{
 	SDL_FPoint pos;
 	Coord speed;
 	float zoom;
-	float targetZoom;
+	float target_zoom;
 };
 
 #define SMOOTHNESS 50;
