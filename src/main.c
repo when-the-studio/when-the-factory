@@ -10,16 +10,10 @@
 #include "camera.h"
 
 Coord window_pixel_to_tile_coords(Camera const* camera, int x, int y) {
-	#if 0
-	float tileRenderSize = TILE_SIZE * camera->zoom;
-	int x = (i % N_TILES_W) * tileRenderSize - camera->pos.x;
-	int y = (i / N_TILES_W) * tileRenderSize - camera->pos.y;
-	SDL_Rect rect = {x, y, ceilf(tileRenderSize), ceilf(tileRenderSize)};
-	#endif
 	float tileRenderSize = TILE_SIZE * camera->zoom;
 	return (Coord){
-		.x = (x + camera->pos.x) / tileRenderSize,
-		.y = (y + camera->pos.y) / tileRenderSize,
+		.x = floorf(((float)x + camera->pos.x) / tileRenderSize),
+		.y = floorf(((float)y + camera->pos.y) / tileRenderSize),
 	};
 }
 
@@ -27,6 +21,10 @@ bool tile_coords_are_valid(Coord coords) {
 	return
 		0 <= coords.x && coords.x < N_TILES_W &&
 		0 <= coords.y && coords.y < N_TILES_H;
+}
+
+bool coords_eq(Coord a, Coord b) {
+	return a.x == b.x && a.y == b.y;
 }
 
 int main() {
