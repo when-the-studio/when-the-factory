@@ -3,59 +3,51 @@
 #include <stdlib.h>
 #include <time.h>
 #include <assert.h>
+
 #include <SDL2/SDL.h>
 
 #include "renderer.h"
 #include "map.h"
 #include "camera.h"
 
-Coord window_pixel_to_tile_coords(Camera const* camera, int x, int y) {
-	float tileRenderSize = TILE_SIZE * camera->zoom;
-	return (Coord){
-		.x = floorf(((float)x + camera->pos.x) / tileRenderSize),
-		.y = floorf(((float)y + camera->pos.y) / tileRenderSize),
+TileCoords window_pixel_to_tile_coords(WinCoords wc) {
+	float tile_render_size = TILE_SIZE * g_camera.zoom;
+	return (TileCoords){
+		.x = floorf(((float)wc.x + g_camera.pos.x) / tile_render_size),
+		.y = floorf(((float)wc.y + g_camera.pos.y) / tile_render_size),
 	};
 }
 
-bool tile_coords_are_valid(Coord coords) {
-	return
-		0 <= coords.x && coords.x < N_TILES_W &&
-		0 <= coords.y && coords.y < N_TILES_H;
-}
-
-bool coords_eq(Coord a, Coord b) {
-	return a.x == b.x && a.y == b.y;
-}
-
 int main() {
-	/* Renderer initialisation*/
 	renderer_init();
-	/* Game variables init*/
 	init_map();
 	
-	/* Position of the top left corner of the grid in the window */
-	// coord_t offset = {-1000, -1000}; // Replaced with camera.pos
-	Camera camera = {{1000,1000}, {1000,1000}, {0,0}, 1, 1};
-
+	/* Is grid line display enabled? */
 	bool render_lines = false;
 
-	bool selected_tile_exists = false;
-	Coord selected_tile_coords = {0, 0};
+	/* Selected tile, if any. */
+	/* DISCUSS: Abreviations use and conventions and all. */
+	bool sel_tile_exists = false;
+	TileCoords sel_tile_coords = {0, 0};
 
-	/* Main game loop */
-	bool running = true;
-
-	double dt = 0;  /* delta time in ms */
+	/* Game loop iteration time monitoring. */
 	Uint64 timer = SDL_GetPerformanceCounter();
-	Uint64 lastTimer = 0;
+	Uint64 last_timer = 0;
+
+	/* Main game loop. */
+	bool running = true;
 	while (running) {
-		lastTimer = timer;
+		last_timer = timer;
 		timer = SDL_GetPerformanceCounter();
-		dt = (double)((timer-lastTimer)*1000/(double)SDL_GetPerformanceFrequency());
-		cam_update(&camera, dt);
+		/* Delta time in ms. */
+		double dt = (timer - last_timer) * 1000 / (double)SDL_GetPerformanceFrequency();
+
 		SDL_Event event;
 		while (SDL_PollEvent(&event)) {
-			if ((event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) && event.key.repeat) {
+			if (event.type == SDL_KEYDOWN && event.key.repeat) {
+				/* SDL will spam KEYDOWN events when a key is just pressed for long enough,
+				 * which will confuse whatever relies on matching KEYDOWN and KEYUP events.
+				 * So we just filter out these 'fake' KEYDOWN events. */
 				continue;
 			}
 			switch (event.type) {
@@ -67,71 +59,74 @@ int main() {
 						case SDLK_ESCAPE:
 							running = false;
 						break;
-						case SDLK_DOWN:  cam_speed(&camera, camera.speed.x, 1); break;
-						case SDLK_UP:    cam_speed(&camera, camera.speed.x, -1); break;
-						case SDLK_RIGHT: cam_speed(&camera, 1, camera.speed.y); break;
-						case SDLK_LEFT:  cam_speed(&camera, -1, camera.speed.y); break;
+						case SDLK_DOWN:  cam_speed(g_camera.speed.x, +1); break;
+						case SDLK_UP:    cam_speed(g_camera.speed.x, -1); break;
+						case SDLK_RIGHT: cam_speed(+1, g_camera.speed.y); break;
+						case SDLK_LEFT:  cam_speed(-1, g_camera.speed.y); break;
 						case SDLK_l:
 							render_lines = !render_lines;
 						break;
 					}
 				break;
-				// case SDL_MOUSEBUTTONUP:
-				// break;
 				case SDL_MOUSEBUTTONDOWN:
 					switch (event.button.button) {
 						case SDL_BUTTON_LEFT: {
-							Coord tile_coords = window_pixel_to_tile_coords(&camera,
-								event.button.x, event.button.y);
-							if (tile_coords_are_valid(tile_coords) && !(
-								selected_tile_exists && coords_eq(selected_tile_coords, tile_coords)
+							WinCoords wc = {event.button.x, event.button.y};
+							TileCoords tc = window_pixel_to_tile_coords(wc);
+							if (tile_coords_are_valid(tc) && !(
+								sel_tile_exists && coords_eq(sel_tile_coords, tc)
 							)) {
-								selected_tile_exists = true;
-								selected_tile_coords = tile_coords;
+								sel_tile_exists = true;
+								sel_tile_coords = tc;
 							} else {
-								selected_tile_exists = false;
+								sel_tile_exists = false;
 							}
 						} break;
 					}
 				break;
 				case SDL_KEYUP:
 					switch (event.key.keysym.sym) {
-						case SDLK_DOWN:  if (camera.speed.y > 0) {cam_speed(&camera, camera.speed.x, 0);}; break;
-						case SDLK_UP:    if (camera.speed.y < 0) {cam_speed(&camera, camera.speed.x, 0);}; break;
-						case SDLK_RIGHT: if (camera.speed.x > 0) {cam_speed(&camera, 0, camera.speed.y);}; break;
-						case SDLK_LEFT:  if (camera.speed.x < 0) {cam_speed(&camera, 0, camera.speed.y);}; break;
+						case SDLK_DOWN:  if (g_camera.speed.y > 0) {cam_speed(g_camera.speed.x, 0);}; break;
+						case SDLK_UP:    if (g_camera.speed.y < 0) {cam_speed(g_camera.speed.x, 0);}; break;
+						case SDLK_RIGHT: if (g_camera.speed.x > 0) {cam_speed(0, g_camera.speed.y);}; break;
+						case SDLK_LEFT:  if (g_camera.speed.x < 0) {cam_speed(0, g_camera.speed.y);}; break;
 						break;
 					}
 				break;
 				case SDL_MOUSEMOTION:
 					if (SDL_GetMouseState(NULL, NULL) & SDL_BUTTON_RMASK) {
-						camera.target_pos.x -= event.motion.xrel;
-						camera.target_pos.y -= event.motion.yrel;
-						camera.pos.x -= event.motion.xrel;
-						camera.pos.y -= event.motion.yrel;
+						g_camera.target_pos.x -= event.motion.xrel;
+						g_camera.target_pos.y -= event.motion.yrel;
+						g_camera.pos.x -= event.motion.xrel;
+						g_camera.pos.y -= event.motion.yrel;
 					}
 					break;
 				case SDL_MOUSEWHEEL:
-					if (event.wheel.y > 0 && camera.target_zoom < 4 ){
-						camera.target_zoom /= 0.8;
+					if (event.wheel.y > 0 && g_camera.target_zoom < 4 ){
+						g_camera.target_zoom /= 0.8;
 						
-					} else if (event.wheel.y < 0 && camera.target_zoom > 0.1) {
-						camera.target_zoom *= 0.8;
+					} else if (event.wheel.y < 0 && g_camera.target_zoom > 0.1) {
+						g_camera.target_zoom *= 0.8;
 					}
 					break;
 				break;
 			}
 		}
+
+		cam_update(dt);
 		
-		/* Background*/
+		/* Background. */
 		SDL_SetRenderDrawColor(g_renderer, 255, 255, 255, 255);
 		SDL_RenderClear(g_renderer);
-		/* Draw tiles */
-		float tileRenderSize = TILE_SIZE * camera.zoom;
+
+		/* TODO: Do a little formatting on what follows. */
+
+		/* Draw tiles. */
+		float tile_render_size = TILE_SIZE * g_camera.zoom;
 		for (int i = 0; i < N_TILES; ++i) {
-			int x = (i % N_TILES_W) * tileRenderSize - camera.pos.x;
-			int y = (i / N_TILES_W) * tileRenderSize - camera.pos.y;
-			SDL_Rect rect = {x, y, ceilf(tileRenderSize), ceilf(tileRenderSize)};
+			int x = (i % N_TILES_W) * tile_render_size - g_camera.pos.x;
+			int y = (i / N_TILES_W) * tile_render_size - g_camera.pos.y;
+			SDL_Rect rect = {x, y, ceilf(tile_render_size), ceilf(tile_render_size)};
 			SDL_Rect rect_in_spritesheet = {.x = 0, .y = 0, .w = 8, .h = 8};
 			switch (g_grid[i].type) {
 			case TILE_PLAIN:
@@ -158,22 +153,22 @@ int main() {
 			x0 = 0; xf = WINDOW_W;
 			y0 = 0; yf = WINDOW_H;
 			for (int row = 1; row < N_TILES_W; ++row) {
-				int xi = row * tileRenderSize - camera.pos.x;
+				int xi = row * tile_render_size - g_camera.pos.x;
 				SDL_RenderDrawLine(g_renderer, xi, y0, xi, yf);
 				SDL_RenderDrawLine(g_renderer, xi-1, y0, xi-1, yf);
 			}
 			for (int col = 1; col < N_TILES_H; ++col) {
-				int yi = col * tileRenderSize - camera.pos.y;
+				int yi = col * tile_render_size - g_camera.pos.y;
 				SDL_RenderDrawLine(g_renderer, x0, yi, xf, yi);
 				SDL_RenderDrawLine(g_renderer, x0, yi-1, xf, yi-1);
 			}
 		}
-		if (selected_tile_exists) {
+		if (sel_tile_exists) {
 			SDL_Rect rect = {
-				.x = selected_tile_coords.x * tileRenderSize - camera.pos.x,
-				.y = selected_tile_coords.y * tileRenderSize - camera.pos.y,
-				.w = ceilf(tileRenderSize),
-				.h = ceilf(tileRenderSize)};
+				.x = sel_tile_coords.x * tile_render_size - g_camera.pos.x,
+				.y = sel_tile_coords.y * tile_render_size - g_camera.pos.y,
+				.w = ceilf(tile_render_size),
+				.h = ceilf(tile_render_size)};
 			SDL_SetRenderDrawColor(g_renderer, 255, 255, 0, 255);
 			SDL_RenderDrawRect(g_renderer, &rect);
 
@@ -183,12 +178,12 @@ int main() {
 			SDL_SetRenderDrawColor(g_renderer, 0, 0, 0, 255);
 			SDL_RenderDrawRect(g_renderer, &rect);
 
-			Tile const* selected_tile = 
-				&g_grid[selected_tile_coords.y * N_TILES_W + selected_tile_coords.x];
+			Tile const* sel_tile = 
+				&g_grid[sel_tile_coords.y * N_TILES_W + sel_tile_coords.x];
 
 			rect = (SDL_Rect){.x = 35, .y = WINDOW_H - 135, .w = 100, .h = 100};
 			SDL_Rect rect_in_spritesheet = {.x = 0, .y = 0, .w = 8, .h = 8};
-			switch (selected_tile->type) {
+			switch (sel_tile->type) {
 				case TILE_PLAIN:
 					rect_in_spritesheet.x = 0;
 				break;
@@ -206,7 +201,7 @@ int main() {
 			SDL_RenderCopy(g_renderer, g_spritesheet, &rect_in_spritesheet, &rect);
 
 			char const* name;
-			switch (selected_tile->type) {
+			switch (sel_tile->type) {
 				case TILE_PLAIN:
 					name = "Plain";
 				break;

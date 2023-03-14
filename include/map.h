@@ -1,19 +1,24 @@
 #ifndef WHEN_THE_FACTORY_MAP_
 #define WHEN_THE_FACTORY_MAP_
+
+#include <stdbool.h>
+
 #include <SDL2/SDL.h>
 
 #define TILE_SIZE 100
 
-//#include "renderer.h"
-
-// #define N_TILES_H (WINDOW_H / TILE_SIZE)
-// #define N_TILES_W (WINDOW_W / TILE_SIZE)
+#if 0
+#include "renderer.h"
+#define N_TILES_H (WINDOW_H / TILE_SIZE)
+#define N_TILES_W (WINDOW_W / TILE_SIZE)
+#endif
 
 #define N_TILES_H 50
 #define N_TILES_W 50
 
-#define N_TILES N_TILES_H * N_TILES_W
-/* Type of terrain for each entity on the g_grid */
+#define N_TILES (N_TILES_H * N_TILES_W)
+
+/* Type of terrain for each tile of the map. */
 enum TileType {
 	TILE_PLAIN,
 	TILE_MOUTAIN,
@@ -24,37 +29,44 @@ enum TileType {
 };
 typedef enum TileType TileType;
 
-/* Coords of something on the map */
-typedef SDL_Point Coord;
+/* Coords of a tile on the map. */
+struct TileCoords {
+	int x, y;
+};
+typedef struct TileCoords TileCoords;
 
-/* Entity types possible */
+bool tile_coords_are_valid(TileCoords coords);
+bool tile_coords_eq(TileCoords a, TileCoords b);
+
+/* Entity types. */
 enum EntityType {
-	PLAYER,
-	ENEMY,
-	BUILDING,
+	ENTITY_PLAYER,
+	ENTITY_ENEMY, /* DISCUSS: Maybe we could store the faction in an other field. */
+	ENTITY_BUILDING, /* DISCUSS: Should this be an entity? */
 
-	N_ENTITY_TYPE,
+	ENTITY_TYPE_NUM,
 };
 typedef enum EntityType EntityType;
 
-/* An actual entity on the grid */
-struct entity{
+/* Entity, something that is not a tile terrain but rather ON a tile. */
+struct Entity {
 	EntityType type;
 };
 typedef struct Entity Entity;
 
-/* The representation of a map tile */
+/* The representation of a map tile. */
 struct Tile {
 	TileType type;
-	Coord pos;
-	Entity* entities_on_tile;
+	Entity* entities; /* DISCUSS: This could be a dynamic array of ids. */
 };
 typedef struct Tile Tile;
 
-/* Global variable : Map grid */
+/* This is the map, which is a grid of tiles. */
 extern Tile* g_grid;
 
-/* Initilises the grid with random tiles */
+/* Initilises the grid with random tiles. */
 void init_map(void);
 
-#endif // WHEN_THE_FACTORY_MAP_
+Tile* get_tile(TileCoords coords);
+
+#endif /* WHEN_THE_FACTORY_MAP_ */

@@ -7,18 +7,18 @@
 struct Camera{
 	SDL_FPoint target_pos;
 	SDL_FPoint pos;
-	Coord speed;
+	SDL_FPoint speed;
 	float zoom;
 	float target_zoom;
 };
-
-#define SMOOTHNESS 50;
-#define BASE_SPEED 2;
-
-
 typedef struct Camera Camera;
 
-void cam_speed(Camera* cam, int vx, int vy);
-void cam_update(Camera* cam, double dt);
+#define SMOOTHNESS 50
+#define BASE_SPEED 2
+
+extern Camera g_camera;
+
+void cam_speed(float vx, float vy);
+void cam_update(double dt);
 
 #endif
