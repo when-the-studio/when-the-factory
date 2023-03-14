@@ -11,4 +11,7 @@ extern SDL_Renderer* g_renderer;
 extern SDL_Texture* g_spritesheet;
 
 void renderer_init(void);
+
+void render_text(char const* text, int x, int y, SDL_Color color);
+
 #endif // WHEN_THE_FACTORY_RENDERER_

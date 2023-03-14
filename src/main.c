@@ -131,6 +131,7 @@ int main() {
 				SDL_RenderDrawLine(g_renderer, x0, yi-1, xf, yi-1);
 			}
 		}
+		render_text("Gaming", 10, 10, (SDL_Color){0, 0, 255, 255});
 		SDL_RenderPresent(g_renderer);
 	}
 	return 0;
