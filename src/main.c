@@ -23,13 +23,14 @@ int main() {
 	/* Main game loop */
 	bool running = true;
 
-	clock_t timer = clock();
-	float dt = 0;
+	double dt = 0;  // delta time in ms
+	Uint64 timer = SDL_GetPerformanceCounter();
+	Uint64 lastTimer = 0;
 	while (running) {
-		clock_t clockDt = clock() - timer;
-		timer = clock();
-		dt = clockDt * 1000 / (float)CLOCKS_PER_SEC;
-		
+		lastTimer = timer;
+		timer = SDL_GetPerformanceCounter();
+		dt = (double)((timer-lastTimer)*1000/(double)SDL_GetPerformanceFrequency());
+		cam_update(&camera, dt);
 		SDL_Event event;
 		while (SDL_PollEvent(&event)) {
 			if ((event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) && event.key.repeat) {
@@ -70,11 +71,13 @@ int main() {
 					if (SDL_GetMouseState(NULL, NULL) & SDL_BUTTON_LMASK) {
 						camera.target_pos.x += event.motion.xrel;
 						camera.target_pos.y += event.motion.yrel;
+						camera.pos.x += event.motion.xrel;
+						camera.pos.y += event.motion.yrel;
 					}
 				break;
 			}
 		}
-		cam_update(&camera, dt);
+		
 
 		/* Background*/
 		SDL_SetRenderDrawColor(g_renderer, 255, 255, 255, 255);

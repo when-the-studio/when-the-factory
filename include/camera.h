@@ -11,13 +11,13 @@ struct Camera{
 	int zoom;
 };
 
-#define SMOOTHNESS 10;
-#define BASE_SPEED 15;
+#define SMOOTHNESS 50;
+#define BASE_SPEED 2;
 
 
 typedef struct Camera Camera;
 
 void cam_speed(Camera* cam, int vx, int vy);
-void cam_update(Camera* cam, float dt);
+void cam_update(Camera* cam, double dt);
 
 #endif
