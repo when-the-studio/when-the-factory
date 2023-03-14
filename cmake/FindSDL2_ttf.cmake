@@ -1,0 +1,7 @@
+set(prefix "/usr") 
+set(exec_prefix "${prefix}")
+set(libdir "${prefix}/lib/x86_64-linux-gnu")
+set(SDL2_TTF_PREFIX "/usr")
+set(SDL2_TTF_EXEC_PREFIX "/usr")
+set(SDL2_TTF_INCLUDE_DIRS "${prefix}/include/SDL2_ttf")
+set(SDL2_TTF_LIBRARIES "-lSDL2_ttf")
