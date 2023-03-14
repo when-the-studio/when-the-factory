@@ -79,14 +79,17 @@ int main() {
 				// case SDL_MOUSEBUTTONUP:
 				// break;
 				case SDL_MOUSEBUTTONDOWN:
-					selected_tile_exists = false;
 					switch (event.button.button) {
 						case SDL_BUTTON_LEFT: {
 							Coord tile_coords = window_pixel_to_tile_coords(&camera,
 								event.button.x, event.button.y);
-							if (tile_coords_are_valid(tile_coords)) {
+							if (tile_coords_are_valid(tile_coords) && !(
+								selected_tile_exists && coords_eq(selected_tile_coords, tile_coords)
+							)) {
 								selected_tile_exists = true;
 								selected_tile_coords = tile_coords;
+							} else {
+								selected_tile_exists = false;
 							}
 						} break;
 					}
