@@ -5,10 +5,11 @@
 #include "map.h"
 
 struct Camera{
-	Coord target_pos;
-	Coord pos;
+	SDL_FPoint target_pos;
+	SDL_FPoint pos;
 	Coord speed;
-	int zoom;
+	float zoom;
+	float targetZoom;
 };
 
 #define SMOOTHNESS 50;
