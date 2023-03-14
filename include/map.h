@@ -25,7 +25,7 @@ enum TileType {
 typedef enum TileType TileType;
 
 /* Coords of something on the map */
-typedef SDL_Point coord_t;
+typedef SDL_Point Coord;
 
 /* Entity types possible */
 enum EntityType {
@@ -46,7 +46,7 @@ typedef struct Entity Entity;
 /* The representation of a map tile */
 struct Tile {
 	TileType type;
-	coord_t pos;
+	Coord pos;
 	Entity* entities_on_tile;
 };
 typedef struct Tile Tile;

@@ -5,18 +5,19 @@
 #include "map.h"
 
 struct Camera{
-	coord_t target_pos;
-	coord_t pos;
-	coord_t speed;
+	Coord target_pos;
+	Coord pos;
+	Coord speed;
 	int zoom;
 };
 
 #define SMOOTHNESS 10;
-#define BASE_SPEED 20;
+#define BASE_SPEED 15;
+
 
 typedef struct Camera Camera;
 
 void cam_speed(Camera* cam, int vx, int vy);
-void cam_update(Camera* cam);
+void cam_update(Camera* cam, float dt);
 
 #endif

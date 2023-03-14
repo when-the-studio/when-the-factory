@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <SDL2/SDL.h>
+#include <time.h>
 #include "utils.h"
 
 #include "renderer.h"
@@ -21,7 +22,14 @@ int main() {
 	bool render_lines = true;
 	/* Main game loop */
 	bool running = true;
+
+	clock_t timer = clock();
+	float dt = 0;
 	while (running) {
+		clock_t clockDt = clock() - timer;
+		timer = clock();
+		dt = clockDt * 1000 / (float)CLOCKS_PER_SEC;
+		
 		SDL_Event event;
 		while (SDL_PollEvent(&event)) {
 			if ((event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) && event.key.repeat) {
@@ -60,13 +68,13 @@ int main() {
 				break;
 				case SDL_MOUSEMOTION:
 					if (SDL_GetMouseState(NULL, NULL) & SDL_BUTTON_LMASK) {
-						camera.pos.x += event.motion.xrel;
-						camera.pos.y += event.motion.yrel;
+						camera.target_pos.x += event.motion.xrel;
+						camera.target_pos.y += event.motion.yrel;
 					}
 				break;
 			}
 		}
-		cam_update(&camera);
+		cam_update(&camera, dt);
 
 		/* Background*/
 		SDL_SetRenderDrawColor(g_renderer, 255, 255, 255, 255);
