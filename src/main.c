@@ -94,7 +94,7 @@ int main() {
 		for (int i = 0; i < N_TILES; ++i) {
 			int x = (i % N_TILES_W) * tileRenderSize - camera.pos.x;
 			int y = (i / N_TILES_W) * tileRenderSize - camera.pos.y;
-			SDL_Rect rect = {x, y, tileRenderSize, tileRenderSize};
+			SDL_Rect rect = {x, y, ceilf(tileRenderSize), ceilf(tileRenderSize)};
 			SDL_Rect rect_in_spritesheet = {.x = 0, .y = 0, .w = 8, .h = 8};
 			switch (g_grid[i].type) {
 			case TILE_PLAIN:
