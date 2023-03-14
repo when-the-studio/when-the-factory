@@ -14,7 +14,7 @@
 
 #define N_TILES N_TILES_H * N_TILES_W
 /* Type of terrain for each entity on the g_grid */
-enum tile_type_t {
+enum TileType {
 	TILE_PLAIN,
 	TILE_MOUTAIN,
 	TILE_RIVER,
@@ -22,37 +22,37 @@ enum tile_type_t {
 
 	TILE_TYPE_NUM,
 };
-typedef enum tile_type_t tile_type_t;
+typedef enum TileType TileType;
 
 /* Coords of something on the map */
 typedef SDL_Point coord_t;
 
 /* Entity types possible */
-enum entity_type_t {
+enum EntityType {
 	PLAYER,
 	ENEMY,
 	BUILDING,
 
 	N_ENTITY_TYPE,
 };
-typedef enum entity_type_t entity_type_t;
+typedef enum EntityType EntityType;
 
 /* An actual entity on the grid */
 struct entity{
-	entity_type_t type;
+	EntityType type;
 };
-typedef struct entity entity;
+typedef struct Entity Entity;
 
 /* The representation of a map tile */
-struct tile_t {
-	tile_type_t type;
+struct Tile {
+	TileType type;
 	coord_t pos;
-	entity* entities_on_tile;
+	Entity* entities_on_tile;
 };
-typedef struct tile_t tile_t;
+typedef struct Tile Tile;
 
 /* Global variable : Map grid */
-extern tile_t* g_grid;
+extern Tile* g_grid;
 
 /* Initilises the grid with random tiles */
 void init_map(void);

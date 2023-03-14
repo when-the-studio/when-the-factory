@@ -16,7 +16,7 @@ int main() {
 	
 	/* Position of the top left corner of the grid in the window */
 	// coord_t offset = {-1000, -1000}; // Replaced with camera.pos
-	camera_t camera = {{-1000,-1000}, {-1000,-1000}, {0,0}, 1};
+	Camera camera = {{-1000,-1000}, {-1000,-1000}, {0,0}, 1};
 
 	bool render_lines = true;
 	/* Main game loop */
