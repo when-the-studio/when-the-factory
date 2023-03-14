@@ -5,9 +5,9 @@ void cam_speed(Camera * cam, int vx, int vy){
 	cam->speed.y = vy; 
 }
 
-void cam_update(Camera * camera, float dt){
+void cam_update(Camera * camera, double dt){
 	camera->target_pos.x += camera->speed.x*dt*BASE_SPEED;
 	camera->target_pos.y += camera->speed.y*dt*BASE_SPEED; 
-	camera->pos.x += (camera->target_pos.x - camera->pos.x )/SMOOTHNESS;
-	camera->pos.y += (camera->target_pos.y - camera->pos.y )/SMOOTHNESS;
+	camera->pos.x += (camera->target_pos.x - camera->pos.x )*dt/SMOOTHNESS;
+	camera->pos.y += (camera->target_pos.y - camera->pos.y )*dt/SMOOTHNESS;
 }
