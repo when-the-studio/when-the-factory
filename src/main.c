@@ -103,7 +103,7 @@ int main() {
 					}
 				break;
 				case SDL_MOUSEMOTION:
-					if (SDL_GetMouseState(NULL, NULL) & SDL_BUTTON_LMASK) {
+					if (SDL_GetMouseState(NULL, NULL) & SDL_BUTTON_RMASK) {
 						camera.target_pos.x -= event.motion.xrel;
 						camera.target_pos.y -= event.motion.yrel;
 						camera.pos.x -= event.motion.xrel;
