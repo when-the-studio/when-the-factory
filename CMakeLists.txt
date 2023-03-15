@@ -24,7 +24,6 @@ add_executable(wtf
 	${SRC_FILES}
 )
 
-
 target_include_directories(wtf
 	PRIVATE
 	${PROJECT_SOURCE_DIR}/include

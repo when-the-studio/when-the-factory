@@ -10,11 +10,6 @@ Camera g_camera = {
 	.target_zoom = 1.0f,
 };
 
-void cam_speed(float vx, float vy){
-	g_camera.speed.x = vx;
-	g_camera.speed.y = vy; 
-}
-
 void cam_update(double dt){
 	
 	float d_zoom = (g_camera.target_zoom - g_camera.zoom) * dt / SMOOTHNESS;

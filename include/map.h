@@ -29,6 +29,15 @@ enum TileType {
 };
 typedef enum TileType TileType;
 
+/* Describes a type of tile. */
+struct TileTypeSpec {
+	SDL_Rect rect_in_spritesheet;
+	char const* name;
+};
+typedef struct TileTypeSpec TileTypeSpec;
+
+extern TileTypeSpec g_tile_type_spec_table[TILE_TYPE_NUM];
+
 /* Coords of a tile on the map. */
 struct TileCoords {
 	int x, y;

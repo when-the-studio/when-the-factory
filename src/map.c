@@ -2,6 +2,25 @@
 #include <assert.h>
 #include "map.h"
 
+TileTypeSpec g_tile_type_spec_table[TILE_TYPE_NUM] = {
+	[TILE_PLAIN] = {
+		.rect_in_spritesheet = {0, 0, 8, 8},
+		.name = "Plain",
+	},
+	[TILE_MOUTAIN] = {
+		.rect_in_spritesheet = {16, 0, 8, 8},
+		.name = "Mountain",
+	},
+	[TILE_RIVER] = {
+		.rect_in_spritesheet = {8, 0, 8, 8},
+		.name = "River",
+	},
+	[TILE_FOREST] = {
+		.rect_in_spritesheet = {24, 0, 8, 8},
+		.name = "Forest",
+	},
+};
+
 bool tile_coords_are_valid(TileCoords coords) {
 	return
 		0 <= coords.x && coords.x < N_TILES_W &&
