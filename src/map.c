@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <assert.h>
 #include "map.h"
 
 bool tile_coords_are_valid(TileCoords coords) {
@@ -7,7 +8,7 @@ bool tile_coords_are_valid(TileCoords coords) {
 		0 <= coords.y && coords.y < N_TILES_H;
 }
 
-bool coords_eq(TileCoords a, TileCoords b) {
+bool tile_coords_eq(TileCoords a, TileCoords b) {
 	return a.x == b.x && a.y == b.y;
 }
 

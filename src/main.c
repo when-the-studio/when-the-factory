@@ -74,7 +74,7 @@ int main() {
 							WinCoords wc = {event.button.x, event.button.y};
 							TileCoords tc = window_pixel_to_tile_coords(wc);
 							if (tile_coords_are_valid(tc) && !(
-								sel_tile_exists && coords_eq(sel_tile_coords, tc)
+								sel_tile_exists && tile_coords_eq(sel_tile_coords, tc)
 							)) {
 								sel_tile_exists = true;
 								sel_tile_coords = tc;
@@ -216,9 +216,9 @@ int main() {
 				break;
 				default: assert(false);
 			}
-			render_text(name,
-				10 + 150/2, WINDOW_H - 175, (SDL_Color){0, 0, 0, 255},
-				PP_TOP_CENTER);
+			render_string(name,
+				(WinCoords){10 + 150/2, WINDOW_H - 175}, PP_TOP_CENTER,
+				(SDL_Color){0, 0, 0, 255});
 		}
 		SDL_RenderPresent(g_renderer);
 	}
