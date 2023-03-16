@@ -80,6 +80,16 @@ int main() {
 								entity->faction = FACTION_YELLOW;
 							}
 						break;
+						case SDLK_m:
+							if (selected_tile_exists) {
+								Tile* selected_tile = 
+									&g_grid[selected_tile_coords.y * N_TILES_W + selected_tile_coords.x];
+								if (1 <= selected_tile->entity_count) {
+									entity_move(selected_tile->entities[0],
+										(Coord){selected_tile_coords.x + 1, selected_tile_coords.y});
+								}
+							}
+						break;
 					}
 				break;
 				// case SDL_MOUSEBUTTONUP:
