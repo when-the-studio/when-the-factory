@@ -74,6 +74,12 @@ int main() {
 						case SDLK_l:
 							render_lines = !render_lines;
 						break;
+						case SDLK_p:
+							if (selected_tile_exists) {
+								Entity* entity = new_entity(ENTITY_HUMAIN, selected_tile_coords);
+								entity->faction = FACTION_YELLOW;
+							}
+						break;
 					}
 				break;
 				// case SDL_MOUSEBUTTONUP:
@@ -128,12 +134,13 @@ int main() {
 		SDL_RenderClear(g_renderer);
 		/* Draw tiles */
 		float tileRenderSize = TILE_SIZE * camera.zoom;
-		for (int i = 0; i < N_TILES; ++i) {
-			int x = (i % N_TILES_W) * tileRenderSize - camera.pos.x;
-			int y = (i / N_TILES_W) * tileRenderSize - camera.pos.y;
+		for (int tile_i = 0; tile_i < N_TILES; ++tile_i) {
+			int x = (tile_i % N_TILES_W) * tileRenderSize - camera.pos.x;
+			int y = (tile_i / N_TILES_W) * tileRenderSize - camera.pos.y;
+			Tile* tile = &g_grid[tile_i];
 			SDL_Rect rect = {x, y, ceilf(tileRenderSize), ceilf(tileRenderSize)};
 			SDL_Rect rect_in_spritesheet = {.x = 0, .y = 0, .w = 8, .h = 8};
-			switch (g_grid[i].type) {
+			switch (tile->type) {
 			case TILE_PLAIN:
 				rect_in_spritesheet.x = 0;
 				break;
@@ -150,6 +157,25 @@ int main() {
 				break;
 			}
 			SDL_RenderCopy(g_renderer, g_spritesheet, &rect_in_spritesheet, &rect);
+			for (int entity_i = 0; entity_i < tile->entity_count; entity_i++) {
+				Entity* entity = tile->entities[entity_i];
+				assert(entity != NULL);
+				switch (entity->type) {
+					case ENTITY_HUMAIN: /* Implemented, we may go on. */ break;
+					default: assert(false);
+				}
+				int ex = (float)(entity_i+1) / (float)(tile->entity_count+1) * tileRenderSize;
+				int ey = (1.0f - (float)(entity_i+1) / (float)(tile->entity_count+1)) * tileRenderSize;
+				int ew = 0.1f * tileRenderSize;
+				int eh = 0.3f * tileRenderSize;
+				SDL_Rect rect = {x + ex - ew / 2.0f, y + ey - eh / 2.0f, ew, eh};
+				switch (entity->faction) {
+					case FACTION_YELLOW: SDL_SetRenderDrawColor(g_renderer, 255, 255, 0, 255); break;
+					case FACTION_RED:    SDL_SetRenderDrawColor(g_renderer, 255,   0, 0, 255); break;
+					default: assert(false);
+				}
+				SDL_RenderFillRect(g_renderer, &rect);
+			}
 		}
 		/* Draw lines */
 		if (render_lines) {
@@ -177,11 +203,11 @@ int main() {
 			SDL_SetRenderDrawColor(g_renderer, 255, 255, 0, 255);
 			SDL_RenderDrawRect(g_renderer, &rect);
 
-			rect = (SDL_Rect){.x = 10, .y = WINDOW_H - 190, .w = 150, .h = 180};
+			SDL_Rect ui_rect = {.x = 10, .y = WINDOW_H - 190, .w = 150, .h = 180};
 			SDL_SetRenderDrawColor(g_renderer, 200, 200, 200, 255);
-			SDL_RenderFillRect(g_renderer, &rect);
+			SDL_RenderFillRect(g_renderer, &ui_rect);
 			SDL_SetRenderDrawColor(g_renderer, 0, 0, 0, 255);
-			SDL_RenderDrawRect(g_renderer, &rect);
+			SDL_RenderDrawRect(g_renderer, &ui_rect);
 
 			Tile const* selected_tile = 
 				&g_grid[selected_tile_coords.y * N_TILES_W + selected_tile_coords.x];
@@ -224,6 +250,35 @@ int main() {
 			render_text(name,
 				10 + 150/2, WINDOW_H - 175, (SDL_Color){0, 0, 0, 255},
 				PP_TOP_CENTER);
+
+			for (int entity_i = 0; entity_i < selected_tile->entity_count; entity_i++) {
+				Entity* entity = selected_tile->entities[entity_i];
+				assert(entity != NULL);
+
+				ui_rect.x += ui_rect.w + 10;
+				SDL_SetRenderDrawColor(g_renderer, 200, 200, 200, 255);
+				SDL_RenderFillRect(g_renderer, &ui_rect);
+				SDL_SetRenderDrawColor(g_renderer, 0, 0, 0, 255);
+				SDL_RenderDrawRect(g_renderer, &ui_rect);
+
+				char const* name;
+				switch (entity->type) {
+					case ENTITY_HUMAIN: name = "Human"; break;
+					default: assert(false);
+				}
+				render_text(name,
+					ui_rect.x + ui_rect.w/2, WINDOW_H - 175, (SDL_Color){0, 0, 0, 255},
+					PP_TOP_CENTER);
+				char const* faction_name;
+				switch (entity->faction) {
+					case FACTION_YELLOW: faction_name = "Yellow"; break;
+					case FACTION_RED:    faction_name = "Red";    break;
+					default: assert(false);
+				}
+				render_text(faction_name,
+					ui_rect.x + ui_rect.w/2, WINDOW_H - 175 + 40, (SDL_Color){0, 0, 0, 255},
+					PP_TOP_CENTER);
+			}
 		}
 		SDL_RenderPresent(g_renderer);
 	}

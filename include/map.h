@@ -29,17 +29,29 @@ typedef SDL_Point Coord;
 
 /* Entity types possible */
 enum EntityType {
-	PLAYER,
-	ENEMY,
-	BUILDING,
+	ENTITY_HUMAIN,
+	ENTITY_BUILDING,
 
 	N_ENTITY_TYPE,
 };
 typedef enum EntityType EntityType;
 
+enum FactionIdent {
+	FACTION_YELLOW,
+	FACTION_RED,
+
+	FACTION_IDENT_NUM
+};
+typedef enum FactionIdent FactionIdent;
+
 /* An actual entity on the grid */
-struct entity{
+struct Entity {
 	EntityType type;
+	Coord pos;
+	/* DISCUSS (about the `pos`):
+	 * We may not need that here if we do end up storing the entities directly in the tiles, 
+	 * but we might also end up with the entities in some global table. */
+	FactionIdent faction;
 };
 typedef struct Entity Entity;
 
@@ -47,7 +59,8 @@ typedef struct Entity Entity;
 struct Tile {
 	TileType type;
 	Coord pos;
-	Entity* entities_on_tile;
+	Entity** entities;
+	int entity_count;
 };
 typedef struct Tile Tile;
 
@@ -56,5 +69,9 @@ extern Tile* g_grid;
 
 /* Initilises the grid with random tiles */
 void init_map(void);
+
+Entity* new_entity(EntityType type, Coord pos);
+void entity_delete(Entity* entity);
+void entity_move(Entity* entity, Coord new_pos);
 
 #endif // WHEN_THE_FACTORY_MAP_
