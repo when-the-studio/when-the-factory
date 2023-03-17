@@ -10,6 +10,10 @@
 #include "map.h"
 #include "camera.h"
 
+int max(int a, int b) {
+	return a < b ? b : a;
+}
+
 Coord window_pixel_to_tile_coords(Camera const* camera, int x, int y) {
 	float tileRenderSize = TILE_SIZE * camera->zoom;
 	return (Coord){
@@ -28,8 +32,14 @@ bool coords_eq(Coord a, Coord b) {
 	return a.x == b.x && a.y == b.y;
 }
 
+struct Dims {
+	int w, h;
+};
+typedef struct Dims Dims;
+
 enum WidgetType {
 	WIDGET_TEXT_LINE,
+	WIDGET_MULTIPLE_TOP_LEFT_TOP_TO_BOTTOM,
 };
 typedef enum WidgetType WidgetType;
 
@@ -37,6 +47,9 @@ struct Widget {
 	WidgetType type;
 };
 typedef struct Widget Widget;
+
+Dims widget_get_dims(Widget const* widget);
+void widget_render(Widget const* widget, int x, int y);
 
 /* The root of the whole widget tree. */
 Widget* g_wg_root = NULL;
@@ -48,11 +61,6 @@ struct WidgetTextLine {
 };
 typedef struct WidgetTextLine WidgetTextLine;
 
-struct Dims {
-	int w, h;
-};
-typedef struct Dims Dims;
-
 Dims widget_text_line_get_dims(WidgetTextLine const* widget) {
 	Dims dims;
 	TTF_SizeText(g_font, widget->string, &dims.w, &dims.h);
@@ -63,30 +71,84 @@ void widget_text_line_render(WidgetTextLine const* widget, int x, int y) {
 	render_text(widget->string, x, y, widget->fg_color, PP_TOP_LEFT);
 }
 
+struct WidgetMultipleTopLeftTopToBottom {
+	Widget base;
+	Widget** sub_wgs;
+	int sub_wgs_count;
+};
+typedef struct WidgetMultipleTopLeftTopToBottom WidgetMultipleTopLeftTopToBottom;
+
+Dims widget_multiple_top_left_top_to_bottom_get_dims(WidgetMultipleTopLeftTopToBottom const* widget) {
+	Dims dims = {0, 0};
+	for (int i = 0; i < widget->sub_wgs_count; i++) {
+		Dims sub_dims = widget_get_dims(widget->sub_wgs[i]);
+		dims.h += sub_dims.h;
+		dims.w = max(dims.w, sub_dims.w);
+	}
+	return dims;
+}
+
+void widget_multiple_top_left_top_to_bottom_render(WidgetMultipleTopLeftTopToBottom const* widget, int x, int y) {
+	for (int i = 0; i < widget->sub_wgs_count; i++) {
+		widget_render(widget->sub_wgs[i], x, y);
+		Dims sub_dims = widget_get_dims(widget->sub_wgs[i]);
+		y += sub_dims.h;
+	}
+}
+
 Dims widget_get_dims(Widget const* widget) {
 	switch (widget->type) {
-		case WIDGET_TEXT_LINE: return widget_text_line_get_dims((WidgetTextLine const*)widget); break;
+		case WIDGET_TEXT_LINE:
+			return widget_text_line_get_dims((WidgetTextLine const*)widget);
+		break;
+		case WIDGET_MULTIPLE_TOP_LEFT_TOP_TO_BOTTOM:
+			return widget_multiple_top_left_top_to_bottom_get_dims((WidgetMultipleTopLeftTopToBottom const*)widget);
+		break;
 		default: assert(false);
 	}
 }
 
 void widget_render(Widget const* widget, int x, int y) {
 	switch (widget->type) {
-		case WIDGET_TEXT_LINE: widget_text_line_render((WidgetTextLine const*)widget, x, y); break;
+		case WIDGET_TEXT_LINE:
+			widget_text_line_render((WidgetTextLine const*)widget, x, y);
+		break;
+		case WIDGET_MULTIPLE_TOP_LEFT_TOP_TO_BOTTOM:
+			widget_multiple_top_left_top_to_bottom_render((WidgetMultipleTopLeftTopToBottom const*)widget, x, y);
+		break;
 		default: assert(false);
 	}
 }
 
 void init_widget_tree(void) {
-	WidgetTextLine* widget = malloc(sizeof(WidgetTextLine));
-	*widget = (WidgetTextLine){
+	WidgetTextLine* widget_a = malloc(sizeof(WidgetTextLine));
+	*widget_a = (WidgetTextLine){
 		.base = {
 			.type = WIDGET_TEXT_LINE,
 		},
 		.string = "test xd",
 		.fg_color = {255, 0, 0, 255},
 	};
-	g_wg_root = widget;
+	WidgetTextLine* widget_b = malloc(sizeof(WidgetTextLine));
+	*widget_b = (WidgetTextLine){
+		.base = {
+			.type = WIDGET_TEXT_LINE,
+		},
+		.string = "gaming",
+		.fg_color = {255, 0, 0, 255},
+	};
+	Widget** h = malloc(2 * sizeof(WidgetTextLine));
+	h[0] = (Widget*)widget_a;
+	h[1] = (Widget*)widget_b;
+	WidgetMultipleTopLeftTopToBottom* widget_root = malloc(sizeof(WidgetMultipleTopLeftTopToBottom));
+	*widget_root = (WidgetMultipleTopLeftTopToBottom){
+		.base = {
+			.type = WIDGET_MULTIPLE_TOP_LEFT_TOP_TO_BOTTOM,
+		},
+		.sub_wgs = h,
+		.sub_wgs_count = 2,
+	};
+	g_wg_root = (Widget*)widget_root;
 }
 
 int main() {
