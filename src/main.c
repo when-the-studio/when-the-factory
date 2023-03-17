@@ -4,6 +4,7 @@
 #include <time.h>
 #include <assert.h>
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
 
 #include "renderer.h"
 #include "map.h"
@@ -27,6 +28,67 @@ bool coords_eq(Coord a, Coord b) {
 	return a.x == b.x && a.y == b.y;
 }
 
+enum WidgetType {
+	WIDGET_TEXT_LINE,
+};
+typedef enum WidgetType WidgetType;
+
+struct Widget {
+	WidgetType type;
+};
+typedef struct Widget Widget;
+
+/* The root of the whole widget tree. */
+Widget* g_wg_root = NULL;
+
+struct WidgetTextLine {
+	Widget base;
+	char* string;
+	SDL_Color fg_color;
+};
+typedef struct WidgetTextLine WidgetTextLine;
+
+struct Dims {
+	int w, h;
+};
+typedef struct Dims Dims;
+
+Dims widget_text_line_get_dims(WidgetTextLine const* widget) {
+	Dims dims;
+	TTF_SizeText(g_font, widget->string, &dims.w, &dims.h);
+	return dims;
+}
+
+void widget_text_line_render(WidgetTextLine const* widget, int x, int y) {
+	render_text(widget->string, x, y, widget->fg_color, PP_TOP_LEFT);
+}
+
+Dims widget_get_dims(Widget const* widget) {
+	switch (widget->type) {
+		case WIDGET_TEXT_LINE: return widget_text_line_get_dims((WidgetTextLine const*)widget); break;
+		default: assert(false);
+	}
+}
+
+void widget_render(Widget const* widget, int x, int y) {
+	switch (widget->type) {
+		case WIDGET_TEXT_LINE: widget_text_line_render((WidgetTextLine const*)widget, x, y); break;
+		default: assert(false);
+	}
+}
+
+void init_widget_tree(void) {
+	WidgetTextLine* widget = malloc(sizeof(WidgetTextLine));
+	*widget = (WidgetTextLine){
+		.base = {
+			.type = WIDGET_TEXT_LINE,
+		},
+		.string = "test xd",
+		.fg_color = {255, 0, 0, 255},
+	};
+	g_wg_root = widget;
+}
+
 int main() {
 	/* Renderer initialisation*/
 	renderer_init();
@@ -41,6 +103,8 @@ int main() {
 
 	bool selected_tile_exists = false;
 	Coord selected_tile_coords = {0, 0};
+
+	init_widget_tree();
 
 	/* Main game loop */
 	bool running = true;
@@ -225,6 +289,9 @@ int main() {
 				10 + 150/2, WINDOW_H - 175, (SDL_Color){0, 0, 0, 255},
 				PP_TOP_CENTER);
 		}
+
+		widget_render(g_wg_root, 0, 0);
+
 		SDL_RenderPresent(g_renderer);
 	}
 	return 0;
