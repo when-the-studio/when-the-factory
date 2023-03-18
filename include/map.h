@@ -40,40 +40,12 @@ typedef struct TileCoords TileCoords;
 bool tile_coords_are_valid(TileCoords coords);
 bool tile_coords_eq(TileCoords a, TileCoords b);
 
-/* Entity types. */
-enum EntityType {
-	ENTITY_HUMAIN,
-	ENTITY_BUILDING,
-
-	ENTITY_TYPE_NUM,
-};
-typedef enum EntityType EntityType;
-
-/* Entity, something that is not a tile terrain but rather ON a tile. */
-enum FactionIdent {
-	FACTION_YELLOW,
-	FACTION_RED,
-
-	FACTION_IDENT_NUM
-};
-typedef enum FactionIdent FactionIdent;
-
-/* An actual entity on the grid */
-struct Entity {
-	EntityType type;
-	TileCoords pos;
-	FactionIdent faction;
-};
-typedef struct Entity Entity;
-
-Entity* new_entity(EntityType type, TileCoords pos);
-void entity_delete(Entity* entity);
-void entity_move(Entity* entity, TileCoords new_pos);
+typedef struct EntId EntId;
 
 /* The representation of a map tile. */
 struct Tile {
 	TileType type;
-	Entity** entities;
+	EntId* entities;
 	int entity_count;
 };
 typedef struct Tile Tile;
