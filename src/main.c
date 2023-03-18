@@ -18,6 +18,14 @@ TileCoords window_pixel_to_tile_coords(WinCoords wc) {
 	};
 }
 
+WinCoords tile_coords_to_window_pixel(TileCoords tc) {
+	float tile_render_size = TILE_SIZE * g_camera.zoom;
+	return (WinCoords){
+		.x = tc.x * tile_render_size - g_camera.pos.x,
+		.y = tc.y * tile_render_size - g_camera.pos.y,
+	};
+}
+
 void render_tile_ground(TileType tile_type, SDL_Rect dst_rect) {
 	SDL_Rect rect_in_spritesheet = g_tile_type_spec_table[tile_type].rect_in_spritesheet;
 	SDL_RenderCopy(g_renderer, g_spritesheet, &rect_in_spritesheet, &dst_rect);
@@ -142,15 +150,17 @@ int main() {
 		/* Draw grid lines if enabled. */
 		if (render_lines) {
 			SDL_SetRenderDrawColor(g_renderer, 0, 0, 0, 255);
-			for (int row = 1; row < N_TILES_W; ++row) {
-				int x = row * tile_render_size - g_camera.pos.x;
-				SDL_RenderDrawLine(g_renderer, x,   0, x,   WINDOW_H);
-				SDL_RenderDrawLine(g_renderer, x-1, 0, x-1, WINDOW_H);
+			for (int y = 0; y < N_TILES_W+1; ++y) {
+				WinCoords a = tile_coords_to_window_pixel((TileCoords){0, y});
+				WinCoords b = tile_coords_to_window_pixel((TileCoords){N_TILES_W, y});
+				SDL_RenderDrawLine(g_renderer, a.x, a.y,   b.x, b.y);
+				SDL_RenderDrawLine(g_renderer, a.x, a.y-1, b.x, b.y-1);
 			}
-			for (int col = 1; col < N_TILES_H; ++col) {
-				int y = col * tile_render_size - g_camera.pos.y;
-				SDL_RenderDrawLine(g_renderer, 0, y,   WINDOW_W, y);
-				SDL_RenderDrawLine(g_renderer, 0, y-1, WINDOW_W, y-1);
+			for (int x = 0; x < N_TILES_H+1; ++x) {
+				WinCoords a = tile_coords_to_window_pixel((TileCoords){x, 0});
+				WinCoords b = tile_coords_to_window_pixel((TileCoords){x, N_TILES_H});
+				SDL_RenderDrawLine(g_renderer, a.x,   a.y, b.x,   b.y);
+				SDL_RenderDrawLine(g_renderer, a.x-1, a.y, b.x-1, b.y);
 			}
 		}
 
