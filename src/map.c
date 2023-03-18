@@ -31,26 +31,6 @@ bool tile_coords_eq(TileCoords a, TileCoords b) {
 	return a.x == b.x && a.y == b.y;
 }
 
-Tile* g_grid = NULL;
-
-void init_map(void) {
-	g_grid = malloc(N_TILES * sizeof(Tile));
-	for(int y = 0; y < N_TILES_H; ++y) for(int x = 0; x < N_TILES_W; ++x) {
-		TileCoords tc = {x, y};
-		Tile* tile = get_tile(tc);
-		*tile = (Tile){
-			.type = rand() % TILE_TYPE_NUM,
-			.entities = NULL,
-			.entity_count = 0,
-		};
-	}
-}
-
-Tile* get_tile(TileCoords coords) {
-	assert(tile_coords_are_valid(coords));
-	return &g_grid[coords.y * N_TILES_W + coords.x];
-}
-
 static void add_entity_to_tile_list(Entity* entity, Tile* tile) {
 	tile->entity_count++;
 	tile->entities = realloc(tile->entities, tile->entity_count * sizeof(Entity*));
@@ -75,15 +55,17 @@ static void remove_entity_from_tile_list(Entity* entity, Tile* tile) {
 
 Entity* new_entity(EntityType type, TileCoords pos) {
 	Entity* entity = malloc(sizeof(Entity));
-	Tile* tile = &g_grid[pos.y * N_TILES_W + pos.x];
+	*entity = (Entity){
+		.type = type,
+		.pos = pos,
+	};
+	Tile* tile = get_tile(pos);
 	add_entity_to_tile_list(entity, tile);
-	entity->pos = pos;
-	entity->type = type;
 	return entity;
 }
 
 void entity_delete(Entity* entity) {
-	Tile* tile = &g_grid[entity->pos.y * N_TILES_W + entity->pos.x];
+	Tile* tile = get_tile(entity->pos);
 	remove_entity_from_tile_list(entity, tile);
 	free(entity);
 }
@@ -95,4 +77,24 @@ void entity_move(Entity* entity, TileCoords new_pos) {
 	remove_entity_from_tile_list(entity, old_tile);
 	add_entity_to_tile_list(entity, new_tile);
 	entity->pos = new_pos;
+}
+
+Tile* g_grid = NULL;
+
+void init_map(void) {
+	g_grid = malloc(N_TILES * sizeof(Tile));
+	for(int y = 0; y < N_TILES_H; ++y) for(int x = 0; x < N_TILES_W; ++x) {
+		TileCoords tc = {x, y};
+		Tile* tile = get_tile(tc);
+		*tile = (Tile){
+			.type = rand() % TILE_TYPE_NUM,
+			.entities = NULL,
+			.entity_count = 0,
+		};
+	}
+}
+
+Tile* get_tile(TileCoords coords) {
+	assert(tile_coords_are_valid(coords));
+	return &g_grid[coords.y * N_TILES_W + coords.x];
 }

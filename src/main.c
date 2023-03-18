@@ -39,7 +39,6 @@ int main() {
 	bool render_lines = false;
 
 	/* Selected tile, if any. */
-	/* DISCUSS: Abreviations use and conventions and all. */
 	bool sel_tile_exists = false;
 	TileCoords sel_tile_coords = {0, 0};
 
@@ -80,12 +79,14 @@ int main() {
 							render_lines = !render_lines;
 						break;
 						case SDLK_p:
+							/* Test spawing entity on selected tile. */
 							if (sel_tile_exists) {
 								Entity* entity = new_entity(ENTITY_HUMAIN, sel_tile_coords);
 								entity->faction = FACTION_YELLOW;
 							}
 						break;
 						case SDLK_m:
+							/* Test moving entity from selected tile to the right. */
 							if (sel_tile_exists) {
 								Tile* sel_tile = 
 									&g_grid[sel_tile_coords.y * N_TILES_W + sel_tile_coords.x];
@@ -100,7 +101,7 @@ int main() {
 				case SDL_KEYUP:
 					switch (event.key.keysym.sym) {
 						/* Stop moving the camera when a key that
-						 * was moving the camera is released. */
+						* was moving the camera is released. */
 						case SDLK_DOWN:  if (g_camera.speed.y > 0) {g_camera.speed.y = 0;}; break;
 						case SDLK_UP:    if (g_camera.speed.y < 0) {g_camera.speed.y = 0;}; break;
 						case SDLK_RIGHT: if (g_camera.speed.x > 0) {g_camera.speed.x = 0;}; break;
@@ -126,8 +127,8 @@ int main() {
 				case SDL_MOUSEMOTION:
 					if (SDL_GetMouseState(NULL, NULL) & SDL_BUTTON_RMASK) {
 						/* The map is grabbed and the mouse is moving,
-						 * so the map has to look like it follows the mouse
-						 * (by moving the camera in the other direction). */
+						* so the map has to look like it follows the mouse
+						* (by moving the camera in the other direction). */
 						g_camera.target_pos.x -= event.motion.xrel;
 						g_camera.target_pos.y -= event.motion.yrel;
 						g_camera.pos.x -= event.motion.xrel;
@@ -144,7 +145,7 @@ int main() {
 			}
 		}
 
-		cam_update(dt);
+		camera_update(dt);
 		
 		/* Background. */
 		SDL_SetRenderDrawColor(g_renderer, 255, 255, 255, 255);
@@ -154,31 +155,41 @@ int main() {
 		float tile_render_size = TILE_SIZE * g_camera.zoom;
 		for (int i = 0; i < N_TILES; ++i) {
 			TileCoords tc = {.x = i % N_TILES_W, .y = i / N_TILES_W};
+			Tile const* tile = get_tile(tc);
+
 			SDL_Rect dst_rect = {
 				.x = tc.x * tile_render_size - g_camera.pos.x,
 				.y = tc.y * tile_render_size - g_camera.pos.y,
 				.w = ceilf(tile_render_size),
 				.h = ceilf(tile_render_size)};
-			Tile const* tile = get_tile(tc);
 			render_tile_ground(tile->type, dst_rect);
+
 			for (int entity_i = 0; entity_i < tile->entity_count; entity_i++) {
 				Entity* entity = tile->entities[entity_i];
 				assert(entity != NULL);
 				switch (entity->type) {
-					case ENTITY_HUMAIN: /* Implemented, we may go on. */ break;
+					case ENTITY_HUMAIN:;
+						int ex = (float)(entity_i+1) / (float)(tile->entity_count+1)
+							* tile_render_size;
+						int ey = (1.0f - (float)(entity_i+1) / (float)(tile->entity_count+1))
+							* tile_render_size;
+						int ew = 0.1f * tile_render_size;
+						int eh = 0.3f * tile_render_size;
+						SDL_Rect rect = {
+							dst_rect.x + ex - ew / 2.0f, dst_rect.y + ey - eh / 2.0f, ew, eh};
+						switch (entity->faction) {
+							case FACTION_YELLOW:
+								SDL_SetRenderDrawColor(g_renderer, 255, 255, 0, 255);
+							break;
+							case FACTION_RED:
+								SDL_SetRenderDrawColor(g_renderer, 255,   0, 0, 255);
+							break;
+							default: assert(false);
+						}
+						SDL_RenderFillRect(g_renderer, &rect);
+					break;
 					default: assert(false);
 				}
-				int ex = (float)(entity_i+1) / (float)(tile->entity_count+1) * tile_render_size;
-				int ey = (1.0f - (float)(entity_i+1) / (float)(tile->entity_count+1)) * tile_render_size;
-				int ew = 0.1f * tile_render_size;
-				int eh = 0.3f * tile_render_size;
-				SDL_Rect rect = {dst_rect.x + ex - ew / 2.0f, dst_rect.y + ey - eh / 2.0f, ew, eh};
-				switch (entity->faction) {
-					case FACTION_YELLOW: SDL_SetRenderDrawColor(g_renderer, 255, 255, 0, 255); break;
-					case FACTION_RED:    SDL_SetRenderDrawColor(g_renderer, 255,   0, 0, 255); break;
-					default: assert(false);
-				}
-				SDL_RenderFillRect(g_renderer, &rect);
 			}
 		}
 
@@ -212,6 +223,8 @@ int main() {
 			Tile const* sel_tile = 
 				&g_grid[sel_tile_coords.y * N_TILES_W + sel_tile_coords.x];
 
+			/* TODO: Redo the following lame UI stuff with the ui-dev's branch widgets. */
+
 			/* Draw the selected tile information in a corner. */
 			SDL_Rect ui_rect = {.x = 10, .y = WINDOW_H - 190, .w = 150, .h = 180};
 			SDL_SetRenderDrawColor(g_renderer, 200, 200, 200, 255);
@@ -243,6 +256,7 @@ int main() {
 				render_string(name,
 					(WinCoords){ui_rect.x + ui_rect.w/2, WINDOW_H - 175}, PP_TOP_CENTER,
 					(SDL_Color){0, 0, 0, 255});
+
 				char const* faction_name;
 				switch (entity->faction) {
 					case FACTION_YELLOW: faction_name = "Yellow"; break;

@@ -7,15 +7,8 @@
 
 #define TILE_SIZE 100
 
-#if 0
-#include "renderer.h"
-#define N_TILES_H (WINDOW_H / TILE_SIZE)
-#define N_TILES_W (WINDOW_W / TILE_SIZE)
-#endif
-
 #define N_TILES_H 50
 #define N_TILES_W 50
-
 #define N_TILES (N_TILES_H * N_TILES_W)
 
 /* Type of terrain for each tile of the map. */
@@ -73,6 +66,10 @@ struct Entity {
 };
 typedef struct Entity Entity;
 
+Entity* new_entity(EntityType type, TileCoords pos);
+void entity_delete(Entity* entity);
+void entity_move(Entity* entity, TileCoords new_pos);
+
 /* The representation of a map tile. */
 struct Tile {
 	TileType type;
@@ -88,9 +85,5 @@ extern Tile* g_grid;
 void init_map(void);
 
 Tile* get_tile(TileCoords coords);
-
-Entity* new_entity(EntityType type, TileCoords pos);
-void entity_delete(Entity* entity);
-void entity_move(Entity* entity, TileCoords new_pos);
 
 #endif // WHEN_THE_FACTORY_MAP_

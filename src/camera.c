@@ -10,10 +10,9 @@ Camera g_camera = {
 	.target_zoom = 1.0f,
 };
 
-void cam_update(double dt){
-	
+void camera_update(double dt){
 	float d_zoom = (g_camera.target_zoom - g_camera.zoom) * dt / SMOOTHNESS;
-	if (d_zoom != 0){
+	if (d_zoom != 0.0f){
 		float zoom_factor = (d_zoom + g_camera.zoom) / g_camera.zoom;
 		
 		/* Change position scale. */
@@ -38,8 +37,8 @@ void cam_update(double dt){
 		}		
 	}
 
-	g_camera.target_pos.x += g_camera.speed.x*dt*BASE_SPEED;
-	g_camera.target_pos.y += g_camera.speed.y*dt*BASE_SPEED; 
-	g_camera.pos.x += (g_camera.target_pos.x - g_camera.pos.x )*dt/SMOOTHNESS;
-	g_camera.pos.y += (g_camera.target_pos.y - g_camera.pos.y )*dt/SMOOTHNESS;	
+	g_camera.target_pos.x += g_camera.speed.x * dt * BASE_SPEED;
+	g_camera.target_pos.y += g_camera.speed.y * dt * BASE_SPEED; 
+	g_camera.pos.x += (g_camera.target_pos.x - g_camera.pos.x) * dt / SMOOTHNESS;
+	g_camera.pos.y += (g_camera.target_pos.y - g_camera.pos.y) * dt / SMOOTHNESS;	
 }

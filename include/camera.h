@@ -4,7 +4,7 @@
 
 #include "map.h"
 
-struct Camera{
+struct Camera {
 	SDL_FPoint target_pos;
 	SDL_FPoint pos;
 	SDL_FPoint speed;
@@ -20,6 +20,6 @@ typedef struct Camera Camera;
 
 extern Camera g_camera;
 
-void cam_update(double dt);
+void camera_update(double dt);
 
 #endif
