@@ -49,24 +49,35 @@ bool tile_coords_eq(TileCoords a, TileCoords b);
 
 /* Entity types. */
 enum EntityType {
-	ENTITY_PLAYER,
-	ENTITY_ENEMY, /* DISCUSS: Maybe we could store the faction in an other field. */
-	ENTITY_BUILDING, /* DISCUSS: Should this be an entity? */
+	ENTITY_HUMAIN,
+	ENTITY_BUILDING,
 
 	ENTITY_TYPE_NUM,
 };
 typedef enum EntityType EntityType;
 
 /* Entity, something that is not a tile terrain but rather ON a tile. */
+enum FactionIdent {
+	FACTION_YELLOW,
+	FACTION_RED,
+
+	FACTION_IDENT_NUM
+};
+typedef enum FactionIdent FactionIdent;
+
+/* An actual entity on the grid */
 struct Entity {
 	EntityType type;
+	TileCoords pos;
+	FactionIdent faction;
 };
 typedef struct Entity Entity;
 
 /* The representation of a map tile. */
 struct Tile {
 	TileType type;
-	Entity* entities; /* DISCUSS: This could be a dynamic array of ids. */
+	Entity** entities;
+	int entity_count;
 };
 typedef struct Tile Tile;
 
@@ -78,4 +89,8 @@ void init_map(void);
 
 Tile* get_tile(TileCoords coords);
 
-#endif /* WHEN_THE_FACTORY_MAP_ */
+Entity* new_entity(EntityType type, TileCoords pos);
+void entity_delete(Entity* entity);
+void entity_move(Entity* entity, TileCoords new_pos);
+
+#endif // WHEN_THE_FACTORY_MAP_

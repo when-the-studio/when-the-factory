@@ -79,6 +79,22 @@ int main() {
 						case SDLK_l:
 							render_lines = !render_lines;
 						break;
+						case SDLK_p:
+							if (sel_tile_exists) {
+								Entity* entity = new_entity(ENTITY_HUMAIN, sel_tile_coords);
+								entity->faction = FACTION_YELLOW;
+							}
+						break;
+						case SDLK_m:
+							if (sel_tile_exists) {
+								Tile* sel_tile = 
+									&g_grid[sel_tile_coords.y * N_TILES_W + sel_tile_coords.x];
+								if (1 <= sel_tile->entity_count) {
+									entity_move(sel_tile->entities[0],
+										(TileCoords){sel_tile_coords.x + 1, sel_tile_coords.y});
+								}
+							}
+						break;
 					}
 				break;
 				case SDL_KEYUP:
@@ -137,14 +153,33 @@ int main() {
 		/* Draw tiles. */
 		float tile_render_size = TILE_SIZE * g_camera.zoom;
 		for (int i = 0; i < N_TILES; ++i) {
-			int x = i % N_TILES_W;
-			int y = i / N_TILES_W;
+			TileCoords tc = {.x = i % N_TILES_W, .y = i / N_TILES_W};
 			SDL_Rect dst_rect = {
-				.x = x * tile_render_size - g_camera.pos.x,
-				.y = y * tile_render_size - g_camera.pos.y,
+				.x = tc.x * tile_render_size - g_camera.pos.x,
+				.y = tc.y * tile_render_size - g_camera.pos.y,
 				.w = ceilf(tile_render_size),
 				.h = ceilf(tile_render_size)};
-			render_tile_ground(g_grid[i].type, dst_rect);
+			Tile const* tile = get_tile(tc);
+			render_tile_ground(tile->type, dst_rect);
+			for (int entity_i = 0; entity_i < tile->entity_count; entity_i++) {
+				Entity* entity = tile->entities[entity_i];
+				assert(entity != NULL);
+				switch (entity->type) {
+					case ENTITY_HUMAIN: /* Implemented, we may go on. */ break;
+					default: assert(false);
+				}
+				int ex = (float)(entity_i+1) / (float)(tile->entity_count+1) * tile_render_size;
+				int ey = (1.0f - (float)(entity_i+1) / (float)(tile->entity_count+1)) * tile_render_size;
+				int ew = 0.1f * tile_render_size;
+				int eh = 0.3f * tile_render_size;
+				SDL_Rect rect = {dst_rect.x + ex - ew / 2.0f, dst_rect.y + ey - eh / 2.0f, ew, eh};
+				switch (entity->faction) {
+					case FACTION_YELLOW: SDL_SetRenderDrawColor(g_renderer, 255, 255, 0, 255); break;
+					case FACTION_RED:    SDL_SetRenderDrawColor(g_renderer, 255,   0, 0, 255); break;
+					default: assert(false);
+				}
+				SDL_RenderFillRect(g_renderer, &rect);
+			}
 		}
 
 		/* Draw grid lines if enabled. */
@@ -174,23 +209,48 @@ int main() {
 			SDL_SetRenderDrawColor(g_renderer, 255, 255, 0, 255);
 			SDL_RenderDrawRect(g_renderer, &rect);
 
+			Tile const* sel_tile = 
+				&g_grid[sel_tile_coords.y * N_TILES_W + sel_tile_coords.x];
+
 			/* Draw the selected tile information in a corner. */
-			{
-				rect = (SDL_Rect){.x = 10, .y = WINDOW_H - 190, .w = 150, .h = 180};
+			SDL_Rect ui_rect = {.x = 10, .y = WINDOW_H - 190, .w = 150, .h = 180};
+			SDL_SetRenderDrawColor(g_renderer, 200, 200, 200, 255);
+			SDL_RenderFillRect(g_renderer, &ui_rect);
+			SDL_SetRenderDrawColor(g_renderer, 0, 0, 0, 255);
+			SDL_RenderDrawRect(g_renderer, &ui_rect);
+			rect = (SDL_Rect){.x = 35, .y = WINDOW_H - 135, .w = 100, .h = 100};
+			render_tile_ground(sel_tile->type, rect);
+			char const* name = g_tile_type_spec_table[sel_tile->type].name;
+			render_string(name,
+				(WinCoords){10 + 150/2, WINDOW_H - 175}, PP_TOP_CENTER,
+				(SDL_Color){0, 0, 0, 255});
+
+			for (int entity_i = 0; entity_i < sel_tile->entity_count; entity_i++) {
+				Entity* entity = sel_tile->entities[entity_i];
+				assert(entity != NULL);
+
+				ui_rect.x += ui_rect.w + 10;
 				SDL_SetRenderDrawColor(g_renderer, 200, 200, 200, 255);
-				SDL_RenderFillRect(g_renderer, &rect);
+				SDL_RenderFillRect(g_renderer, &ui_rect);
 				SDL_SetRenderDrawColor(g_renderer, 0, 0, 0, 255);
-				SDL_RenderDrawRect(g_renderer, &rect);
+				SDL_RenderDrawRect(g_renderer, &ui_rect);
 
-				Tile const* sel_tile = 
-					&g_grid[sel_tile_coords.y * N_TILES_W + sel_tile_coords.x];
-
-				rect = (SDL_Rect){.x = 35, .y = WINDOW_H - 135, .w = 100, .h = 100};
-				render_tile_ground(sel_tile->type, rect);
-
-				char const* name = g_tile_type_spec_table[sel_tile->type].name;
+				char const* name;
+				switch (entity->type) {
+					case ENTITY_HUMAIN: name = "Human"; break;
+					default: assert(false);
+				}
 				render_string(name,
-					(WinCoords){10 + 150/2, WINDOW_H - 175}, PP_TOP_CENTER,
+					(WinCoords){ui_rect.x + ui_rect.w/2, WINDOW_H - 175}, PP_TOP_CENTER,
+					(SDL_Color){0, 0, 0, 255});
+				char const* faction_name;
+				switch (entity->faction) {
+					case FACTION_YELLOW: faction_name = "Yellow"; break;
+					case FACTION_RED:    faction_name = "Red";    break;
+					default: assert(false);
+				}
+				render_string(faction_name,
+					(WinCoords){ui_rect.x + ui_rect.w/2, WINDOW_H - 175 + 40}, PP_TOP_CENTER,
 					(SDL_Color){0, 0, 0, 255});
 			}
 		}
