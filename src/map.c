@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include "map.h"
+#include "entity.h"
 
 TileTypeSpec g_tile_type_spec_table[TILE_TYPE_NUM] = {
 	[TILE_PLAIN] = {
@@ -31,52 +32,29 @@ bool tile_coords_eq(TileCoords a, TileCoords b) {
 	return a.x == b.x && a.y == b.y;
 }
 
-static void add_entity_to_tile_list(Entity* entity, Tile* tile) {
-	tile->entity_count++;
-	tile->entities = realloc(tile->entities, tile->entity_count * sizeof(Entity*));
-	tile->entities[tile->entity_count-1] = entity;
+void add_eid_to_tile_list(EntId eid, Tile* tile) {
+	for (int i = 0; i < tile->ent_count; i++) {
+		if (eid_null(tile->ents[i])) {
+			tile->ents[i] = eid;
+			return;
+		}
+	}
+	tile->ent_count++;
+	tile->ents = realloc(tile->ents, tile->ent_count * sizeof(Ent*));
+	tile->ents[tile->ent_count-1] = eid;
 }
 
-static void remove_entity_from_tile_list(Entity* entity, Tile* tile) {
-	int entity_index_in_tile = -1;
-	for (int i = 0; i < tile->entity_count; i++) {
-		if (tile->entities[i] == entity) {
-			entity_index_in_tile = i;
+void remove_eid_from_tile_list(EntId eid, Tile* tile) {
+	for (int i = 0; i < tile->ent_count; i++) {
+		if (eid_eq(tile->ents[i], eid)) {
+			tile->ents[i] = EID_NULL;
 			break;
 		}
 	}
-	assert(entity_index_in_tile != -1);
-	for (int i = entity_index_in_tile; i < tile->entity_count - 1; i++) {
-		tile->entities[i] = tile->entities[i+1];
+	while (eid_null(tile->ents[tile->ent_count-1])) {
+		tile->ent_count--;
 	}
-	tile->entity_count--;
-	tile->entities = realloc(tile->entities, tile->entity_count * sizeof(Entity*));
-}
-
-Entity* new_entity(EntityType type, TileCoords pos) {
-	Entity* entity = malloc(sizeof(Entity));
-	*entity = (Entity){
-		.type = type,
-		.pos = pos,
-	};
-	Tile* tile = get_tile(pos);
-	add_entity_to_tile_list(entity, tile);
-	return entity;
-}
-
-void entity_delete(Entity* entity) {
-	Tile* tile = get_tile(entity->pos);
-	remove_entity_from_tile_list(entity, tile);
-	free(entity);
-}
-
-void entity_move(Entity* entity, TileCoords new_pos) {
-	TileCoords old_pos = entity->pos;
-	Tile* old_tile = &g_grid[old_pos.y * N_TILES_W + old_pos.x];
-	Tile* new_tile = &g_grid[new_pos.y * N_TILES_W + new_pos.x];
-	remove_entity_from_tile_list(entity, old_tile);
-	add_entity_to_tile_list(entity, new_tile);
-	entity->pos = new_pos;
+	tile->ents = realloc(tile->ents, tile->ent_count * sizeof(Ent*));
 }
 
 Tile* g_grid = NULL;
@@ -88,8 +66,8 @@ void init_map(void) {
 		Tile* tile = get_tile(tc);
 		*tile = (Tile){
 			.type = rand() % TILE_TYPE_NUM,
-			.entities = NULL,
-			.entity_count = 0,
+			.ents = NULL,
+			.ent_count = 0,
 		};
 	}
 }

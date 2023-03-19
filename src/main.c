@@ -9,6 +9,7 @@
 #include "renderer.h"
 #include "map.h"
 #include "camera.h"
+#include "entity.h"
 
 TileCoords window_pixel_to_tile_coords(WinCoords wc) {
 	float tile_render_size = TILE_SIZE * g_camera.zoom;
@@ -81,18 +82,29 @@ int main() {
 						case SDLK_p:
 							/* Test spawing entity on selected tile. */
 							if (sel_tile_exists) {
-								Entity* entity = new_entity(ENTITY_HUMAIN, sel_tile_coords);
-								entity->faction = FACTION_YELLOW;
+								EntId eid = ent_new(ENT_HUMAIN, sel_tile_coords);
+								Ent* ent = get_ent(eid);
+								ent->faction = FACTION_YELLOW;
 							}
 						break;
 						case SDLK_m:
-							/* Test moving entity from selected tile to the right. */
+							/* Test moving entities from selected tile to adjacent tiles. */
 							if (sel_tile_exists) {
-								Tile* sel_tile = 
-									&g_grid[sel_tile_coords.y * N_TILES_W + sel_tile_coords.x];
-								if (1 <= sel_tile->entity_count) {
-									entity_move(sel_tile->entities[0],
-										(TileCoords){sel_tile_coords.x + 1, sel_tile_coords.y});
+								Tile* sel_tile = get_tile(sel_tile_coords);
+								for (int i = 0; i < sel_tile->ent_count; i++) {
+									ent_move(sel_tile->ents[i],
+										(TileCoords){
+											sel_tile_coords.x + rand() % 3 - 1,
+											sel_tile_coords.y + rand() % 3 - 1});
+								}
+							}
+						break;
+						case SDLK_o:
+							/* Test deleting entities on selected tile. */
+							if (sel_tile_exists) {
+								Tile* sel_tile = get_tile(sel_tile_coords);
+								for (int i = 0; i < sel_tile->ent_count; i++) {
+									ent_delete(sel_tile->ents[i]);
 								}
 							}
 						break;
@@ -164,20 +176,21 @@ int main() {
 				.h = ceilf(tile_render_size)};
 			render_tile_ground(tile->type, dst_rect);
 
-			for (int entity_i = 0; entity_i < tile->entity_count; entity_i++) {
-				Entity* entity = tile->entities[entity_i];
-				assert(entity != NULL);
-				switch (entity->type) {
-					case ENTITY_HUMAIN:;
-						int ex = (float)(entity_i+1) / (float)(tile->entity_count+1)
+			for (int ent_i = 0; ent_i < tile->ent_count; ent_i++) {
+				EntId eid = (tile->ents[ent_i]);
+				Ent* ent = get_ent(eid);
+				if (ent == NULL) continue;
+				switch (ent->type) {
+					case ENT_HUMAIN:;
+						int ex = (float)(ent_i+1) / (float)(tile->ent_count+1)
 							* tile_render_size;
-						int ey = (1.0f - (float)(entity_i+1) / (float)(tile->entity_count+1))
+						int ey = (1.0f - (float)(ent_i+1) / (float)(tile->ent_count+1))
 							* tile_render_size;
 						int ew = 0.1f * tile_render_size;
 						int eh = 0.3f * tile_render_size;
 						SDL_Rect rect = {
 							dst_rect.x + ex - ew / 2.0f, dst_rect.y + ey - eh / 2.0f, ew, eh};
-						switch (entity->faction) {
+						switch (ent->faction) {
 							case FACTION_YELLOW:
 								SDL_SetRenderDrawColor(g_renderer, 255, 255, 0, 255);
 							break;
@@ -238,9 +251,10 @@ int main() {
 				(WinCoords){10 + 150/2, WINDOW_H - 175}, PP_TOP_CENTER,
 				(SDL_Color){0, 0, 0, 255});
 
-			for (int entity_i = 0; entity_i < sel_tile->entity_count; entity_i++) {
-				Entity* entity = sel_tile->entities[entity_i];
-				assert(entity != NULL);
+			for (int ent_i = 0; ent_i < sel_tile->ent_count; ent_i++) {
+				EntId eid = (sel_tile->ents[ent_i]);
+				Ent* ent = get_ent(eid);
+				if (ent == NULL) continue;
 
 				ui_rect.x += ui_rect.w + 10;
 				SDL_SetRenderDrawColor(g_renderer, 200, 200, 200, 255);
@@ -249,8 +263,8 @@ int main() {
 				SDL_RenderDrawRect(g_renderer, &ui_rect);
 
 				char const* name;
-				switch (entity->type) {
-					case ENTITY_HUMAIN: name = "Human"; break;
+				switch (ent->type) {
+					case ENT_HUMAIN: name = "Human"; break;
 					default: assert(false);
 				}
 				render_string(name,
@@ -258,7 +272,7 @@ int main() {
 					(SDL_Color){0, 0, 0, 255});
 
 				char const* faction_name;
-				switch (entity->faction) {
+				switch (ent->faction) {
 					case FACTION_YELLOW: faction_name = "Yellow"; break;
 					case FACTION_RED:    faction_name = "Red";    break;
 					default: assert(false);

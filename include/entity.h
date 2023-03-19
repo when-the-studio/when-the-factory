@@ -41,10 +41,18 @@ struct EntId {
 };
 typedef struct EntId EntId;
 
+/* Magic `EntId` value that references no entity. */
+#define EID_NULL ((EntId){.index = UINT32_MAX, .gen = UINT32_MAX})
 
+bool eid_null(EntId eid);
+bool eid_eq(EntId a, EntId b);
 
-Ent* new_ent(EntType type, TileCoords pos);
-void ent_delete(Ent* ent);
-void ent_move(Ent* ent, TileCoords new_pos);
+/* Returns the entity referenced by the given ID,
+ * or `NULL` if the referenced entity does not exist anymore or eid is `ENT_ID_NULL`. */
+Ent* get_ent(EntId eid);
+
+EntId ent_new(EntType type, TileCoords pos);
+void ent_delete(EntId eid);
+void ent_move(EntId eid, TileCoords new_pos);
 
 #endif // WHEN_THE_FACTORY_ENTITY_

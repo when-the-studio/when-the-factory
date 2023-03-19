@@ -1,5 +1,15 @@
 #include <stdlib.h>
+#include <assert.h>
 #include "entity.h"
+#include "map.h"
+
+bool eid_null(EntId eid) {
+	return eid_eq(eid, EID_NULL);
+}
+
+bool eid_eq(EntId a, EntId b) {
+	return a.index == b.index && a.gen == b.gen;
+}
 
 /* An entry in the global (static) entity table. */
 struct Entry {
@@ -12,33 +22,88 @@ struct Entry {
 typedef struct Entry Entry;
 
 /* Here it is, the entity table. */
-static Entry* s_entry_arr = NULL;
-static int s_entry_len = 0;
+static Entry* s_entry_table = NULL;
+static uint32_t s_entry_count = 0;
 
-static Entry* get_unused_entry(void) {
-	for (int i = 0; i < s_entry_len; i++) {
-		if (s_entry_arr[i].ent == NULL) {
-			return &s_entry_arr[i];
+Ent* get_ent(EntId eid) {
+	if (eid_null(eid)) return NULL;
+	assert(eid.index < s_entry_count);
+	Entry* entry = &s_entry_table[eid.index];
+	if (entry->ent != NULL && entry->gen == eid.gen) {
+		return entry->ent;
+	} else if (entry->gen < eid.gen) {
+		/* The referenced entity is deleted (but has existed in the past). */
+		return NULL;
+	} else {
+		/* The entry's gen can only increase (on entity deletion),
+		 * so if the ID's gen is higher than the entry's,
+		 * then it means that it references an entity that was not created yet (bug)
+		 * or the index is wrong (bug). */
+		assert(false);
+	}
+}
+
+static uint32_t get_unused_entry_index(void) {
+	for (uint32_t i = 0; i < s_entry_count; i++) {
+		if (s_entry_table[i].ent == NULL) {
+			return i;
 		}
 	}
 	/* All entries are occupied by an entity, so we have to add new entries. */
-	int old_len = s_entry_len;
-	s_entry_len = s_entry_len == 0 ? 24 : s_entry_len * 2;
-	s_entry_arr = realloc(s_entry_arr, s_entry_len * sizeof(Entry));
-	memset(&s_entry_arr[old_len], 0, (s_entry_len - old_len) * sizeof(Entry));
-	return &s_entry_arr[old_len];
+	uint32_t old_count = s_entry_count;
+	s_entry_count = s_entry_count == 0 ? 24 : s_entry_count * 2;
+	s_entry_table = realloc(s_entry_table, s_entry_count * sizeof(Entry));
+	memset(&s_entry_table[old_count], 0, (s_entry_count - old_count) * sizeof(Entry));
+	return old_count;
 }
 
-Ent* new_ent(EntType type, TileCoords pos) {
-	Entry* entry = get_unused_entry();
-	entry->ent = h
-	#error TODO
+void add_eid_to_tile_list(EntId eid, Tile* tile);
+void remove_eid_from_tile_list(EntId eid, Tile* tile);
+
+EntId ent_new(EntType type, TileCoords pos) {
+	uint32_t index = get_unused_entry_index();
+	Entry* entry = &s_entry_table[index];
+	entry->ent = malloc(sizeof(Ent));
+	*entry->ent = (Ent){
+		.type = type,
+		.pos = pos,
+	};
+	EntId eid = {.index = index, .gen = entry->gen};
+	Tile* tile = get_tile(pos);
+	add_eid_to_tile_list(eid, tile);
+	return eid;
 }
 
-void ent_delete(Ent* ent) {
-
+void ent_delete(EntId eid) {
+	if (eid_null(eid)) return;
+	assert(eid.index < s_entry_count);
+	Entry* entry = &s_entry_table[eid.index];
+	if (entry->ent != NULL && entry->gen == eid.gen) {
+		Tile* tile = get_tile(entry->ent->pos);
+		remove_eid_from_tile_list(eid, tile);
+		/* TODO: Do some more adaptative freeing of whatever is pointed to by the entity
+		* or else we are going to leak memory evesntually. */
+		free(entry->ent);
+		entry->ent = NULL;
+		entry->gen++;
+	} else if (entry->gen < eid.gen) {
+		/* The referenced entity is deleted (but has existed in the past). */
+	} else {
+		/* The entry's gen can only increase (on entity deletion),
+		 * so if the ID's gen is higher than the entry's,
+		 * then it means that it references an entity that was not created yet (bug)
+		 * or the index is wrong (bug). */
+		assert(false);
+	}
 }
 
-void ent_move(Ent* ent, TileCoords new_pos) {
-
+void ent_move(EntId eid, TileCoords new_pos) {
+	Ent* ent = get_ent(eid);
+	if (ent == NULL) return;
+	TileCoords old_pos = ent->pos;
+	Tile* old_tile = get_tile(old_pos);
+	Tile* new_tile = get_tile(new_pos);
+	remove_eid_from_tile_list(eid, old_tile);
+	add_eid_to_tile_list(eid, new_tile);
+	ent->pos = new_pos;
 }

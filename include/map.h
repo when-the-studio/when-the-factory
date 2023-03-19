@@ -45,8 +45,8 @@ typedef struct EntId EntId;
 /* The representation of a map tile. */
 struct Tile {
 	TileType type;
-	EntId* entities;
-	int entity_count;
+	EntId* ents;
+	int ent_count;
 };
 typedef struct Tile Tile;
 
