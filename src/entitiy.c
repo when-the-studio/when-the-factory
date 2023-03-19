@@ -60,12 +60,12 @@ static uint32_t get_unused_entry_index(void) {
 void add_eid_to_tile_list(EntId eid, Tile* tile);
 void remove_eid_from_tile_list(EntId eid, Tile* tile);
 
-EntId ent_new(EntType type, TileCoords pos) {
+EntId ent_new(TileCoords pos) {
 	uint32_t index = get_unused_entry_index();
 	Entry* entry = &s_entry_table[index];
 	entry->ent = malloc(sizeof(Ent));
 	*entry->ent = (Ent){
-		.type = type,
+		.type = ENT_UNTYPED,
 		.pos = pos,
 	};
 	EntId eid = {.index = index, .gen = entry->gen};
@@ -106,4 +106,28 @@ void ent_move(EntId eid, TileCoords new_pos) {
 	remove_eid_from_tile_list(eid, old_tile);
 	add_eid_to_tile_list(eid, new_tile);
 	ent->pos = new_pos;
+}
+
+EntId ent_new_human(TileCoords pos, FactionIdent faction) {
+	EntId eid = ent_new(pos);
+	Ent* ent = get_ent(eid);
+	ent->type = ENT_HUMAIN;
+	ent->data = malloc(sizeof(EntDataHuman));
+	EntDataHuman* data_human = ent->data;
+	*data_human = (EntDataHuman){
+		.faction = faction,
+	};
+	return eid;
+}
+
+EntId ent_new_test_block(TileCoords pos, SDL_Color color) {
+	EntId eid = ent_new(pos);
+	Ent* ent = get_ent(eid);
+	ent->type = ENT_TEST_BLOCK;
+	ent->data = malloc(sizeof(EntDataTestBlock));
+	EntDataTestBlock* data_test_block = ent->data;
+	*data_test_block = (EntDataTestBlock){
+		.color = color,
+	};
+	return eid;
 }

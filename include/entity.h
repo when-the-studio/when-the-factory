@@ -8,7 +8,9 @@
 
 /* Entity types. */
 enum EntType {
+	ENT_UNTYPED = 0,
 	ENT_HUMAIN,
+	ENT_TEST_BLOCK,
 	ENT_BUILDING,
 
 	ENT_TYPE_NUM,
@@ -29,7 +31,7 @@ struct Ent {
 	/* TODO: Add support for an entity being "inside" an other entity
 	 * instead of directly on a tile. */
 	TileCoords pos;
-	FactionIdent faction;
+	void* data;
 };
 typedef struct Ent Ent;
 
@@ -51,8 +53,20 @@ bool eid_eq(EntId a, EntId b);
  * or `NULL` if the referenced entity does not exist anymore or eid is `ENT_ID_NULL`. */
 Ent* get_ent(EntId eid);
 
-EntId ent_new(EntType type, TileCoords pos);
+EntId ent_new(TileCoords pos);
 void ent_delete(EntId eid);
 void ent_move(EntId eid, TileCoords new_pos);
+
+struct EntDataHuman {
+	FactionIdent faction;
+};
+typedef struct EntDataHuman EntDataHuman;
+EntId ent_new_human(TileCoords pos, FactionIdent faction);
+
+struct EntDataTestBlock {
+	SDL_Color color;
+};
+typedef struct EntDataTestBlock EntDataTestBlock;
+EntId ent_new_test_block(TileCoords pos, SDL_Color color);
 
 #endif // WHEN_THE_FACTORY_ENTITY_

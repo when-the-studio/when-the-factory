@@ -82,9 +82,13 @@ int main() {
 						case SDLK_p:
 							/* Test spawing entity on selected tile. */
 							if (sel_tile_exists) {
-								EntId eid = ent_new(ENT_HUMAIN, sel_tile_coords);
-								Ent* ent = get_ent(eid);
-								ent->faction = FACTION_YELLOW;
+								if (rand() % 2 == 0) {
+									ent_new_human(sel_tile_coords,
+										rand() % 2 == 0 ? FACTION_YELLOW : FACTION_RED);
+								} else {
+									ent_new_test_block(sel_tile_coords,
+										(SDL_Color){rand(), rand(), rand(), 255});
+								}
 							}
 						break;
 						case SDLK_m:
@@ -180,17 +184,20 @@ int main() {
 				EntId eid = (tile->ents[ent_i]);
 				Ent* ent = get_ent(eid);
 				if (ent == NULL) continue;
+
+				int ex = (float)(ent_i+1) / (float)(tile->ent_count+1)
+					* tile_render_size;
+				int ey = (1.0f - (float)(ent_i+1) / (float)(tile->ent_count+1))
+					* tile_render_size;
+
 				switch (ent->type) {
-					case ENT_HUMAIN:;
-						int ex = (float)(ent_i+1) / (float)(tile->ent_count+1)
-							* tile_render_size;
-						int ey = (1.0f - (float)(ent_i+1) / (float)(tile->ent_count+1))
-							* tile_render_size;
+					case ENT_HUMAIN: {
 						int ew = 0.1f * tile_render_size;
 						int eh = 0.3f * tile_render_size;
 						SDL_Rect rect = {
 							dst_rect.x + ex - ew / 2.0f, dst_rect.y + ey - eh / 2.0f, ew, eh};
-						switch (ent->faction) {
+						EntDataHuman* data = ent->data;
+						switch (data->faction) {
 							case FACTION_YELLOW:
 								SDL_SetRenderDrawColor(g_renderer, 255, 255, 0, 255);
 							break;
@@ -200,7 +207,19 @@ int main() {
 							default: assert(false);
 						}
 						SDL_RenderFillRect(g_renderer, &rect);
-					break;
+					break; }
+
+					case ENT_TEST_BLOCK: {
+						int ew = 0.2f * tile_render_size;
+						int eh = 0.2f * tile_render_size;
+						SDL_Rect rect = {
+							dst_rect.x + ex - ew / 2.0f, dst_rect.y + ey - eh / 2.0f, ew, eh};
+						EntDataTestBlock* data = ent->data;
+						SDL_SetRenderDrawColor(g_renderer,
+							data->color.r, data->color.g, data->color.b, 255);
+						SDL_RenderFillRect(g_renderer, &rect);
+					break; }
+
 					default: assert(false);
 				}
 			}
@@ -262,24 +281,39 @@ int main() {
 				SDL_SetRenderDrawColor(g_renderer, 0, 0, 0, 255);
 				SDL_RenderDrawRect(g_renderer, &ui_rect);
 
-				char const* name;
 				switch (ent->type) {
-					case ENT_HUMAIN: name = "Human"; break;
-					default: assert(false);
-				}
-				render_string(name,
-					(WinCoords){ui_rect.x + ui_rect.w/2, WINDOW_H - 175}, PP_TOP_CENTER,
-					(SDL_Color){0, 0, 0, 255});
+					case ENT_HUMAIN: {
+						render_string("Human",
+							(WinCoords){ui_rect.x + ui_rect.w/2, WINDOW_H - 175}, PP_TOP_CENTER,
+							(SDL_Color){0, 0, 0, 255});
+						EntDataHuman* data = ent->data;
+						char const* faction_name;
+						switch (data->faction) {
+							case FACTION_YELLOW: faction_name = "Yellow"; break;
+							case FACTION_RED:    faction_name = "Red";    break;
+							default: assert(false);
+						}
+						render_string(faction_name,
+							(WinCoords){ui_rect.x + ui_rect.w/2, WINDOW_H - 175 + 40}, PP_TOP_CENTER,
+							(SDL_Color){0, 0, 0, 255});
+					break; }
 
-				char const* faction_name;
-				switch (ent->faction) {
-					case FACTION_YELLOW: faction_name = "Yellow"; break;
-					case FACTION_RED:    faction_name = "Red";    break;
+					case ENT_TEST_BLOCK: {
+						render_string("Test Block",
+							(WinCoords){ui_rect.x + ui_rect.w/2, WINDOW_H - 175}, PP_TOP_CENTER,
+							(SDL_Color){0, 0, 0, 255});
+						EntDataTestBlock* data = ent->data;
+						SDL_SetRenderDrawColor(g_renderer,
+							data->color.r, data->color.g, data->color.b, 255);
+						rect.w = ui_rect.w / 2;
+						rect.h = rect.w;
+						rect.x = ui_rect.x + ui_rect.w / 2 - rect.w / 2;
+						rect.y = ui_rect.y + ui_rect.h / 2 - rect.h / 2;
+						SDL_RenderFillRect(g_renderer, &rect);
+					break; }
+
 					default: assert(false);
 				}
-				render_string(faction_name,
-					(WinCoords){ui_rect.x + ui_rect.w/2, WINDOW_H - 175 + 40}, PP_TOP_CENTER,
-					(SDL_Color){0, 0, 0, 255});
 			}
 		}
 		SDL_RenderPresent(g_renderer);
