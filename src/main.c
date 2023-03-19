@@ -110,7 +110,7 @@ int main() {
 				break;
 				case SDL_MOUSEBUTTONDOWN:
 					switch (event.button.button) {
-						case SDL_BUTTON_LEFT: {
+						case SDL_BUTTON_LEFT:;
 							WinCoords wc = {event.button.x, event.button.y};
 							TileCoords tc = window_pixel_to_tile_coords(wc);
 							bool sel_tile_is_alrady_tc =
@@ -121,7 +121,7 @@ int main() {
 							} else {
 								sel_tile_exists = false;
 							}
-						} break;
+						break;
 					}
 				break;
 				case SDL_MOUSEMOTION:
