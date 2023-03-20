@@ -234,7 +234,7 @@ int main() {
 			rect = (SDL_Rect){.x = 35, .y = WINDOW_H - 135, .w = 100, .h = 100};
 			render_tile_ground(sel_tile->type, rect);
 			char const* name = g_tile_type_spec_table[sel_tile->type].name;
-			render_string(name,
+			render_string_pixel(name,
 				(WinCoords){10 + 150/2, WINDOW_H - 175}, PP_TOP_CENTER,
 				(SDL_Color){0, 0, 0, 255});
 
@@ -253,7 +253,7 @@ int main() {
 					case ENTITY_HUMAIN: name = "Human"; break;
 					default: assert(false);
 				}
-				render_string(name,
+				render_string_pixel(name,
 					(WinCoords){ui_rect.x + ui_rect.w/2, WINDOW_H - 175}, PP_TOP_CENTER,
 					(SDL_Color){0, 0, 0, 255});
 
@@ -263,11 +263,15 @@ int main() {
 					case FACTION_RED:    faction_name = "Red";    break;
 					default: assert(false);
 				}
-				render_string(faction_name,
+				render_string_pixel(faction_name,
 					(WinCoords){ui_rect.x + ui_rect.w/2, WINDOW_H - 175 + 40}, PP_TOP_CENTER,
 					(SDL_Color){0, 0, 0, 255});
 			}
 		}
+
+		render_string_pixel("test uwu !!! ballz ``sus amogus -1 +8 1000",
+			(WinCoords){10, 10}, PP_TOP_LEFT,
+			(SDL_Color){0, 0, 0, 255});
 		SDL_RenderPresent(g_renderer);
 	}
 	return 0;

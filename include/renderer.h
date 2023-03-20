@@ -38,6 +38,9 @@ typedef struct PinPoint PinPoint;
 #define PP_BOTTOM_RIGHT  ((PinPoint){.x = 1.0f, .y = 1.0f})
 
 /* Renders the given string so that its pin point is as the given window coordinates. */
-void render_string(char const* string, WinCoords wc, PinPoint pp, SDL_Color color);
+void render_string_pixel(char const* string, WinCoords wc, PinPoint pp, SDL_Color color);
+
+/* Same as `render_string` but using a non-pixel font. */
+void render_string_ttf(char const* string, WinCoords wc, PinPoint pp, SDL_Color color);
 
 #endif /* WHEN_THE_FACTORY_RENDERER_ */
