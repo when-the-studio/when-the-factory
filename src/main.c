@@ -219,6 +219,8 @@ int main() {
 				.h = ceilf(tile_render_size)};
 			SDL_SetRenderDrawColor(g_renderer, 255, 255, 0, 255);
 			SDL_RenderDrawRect(g_renderer, &rect);
+			rect.x -= 1; rect.y -= 1; rect.w += 2; rect.h += 2;
+			SDL_RenderDrawRect(g_renderer, &rect);
 
 			Tile const* sel_tile = 
 				&g_grid[sel_tile_coords.y * N_TILES_W + sel_tile_coords.x];
@@ -231,6 +233,10 @@ int main() {
 			SDL_RenderFillRect(g_renderer, &ui_rect);
 			SDL_SetRenderDrawColor(g_renderer, 0, 0, 0, 255);
 			SDL_RenderDrawRect(g_renderer, &ui_rect);
+			ui_rect.x -= 1; ui_rect.y -= 1; ui_rect.w += 2; ui_rect.h += 2;
+			SDL_RenderDrawRect(g_renderer, &ui_rect);
+			ui_rect.x += 1; ui_rect.y += 1; ui_rect.w -= 2; ui_rect.h -= 2;
+			
 			rect = (SDL_Rect){.x = 35, .y = WINDOW_H - 135, .w = 100, .h = 100};
 			render_tile_ground(sel_tile->type, rect);
 			char const* name = g_tile_type_spec_table[sel_tile->type].name;
@@ -247,6 +253,9 @@ int main() {
 				SDL_RenderFillRect(g_renderer, &ui_rect);
 				SDL_SetRenderDrawColor(g_renderer, 0, 0, 0, 255);
 				SDL_RenderDrawRect(g_renderer, &ui_rect);
+				ui_rect.x -= 1; ui_rect.y -= 1; ui_rect.w += 2; ui_rect.h += 2;
+				SDL_RenderDrawRect(g_renderer, &ui_rect);
+				ui_rect.x += 1; ui_rect.y += 1; ui_rect.w -= 2; ui_rect.h -= 2;
 
 				char const* name;
 				switch (entity->type) {
