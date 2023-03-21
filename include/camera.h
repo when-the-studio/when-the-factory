@@ -4,21 +4,22 @@
 
 #include "map.h"
 
-struct Camera{
+struct Camera {
 	SDL_FPoint target_pos;
 	SDL_FPoint pos;
-	Coord speed;
+	SDL_FPoint speed;
 	float zoom;
 	float target_zoom;
 };
-
-#define SMOOTHNESS 50;
-#define BASE_SPEED 2;
-
-
 typedef struct Camera Camera;
 
-void cam_speed(Camera* cam, int vx, int vy);
-void cam_update(Camera* cam, double dt);
+#define SMOOTHNESS 50.0f
+#define BASE_SPEED 2.0f
+#define ZOOM_MAX 4.0f
+#define ZOOM_MIN 0.1f
+
+extern Camera g_camera;
+
+void camera_update(double dt);
 
 #endif

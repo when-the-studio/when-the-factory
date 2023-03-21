@@ -1,19 +1,17 @@
 #ifndef WHEN_THE_FACTORY_MAP_
 #define WHEN_THE_FACTORY_MAP_
+
+#include <stdbool.h>
+
 #include <SDL2/SDL.h>
 
 #define TILE_SIZE 100
 
-//#include "renderer.h"
-
-// #define N_TILES_H (WINDOW_H / TILE_SIZE)
-// #define N_TILES_W (WINDOW_W / TILE_SIZE)
-
 #define N_TILES_H 50
 #define N_TILES_W 50
+#define N_TILES (N_TILES_H * N_TILES_W)
 
-#define N_TILES N_TILES_H * N_TILES_W
-/* Type of terrain for each entity on the g_grid */
+/* Type of terrain for each tile of the map. */
 enum TileType {
 	TILE_PLAIN,
 	TILE_MOUTAIN,
@@ -24,37 +22,68 @@ enum TileType {
 };
 typedef enum TileType TileType;
 
-/* Coords of something on the map */
-typedef SDL_Point Coord;
+/* Describes a type of tile. */
+struct TileTypeSpec {
+	SDL_Rect rect_in_spritesheet;
+	char const* name;
+};
+typedef struct TileTypeSpec TileTypeSpec;
 
-/* Entity types possible */
+extern TileTypeSpec g_tile_type_spec_table[TILE_TYPE_NUM];
+
+/* Coords of a tile on the map. */
+struct TileCoords {
+	int x, y;
+};
+typedef struct TileCoords TileCoords;
+
+bool tile_coords_are_valid(TileCoords coords);
+bool tile_coords_eq(TileCoords a, TileCoords b);
+
+/* Entity types. */
 enum EntityType {
-	PLAYER,
-	ENEMY,
-	BUILDING,
+	ENTITY_HUMAIN,
+	ENTITY_BUILDING,
 
-	N_ENTITY_TYPE,
+	ENTITY_TYPE_NUM,
 };
 typedef enum EntityType EntityType;
 
+/* Entity, something that is not a tile terrain but rather ON a tile. */
+enum FactionIdent {
+	FACTION_YELLOW,
+	FACTION_RED,
+
+	FACTION_IDENT_NUM
+};
+typedef enum FactionIdent FactionIdent;
+
 /* An actual entity on the grid */
-struct entity{
+struct Entity {
 	EntityType type;
+	TileCoords pos;
+	FactionIdent faction;
 };
 typedef struct Entity Entity;
 
-/* The representation of a map tile */
+Entity* new_entity(EntityType type, TileCoords pos);
+void entity_delete(Entity* entity);
+void entity_move(Entity* entity, TileCoords new_pos);
+
+/* The representation of a map tile. */
 struct Tile {
 	TileType type;
-	Coord pos;
-	Entity* entities_on_tile;
+	Entity** entities;
+	int entity_count;
 };
 typedef struct Tile Tile;
 
-/* Global variable : Map grid */
+/* This is the map, which is a grid of tiles. */
 extern Tile* g_grid;
 
-/* Initilises the grid with random tiles */
+/* Initilises the grid with random tiles. */
 void init_map(void);
+
+Tile* get_tile(TileCoords coords);
 
 #endif // WHEN_THE_FACTORY_MAP_
