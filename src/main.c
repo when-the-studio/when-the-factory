@@ -10,10 +10,7 @@
 #include "renderer.h"
 #include "map.h"
 #include "camera.h"
-
-int max(int a, int b) {
-	return a < b ? b : a;
-}
+#include "widget.h"
 
 TileCoords window_pixel_to_tile_coords(WinCoords wc) {
 	float tile_render_size = TILE_SIZE * g_camera.zoom;
@@ -36,169 +33,7 @@ void render_tile_ground(TileType tile_type, SDL_Rect dst_rect) {
 	SDL_RenderCopy(g_renderer, g_spritesheet, &rect_in_spritesheet, &dst_rect);
 }
 
-struct Dims {
-	int w, h;
-};
-typedef struct Dims Dims;
 
-enum WidgetType {
-	WIDGET_TEXT_LINE,
-	WIDGET_MULTIPLE_TOP_LEFT_TOP_TO_BOTTOM,
-	WIDGET_BUTTON,
-};
-typedef enum WidgetType WidgetType;
-
-struct Widget {
-	WidgetType type;
-};
-typedef struct Widget Widget;
-
-Dims widget_get_dims(Widget const* widget);
-void widget_render(Widget const* widget, int x, int y);
-bool widget_click(Widget const* widget, int x, int y, int cx, int cy);
-
-/* The root of the whole widget tree. */
-Widget* g_wg_root = NULL;
-
-struct WidgetTextLine {
-	Widget base;
-	char* string;
-	SDL_Color fg_color;
-};
-typedef struct WidgetTextLine WidgetTextLine;
-
-Dims widget_text_line_get_dims(WidgetTextLine const* widget) {
-	Dims dims;
-	string_pixel_dims(widget->string, &dims.w, &dims.h);
-	return dims;
-}
-
-void widget_text_line_render(WidgetTextLine const* widget, int x, int y) {
-	render_string_pixel(widget->string, (WinCoords){x, y}, PP_TOP_LEFT, widget->fg_color);
-}
-
-bool widget_text_line_click(WidgetTextLine const* widget, int x, int y, int cx, int cy) {
-	Dims dims = widget_text_line_get_dims(widget);
-	SDL_Rect r = {x, y, dims.w, dims.h};
-	return r.x <= cx && cx < r.x + r.w && r.y <= cy && cy < r.y + r.h;
-}
-
-struct WidgetMultipleTopLeftTopToBottom {
-	Widget base;
-	Widget** sub_wgs;
-	int sub_wgs_count;
-	int spacing;
-	int offset_x, offset_y;
-};
-typedef struct WidgetMultipleTopLeftTopToBottom WidgetMultipleTopLeftTopToBottom;
-
-Dims widget_multiple_top_left_top_to_bottom_get_dims(WidgetMultipleTopLeftTopToBottom const* widget) {
-	Dims dims = {0, 0};
-	for (int i = 0; i < widget->sub_wgs_count; i++) {
-		Dims sub_dims = widget_get_dims(widget->sub_wgs[i]);
-		dims.h += sub_dims.h;
-		if (i != 0) {
-			dims.h += widget->spacing;
-		}
-		dims.w = max(dims.w, sub_dims.w);
-	}
-	return dims;
-}
-
-void widget_multiple_top_left_top_to_bottom_render(WidgetMultipleTopLeftTopToBottom const* widget, int x, int y) {
-	x += widget->offset_x;
-	y += widget->offset_y;
-	for (int i = 0; i < widget->sub_wgs_count; i++) {
-		widget_render(widget->sub_wgs[i], x, y);
-		Dims sub_dims = widget_get_dims(widget->sub_wgs[i]);
-		y += sub_dims.h + widget->spacing;
-	}
-}
-
-bool widget_multiple_top_left_top_to_bottom_click(WidgetMultipleTopLeftTopToBottom const* widget, int x, int y, int cx, int cy) {
-	x += widget->offset_x;
-	y += widget->offset_y;
-	for (int i = 0; i < widget->sub_wgs_count; i++) {
-		Dims sub_dims = widget_get_dims(widget->sub_wgs[i]);
-		SDL_Rect r = {x, y, sub_dims.w, sub_dims.h};
-		if (r.x <= cx && cx < r.x + r.w && r.y <= cy && cy < r.y + r.h) {
-			return widget_click(widget->sub_wgs[i], x, y, cx, cy);
-		}
-		y += sub_dims.h + widget->spacing;
-	}
-	return false;
-}
-
-struct WidgetButton {
-	Widget base;
-	Widget* sub_wg;
-	void* whatever;
-	void (*left_click_callback)(void* whatever);
-};
-typedef struct WidgetButton WidgetButton;
-
-Dims widget_button_get_dims(WidgetButton const* widget) {
-	return widget_get_dims(widget->sub_wg);
-}
-
-void widget_button_render(WidgetButton const* widget, int x, int y) {
-	widget_render(widget->sub_wg, x, y);
-}
-
-bool widget_button_click(WidgetButton const* widget, int x, int y, int cx, int cy) {
-	Dims sub_dims = widget_get_dims(widget->sub_wg);
-	SDL_Rect r = {x, y, sub_dims.w, sub_dims.h};
-	if (r.x <= cx && cx < r.x + r.w && r.y <= cy && cy < r.y + r.h) {
-		widget->left_click_callback(widget->whatever);
-		return true;
-	}
-	return false;
-}
-
-Dims widget_get_dims(Widget const* widget) {
-	switch (widget->type) {
-		case WIDGET_TEXT_LINE:
-			return widget_text_line_get_dims((WidgetTextLine const*)widget);
-		break;
-		case WIDGET_MULTIPLE_TOP_LEFT_TOP_TO_BOTTOM:
-			return widget_multiple_top_left_top_to_bottom_get_dims((WidgetMultipleTopLeftTopToBottom const*)widget);
-		break;
-		case WIDGET_BUTTON:
-			return widget_button_get_dims((WidgetButton const*)widget);
-		break;
-		default: assert(false);
-	}
-}
-
-void widget_render(Widget const* widget, int x, int y) {
-	switch (widget->type) {
-		case WIDGET_TEXT_LINE:
-			widget_text_line_render((WidgetTextLine const*)widget, x, y);
-		break;
-		case WIDGET_MULTIPLE_TOP_LEFT_TOP_TO_BOTTOM:
-			widget_multiple_top_left_top_to_bottom_render((WidgetMultipleTopLeftTopToBottom const*)widget, x, y);
-		break;
-		case WIDGET_BUTTON:
-			widget_button_render((WidgetButton const*)widget, x, y);
-		break;
-		default: assert(false);
-	}
-}
-
-bool widget_click(Widget const* widget, int x, int y, int cx, int cy) {
-	switch (widget->type) {
-		case WIDGET_TEXT_LINE:
-			return widget_text_line_click((WidgetTextLine const*)widget, x, y, cx, cy);
-		break;
-		case WIDGET_MULTIPLE_TOP_LEFT_TOP_TO_BOTTOM:
-			return widget_multiple_top_left_top_to_bottom_click((WidgetMultipleTopLeftTopToBottom const*)widget, x, y, cx, cy);
-		break;
-		case WIDGET_BUTTON:
-			return widget_button_click((WidgetButton const*)widget, x, y, cx, cy);
-		break;
-		default: assert(false);
-	}
-}
 
 static void test_callback(void* whatever) {
 	(void)whatever;
@@ -206,46 +41,23 @@ static void test_callback(void* whatever) {
 }
 
 void init_widget_tree(void) {
-	WidgetTextLine* widget_a_sub = malloc(sizeof(WidgetTextLine));
-	*widget_a_sub = (WidgetTextLine){
-		.base = {
-			.type = WIDGET_TEXT_LINE,
-		},
-		.string = "test xd",
-		.fg_color = {255, 0, 0, 255},
-	};
-	WidgetButton* widget_a = malloc(sizeof(WidgetButton));
-	*widget_a = (WidgetButton){
-		.base = {
-			.type = WIDGET_BUTTON,
-		},
-		.sub_wg = (Widget*)widget_a_sub,
-		.whatever = NULL,
-		.left_click_callback = test_callback,
-	};
-	WidgetTextLine* widget_b = malloc(sizeof(WidgetTextLine));
-	*widget_b = (WidgetTextLine){
-		.base = {
-			.type = WIDGET_TEXT_LINE,
-		},
-		.string = "test uwu !!! ballz ``sus amogus -1 +8 1000 gaming",
-		.fg_color = {255, 0, 0, 255},
-	};
-	Widget** h = malloc(2 * sizeof(WidgetTextLine));
-	h[0] = (Widget*)widget_a;
-	h[1] = (Widget*)widget_b;
-	WidgetMultipleTopLeftTopToBottom* widget_root = malloc(sizeof(WidgetMultipleTopLeftTopToBottom));
-	*widget_root = (WidgetMultipleTopLeftTopToBottom){
-		.base = {
-			.type = WIDGET_MULTIPLE_TOP_LEFT_TOP_TO_BOTTOM,
-		},
-		.sub_wgs = h,
-		.sub_wgs_count = 2,
-		.spacing = 10,
-		.offset_x = 10,
-		.offset_y = 10,
-	};
-	g_wg_root = (Widget*)widget_root;
+	g_wg_root = new_widget_mtlttb(10, 10, 10);
+	widget_mtlttb_add_sub(g_wg_root,
+		new_widget_button(
+			new_widget_text_line(
+				"test xd",
+				(SDL_Color){255, 0, 0, 255}
+			),
+			NULL,
+			test_callback
+		)
+	);
+	widget_mtlttb_add_sub(g_wg_root,
+		new_widget_text_line(
+			"test uwu !!! ballz ``sus amogus -1 +8 1000 gaming",
+			(SDL_Color){255, 0, 0, 255}
+		)
+	);
 }
 
 int main() {
