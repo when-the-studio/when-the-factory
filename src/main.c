@@ -80,6 +80,7 @@ struct WidgetMultipleTopLeftTopToBottom {
 	Widget** sub_wgs;
 	int sub_wgs_count;
 	int spacing;
+	int offset_x, offset_y;
 };
 typedef struct WidgetMultipleTopLeftTopToBottom WidgetMultipleTopLeftTopToBottom;
 
@@ -97,6 +98,8 @@ Dims widget_multiple_top_left_top_to_bottom_get_dims(WidgetMultipleTopLeftTopToB
 }
 
 void widget_multiple_top_left_top_to_bottom_render(WidgetMultipleTopLeftTopToBottom const* widget, int x, int y) {
+	x += widget->offset_x;
+	y += widget->offset_y;
 	for (int i = 0; i < widget->sub_wgs_count; i++) {
 		widget_render(widget->sub_wgs[i], x, y);
 		Dims sub_dims = widget_get_dims(widget->sub_wgs[i]);
@@ -155,7 +158,9 @@ void init_widget_tree(void) {
 		},
 		.sub_wgs = h,
 		.sub_wgs_count = 2,
-		.spacing = 5,
+		.spacing = 10,
+		.offset_x = 10,
+		.offset_y = 10,
 	};
 	g_wg_root = (Widget*)widget_root;
 }
