@@ -188,6 +188,8 @@ static bool wg_button_click(WgButton const* wg, int x, int y, int cx, int cy) {
 }
 
 static void wg_button_delete(WgButton* wg) {
+	/* TODO: Do something to free `wg->whatever` if and only if it has to be freed,
+	 * or else we are going to leak memory at some point. */
 	wg_delete(wg->sub_wg);
 	free(wg);
 }

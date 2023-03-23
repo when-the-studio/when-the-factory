@@ -104,6 +104,19 @@ bool g_sel_tile_exists = false;
 TileCoords g_sel_tile_coords = {0, 0};
 
 void ui_unselect_tile(void);
+void refresh_ui(void);
+
+struct CallbackMoveEntityData {
+	EntId eid;
+	TileCoords dst_pos;
+};
+typedef struct CallbackMoveEntityData CallbackMoveEntityData;
+
+void test_callback_move_entity(void* whatever) {
+	CallbackMoveEntityData* data = whatever;
+	ent_move(data->eid, data->dst_pos);
+	refresh_ui();
+}
 
 void ui_select_tile(TileCoords tc) {
 	ui_unselect_tile();
@@ -118,6 +131,7 @@ void ui_select_tile(TileCoords tc) {
 	for (int i = 0; i < tile->ent_count; i++) {
 		EntId eid = tile->ents[i];
 		Ent* ent = get_ent(eid);
+		if (ent == NULL) continue;
 		switch (ent->type) {
 			case ENT_HUMAIN:;
 				EntDataHuman* data_human = ent->data;
@@ -139,6 +153,26 @@ void ui_select_tile(TileCoords tc) {
 						(SDL_Color){255, 0, 0, 255}
 					)
 				);
+				typedef struct { int dx, dy; char* name; } Dir;
+				Dir dirs[4] = {{1, 0, "Right"}, {0, 1, "Down"}, {-1, 0, "Left"}, {0, -1, "Up"}};
+				for (int dir_i = 0; dir_i < 4; dir_i++) {
+					Dir dir = dirs[dir_i];
+					CallbackMoveEntityData* data = malloc(sizeof(CallbackMoveEntityData));
+					*data = (CallbackMoveEntityData){
+						.eid = eid,
+						.dst_pos = {tc.x + dir.dx, tc.y + dir.dy},
+					};
+					wg_mtlttb_add_sub(g_tile_wg_mtlttb,
+						new_wg_button(
+							new_wg_text_line(
+								dir.name,
+								(SDL_Color){255, 0, 0, 255}
+							),
+							data,
+							test_callback_move_entity
+						)
+					);
+				}
 			break;
 			case ENT_TEST_BLOCK:
 				wg_mtlttb_add_sub(g_tile_wg_mtlttb,
@@ -318,14 +352,23 @@ int main() {
 				.h = ceilf(tile_render_size)};
 			render_tile_ground(tile->type, dst_rect);
 
+			int true_ent_count = 0;
+			for (int ent_i = 0; ent_i < tile->ent_count; ent_i++) {
+				if (get_ent(tile->ents[ent_i]) != NULL) {
+					true_ent_count++;
+				}
+			}
+
+			int true_ent_i = -1;
 			for (int ent_i = 0; ent_i < tile->ent_count; ent_i++) {
 				EntId eid = (tile->ents[ent_i]);
 				Ent* ent = get_ent(eid);
 				if (ent == NULL) continue;
+				true_ent_i++;
 
-				int ex = (float)(ent_i+1) / (float)(tile->ent_count+1)
+				int ex = (float)(true_ent_i+1) / (float)(true_ent_count+1)
 					* tile_render_size;
-				int ey = (1.0f - (float)(ent_i+1) / (float)(tile->ent_count+1))
+				int ey = (1.0f - (float)(true_ent_i+1) / (float)(true_ent_count+1))
 					* tile_render_size;
 
 				switch (ent->type) {
