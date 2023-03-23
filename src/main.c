@@ -33,18 +33,16 @@ void render_tile_ground(TileType tile_type, SDL_Rect dst_rect) {
 	SDL_RenderCopy(g_renderer, g_spritesheet, &rect_in_spritesheet, &dst_rect);
 }
 
-
-
 static void test_callback(void* whatever) {
 	(void)whatever;
 	printf("test uwu\n");
 }
 
-void init_widget_tree(void) {
-	g_wg_root = new_widget_mtlttb(10, 10, 10);
-	widget_mtlttb_add_sub(g_wg_root,
-		new_widget_button(
-			new_widget_text_line(
+void init_wg_tree(void) {
+	g_wg_root = new_wg_mtlttb(10, 10, 10);
+	wg_mtlttb_add_sub(g_wg_root,
+		new_wg_button(
+			new_wg_text_line(
 				"test xd",
 				(SDL_Color){255, 0, 0, 255}
 			),
@@ -52,8 +50,8 @@ void init_widget_tree(void) {
 			test_callback
 		)
 	);
-	widget_mtlttb_add_sub(g_wg_root,
-		new_widget_text_line(
+	wg_mtlttb_add_sub(g_wg_root,
+		new_wg_text_line(
 			"test uwu !!! ballz ``sus amogus -1 +8 1000 gaming",
 			(SDL_Color){255, 0, 0, 255}
 		)
@@ -71,7 +69,7 @@ int main() {
 	bool sel_tile_exists = false;
 	TileCoords sel_tile_coords = {0, 0};
 
-	init_widget_tree();
+	init_wg_tree();
 
 	/* Game loop iteration time monitoring. */
 	Uint64 time = SDL_GetPerformanceCounter();
@@ -143,7 +141,7 @@ int main() {
 					switch (event.button.button) {
 						case SDL_BUTTON_LEFT:;
 							WinCoords wc = {event.button.x, event.button.y};
-							bool some_wg_got_the_click = widget_click(g_wg_root, 0, 0, wc.x, wc.y);
+							bool some_wg_got_the_click = wg_click(g_wg_root, 0, 0, wc.x, wc.y);
 							if (!some_wg_got_the_click) {
 								TileCoords tc = window_pixel_to_tile_coords(wc);
 								bool sel_tile_is_alrady_tc =
@@ -312,7 +310,7 @@ int main() {
 			}
 		}
 
-		widget_render(g_wg_root, 0, 0);
+		wg_render(g_wg_root, 0, 0);
 
 		SDL_RenderPresent(g_renderer);
 	}
