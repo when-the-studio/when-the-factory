@@ -46,6 +46,12 @@ static bool wg_text_line_click(WgTextLine const* wg, int x, int y, int cx, int c
 	return r.x <= cx && cx < r.x + r.w && r.y <= cy && cy < r.y + r.h;
 }
 
+static void wg_text_line_delete(WgTextLine* wg) {
+	/* TODO: Do something to free `wg->string` if and only if it has to be freed,
+	 * or else we are going to leak memory when we generate new strings for these widgets. */
+	free(wg);
+}
+
 /* *** Multiple Top Left Top To Bottom widget section *** */
 
 struct WgMTLTTB {
@@ -87,6 +93,17 @@ void wg_mtlttb_add_sub(Wg* wg_, Wg* sub) {
 	wg->sub_wgs[wg->sub_wgs_count-1] = sub;
 }
 
+void wg_mtlttb_empty(Wg* wg_) {
+	assert(wg_->type == WG_MULTIPLE_TOP_LEFT_TOP_TO_BOTTOM);
+	WgMTLTTB* wg = (WgMTLTTB*)wg_;
+	for (int i = 0; i < wg->sub_wgs_count; i++) {
+		wg_delete(wg->sub_wgs[i]);
+	}
+	free(wg->sub_wgs);
+	wg->sub_wgs = NULL;
+	wg->sub_wgs_count = 0;
+}
+
 static Dims wg_mtlttb_get_dims(WgMTLTTB const* wg) {
 	Dims dims = {0, 0};
 	for (int i = 0; i < wg->sub_wgs_count; i++) {
@@ -122,6 +139,11 @@ static bool wg_mtlttb_click(WgMTLTTB const* wg, int x, int y, int cx, int cy) {
 		y += sub_dims.h + wg->spacing;
 	}
 	return false;
+}
+
+static void wg_mtlttb_delete(WgMTLTTB* wg) {
+	wg_mtlttb_empty((Wg*)wg);
+	free(wg);
 }
 
 /* *** Button widget section *** */
@@ -163,6 +185,11 @@ static bool wg_button_click(WgButton const* wg, int x, int y, int cx, int cy) {
 		return true;
 	}
 	return false;
+}
+
+static void wg_button_delete(WgButton* wg) {
+	wg_delete(wg->sub_wg);
+	free(wg);
 }
 
 /* *** Dynamic dispatch section *** */
@@ -207,6 +234,21 @@ bool wg_click(Wg const* wg, int x, int y, int cx, int cy) {
 		break;
 		case WG_BUTTON:
 			return wg_button_click((WgButton const*)wg, x, y, cx, cy);
+		break;
+		default: assert(false);
+	}
+}
+
+void wg_delete(Wg* wg) {
+	switch (wg->type) {
+		case WG_TEXT_LINE:
+			wg_text_line_delete((WgTextLine*)wg);
+		break;
+		case WG_MULTIPLE_TOP_LEFT_TOP_TO_BOTTOM:
+			wg_mtlttb_delete((WgMTLTTB*)wg);
+		break;
+		case WG_BUTTON:
+			wg_button_delete((WgButton*)wg);
 		break;
 		default: assert(false);
 	}

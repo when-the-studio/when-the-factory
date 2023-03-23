@@ -32,10 +32,13 @@ Dims wg_get_dims(Wg const* wg);
 void wg_render(Wg const* wg, int x, int y);
 bool wg_click(Wg const* wg, int x, int y, int cx, int cy);
 
+void wg_delete(Wg* wg);
+
 Wg* new_wg_text_line(char* string, SDL_Color fg_color);
 
 Wg* new_wg_mtlttb(int spacing, int offset_x, int offset_y);
 void wg_mtlttb_add_sub(Wg* wg, Wg* sub);
+void wg_mtlttb_empty(Wg* wg);
 
 Wg* new_wg_button(Wg* sub_wg, void* whatever, void (*left_click_callback)(void* whatever));
 

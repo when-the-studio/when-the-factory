@@ -33,9 +33,24 @@ void render_tile_ground(TileType tile_type, SDL_Rect dst_rect) {
 	SDL_RenderCopy(g_renderer, g_spritesheet, &rect_in_spritesheet, &dst_rect);
 }
 
-static void test_callback(void* whatever) {
+static void test_callback_print(void* whatever) {
 	(void)whatever;
 	printf("test uwu\n");
+}
+
+static void test_callback_add(void* whatever) {
+	(void)whatever;
+	wg_mtlttb_add_sub(g_wg_root,
+		new_wg_text_line(
+			"owo",
+			(SDL_Color){255, 0, 0, 255}
+		)
+	);
+}
+
+static void test_callback_clear(void* whatever) {
+	(void)whatever;
+	wg_mtlttb_empty(g_wg_root);
 }
 
 void init_wg_tree(void) {
@@ -47,13 +62,33 @@ void init_wg_tree(void) {
 				(SDL_Color){255, 0, 0, 255}
 			),
 			NULL,
-			test_callback
+			test_callback_print
 		)
 	);
 	wg_mtlttb_add_sub(g_wg_root,
 		new_wg_text_line(
 			"test uwu !!! ballz ``sus amogus -1 +8 1000 gaming",
 			(SDL_Color){255, 0, 0, 255}
+		)
+	);
+	wg_mtlttb_add_sub(g_wg_root,
+		new_wg_button(
+			new_wg_text_line(
+				"add",
+				(SDL_Color){255, 0, 0, 255}
+			),
+			NULL,
+			test_callback_add
+		)
+	);
+	wg_mtlttb_add_sub(g_wg_root,
+		new_wg_button(
+			new_wg_text_line(
+				"clear",
+				(SDL_Color){255, 0, 0, 255}
+			),
+			NULL,
+			test_callback_clear
 		)
 	);
 }
