@@ -11,6 +11,7 @@
 #include "map.h"
 #include "camera.h"
 #include "widget.h"
+#include "entity.h"
 
 TileCoords window_pixel_to_tile_coords(WinCoords wc) {
 	float tile_render_size = TILE_SIZE * g_camera.zoom;
@@ -114,30 +115,41 @@ void ui_select_tile(TileCoords tc) {
 			(SDL_Color){255, 0, 0, 255}
 		)
 	);
-	for (int i = 0; i < tile->entity_count; i++) {
-		Entity* entity = tile->entities[i];
-		char* name;
-		switch (entity->type) {
-			case ENTITY_HUMAIN: name = "Human"; break;
+	for (int i = 0; i < tile->ent_count; i++) {
+		EntId eid = tile->ents[i];
+		Ent* ent = get_ent(eid);
+		switch (ent->type) {
+			case ENT_HUMAIN:;
+				EntDataHuman* data_human = ent->data;
+				wg_mtlttb_add_sub(g_tile_wg_mtlttb,
+					new_wg_text_line(
+						"Human",
+						(SDL_Color){255, 0, 0, 255}
+					)
+				);
+				char* name;
+				switch (data_human->faction) {
+					case FACTION_YELLOW: name = "Yellow"; break;
+					case FACTION_RED:    name = "Red";    break;
+					default: assert(false);
+				}
+				wg_mtlttb_add_sub(g_tile_wg_mtlttb,
+					new_wg_text_line(
+						name,
+						(SDL_Color){255, 0, 0, 255}
+					)
+				);
+			break;
+			case ENT_TEST_BLOCK:
+				wg_mtlttb_add_sub(g_tile_wg_mtlttb,
+					new_wg_text_line(
+						"Test block",
+						(SDL_Color){255, 0, 0, 255}
+					)
+				);
+			break;
 			default: assert(false);
 		}
-		wg_mtlttb_add_sub(g_tile_wg_mtlttb,
-			new_wg_text_line(
-				name,
-				(SDL_Color){255, 0, 0, 255}
-			)
-		);
-		switch (entity->faction) {
-			case FACTION_YELLOW: name = "Yellow"; break;
-			case FACTION_RED:    name = "Red";    break;
-			default: assert(false);
-		}
-		wg_mtlttb_add_sub(g_tile_wg_mtlttb,
-			new_wg_text_line(
-				name,
-				(SDL_Color){255, 0, 0, 255}
-			)
-		);
 	}
 }
 
@@ -200,19 +212,35 @@ int main() {
 						case SDLK_p:
 							/* Test spawing entity on selected tile. */
 							if (g_sel_tile_exists) {
-								Entity* entity = new_entity(ENTITY_HUMAIN, g_sel_tile_coords);
-								entity->faction = FACTION_YELLOW;
+								if (rand() % 2 == 0) {
+									ent_new_human(g_sel_tile_coords,
+										rand() % 2 == 0 ? FACTION_YELLOW : FACTION_RED);
+								} else {
+									ent_new_test_block(g_sel_tile_coords,
+										(SDL_Color){rand(), rand(), rand(), 255});
+								}
 								refresh_ui();
 							}
 						break;
 						case SDLK_m:
-							/* Test moving entity from selected tile to the right. */
+							/* Test moving entities from selected tile to adjacent tiles. */
 							if (g_sel_tile_exists) {
-								Tile* sel_tile = 
-									&g_grid[g_sel_tile_coords.y * N_TILES_W + g_sel_tile_coords.x];
-								if (1 <= sel_tile->entity_count) {
-									entity_move(sel_tile->entities[0],
-										(TileCoords){g_sel_tile_coords.x + 1, g_sel_tile_coords.y});
+								Tile* sel_tile = get_tile(g_sel_tile_coords);
+								for (int i = 0; i < sel_tile->ent_count; i++) {
+									ent_move(sel_tile->ents[i],
+										(TileCoords){
+											g_sel_tile_coords.x + rand() % 3 - 1,
+											g_sel_tile_coords.y + rand() % 3 - 1});
+								}
+								refresh_ui();
+							}
+						break;
+						case SDLK_o:
+							/* Test deleting entities on selected tile. */
+							if (g_sel_tile_exists) {
+								Tile* sel_tile = get_tile(g_sel_tile_coords);
+								for (int i = 0; i < sel_tile->ent_count; i++) {
+									ent_delete(sel_tile->ents[i]);
 								}
 								refresh_ui();
 							}
@@ -290,20 +318,24 @@ int main() {
 				.h = ceilf(tile_render_size)};
 			render_tile_ground(tile->type, dst_rect);
 
-			for (int entity_i = 0; entity_i < tile->entity_count; entity_i++) {
-				Entity* entity = tile->entities[entity_i];
-				assert(entity != NULL);
-				switch (entity->type) {
-					case ENTITY_HUMAIN:;
-						int ex = (float)(entity_i+1) / (float)(tile->entity_count+1)
-							* tile_render_size;
-						int ey = (1.0f - (float)(entity_i+1) / (float)(tile->entity_count+1))
-							* tile_render_size;
+			for (int ent_i = 0; ent_i < tile->ent_count; ent_i++) {
+				EntId eid = (tile->ents[ent_i]);
+				Ent* ent = get_ent(eid);
+				if (ent == NULL) continue;
+
+				int ex = (float)(ent_i+1) / (float)(tile->ent_count+1)
+					* tile_render_size;
+				int ey = (1.0f - (float)(ent_i+1) / (float)(tile->ent_count+1))
+					* tile_render_size;
+
+				switch (ent->type) {
+					case ENT_HUMAIN: {
 						int ew = 0.1f * tile_render_size;
 						int eh = 0.3f * tile_render_size;
 						SDL_Rect rect = {
 							dst_rect.x + ex - ew / 2.0f, dst_rect.y + ey - eh / 2.0f, ew, eh};
-						switch (entity->faction) {
+						EntDataHuman* data = ent->data;
+						switch (data->faction) {
 							case FACTION_YELLOW:
 								SDL_SetRenderDrawColor(g_renderer, 255, 255, 0, 255);
 							break;
@@ -313,7 +345,19 @@ int main() {
 							default: assert(false);
 						}
 						SDL_RenderFillRect(g_renderer, &rect);
-					break;
+					break; }
+
+					case ENT_TEST_BLOCK: {
+						int ew = 0.2f * tile_render_size;
+						int eh = 0.2f * tile_render_size;
+						SDL_Rect rect = {
+							dst_rect.x + ex - ew / 2.0f, dst_rect.y + ey - eh / 2.0f, ew, eh};
+						EntDataTestBlock* data = ent->data;
+						SDL_SetRenderDrawColor(g_renderer,
+							data->color.r, data->color.g, data->color.b, 255);
+						SDL_RenderFillRect(g_renderer, &rect);
+					break; }
+
 					default: assert(false);
 				}
 			}
@@ -370,9 +414,10 @@ int main() {
 				(WinCoords){10 + 150/2, WINDOW_H - 175}, PP_TOP_CENTER,
 				(SDL_Color){0, 0, 0, 255});
 
-			for (int entity_i = 0; entity_i < sel_tile->entity_count; entity_i++) {
-				Entity* entity = sel_tile->entities[entity_i];
-				assert(entity != NULL);
+			for (int ent_i = 0; ent_i < sel_tile->ent_count; ent_i++) {
+				EntId eid = (sel_tile->ents[ent_i]);
+				Ent* ent = get_ent(eid);
+				if (ent == NULL) continue;
 
 				ui_rect.x += ui_rect.w + 10;
 				SDL_SetRenderDrawColor(g_renderer, 200, 200, 200, 255);
@@ -383,24 +428,39 @@ int main() {
 				SDL_RenderDrawRect(g_renderer, &ui_rect);
 				ui_rect.x += 1; ui_rect.y += 1; ui_rect.w -= 2; ui_rect.h -= 2;
 
-				char const* name;
-				switch (entity->type) {
-					case ENTITY_HUMAIN: name = "Human"; break;
-					default: assert(false);
-				}
-				render_string_pixel(name,
-					(WinCoords){ui_rect.x + ui_rect.w/2, WINDOW_H - 175}, PP_TOP_CENTER,
-					(SDL_Color){0, 0, 0, 255});
+				switch (ent->type) {
+					case ENT_HUMAIN: {
+						render_string_pixel("Human",
+							(WinCoords){ui_rect.x + ui_rect.w/2, WINDOW_H - 175}, PP_TOP_CENTER,
+							(SDL_Color){0, 0, 0, 255});
+						EntDataHuman* data = ent->data;
+						char const* faction_name;
+						switch (data->faction) {
+							case FACTION_YELLOW: faction_name = "Yellow"; break;
+							case FACTION_RED:    faction_name = "Red";    break;
+							default: assert(false);
+						}
+						render_string_pixel(faction_name,
+							(WinCoords){ui_rect.x + ui_rect.w/2, WINDOW_H - 175 + 40}, PP_TOP_CENTER,
+							(SDL_Color){0, 0, 0, 255});
+					break; }
 
-				char const* faction_name;
-				switch (entity->faction) {
-					case FACTION_YELLOW: faction_name = "Yellow"; break;
-					case FACTION_RED:    faction_name = "Red";    break;
+					case ENT_TEST_BLOCK: {
+						render_string_pixel("Test Block",
+							(WinCoords){ui_rect.x + ui_rect.w/2, WINDOW_H - 175}, PP_TOP_CENTER,
+							(SDL_Color){0, 0, 0, 255});
+						EntDataTestBlock* data = ent->data;
+						SDL_SetRenderDrawColor(g_renderer,
+							data->color.r, data->color.g, data->color.b, 255);
+						rect.w = ui_rect.w / 2;
+						rect.h = rect.w;
+						rect.x = ui_rect.x + ui_rect.w / 2 - rect.w / 2;
+						rect.y = ui_rect.y + ui_rect.h / 2 - rect.h / 2;
+						SDL_RenderFillRect(g_renderer, &rect);
+					break; }
+
 					default: assert(false);
 				}
-				render_string_pixel(faction_name,
-					(WinCoords){ui_rect.x + ui_rect.w/2, WINDOW_H - 175 + 40}, PP_TOP_CENTER,
-					(SDL_Color){0, 0, 0, 255});
 			}
 		}
 
