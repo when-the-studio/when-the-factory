@@ -53,6 +53,8 @@ static void test_callback_clear(void* whatever) {
 	wg_mtlttb_empty(g_wg_root);
 }
 
+Wg* g_tile_wg_mtlttb = NULL;
+
 void init_wg_tree(void) {
 	g_wg_root = new_wg_mtlttb(10, 10, 10);
 	wg_mtlttb_add_sub(g_wg_root,
@@ -91,20 +93,73 @@ void init_wg_tree(void) {
 			test_callback_clear
 		)
 	);
+	wg_mtlttb_add_sub(g_wg_root,
+		g_tile_wg_mtlttb = new_wg_mtlttb(10, 10, 0)
+	);
+}
+
+/* Selected tile, if any. */
+bool g_sel_tile_exists = false;
+TileCoords g_sel_tile_coords = {0, 0};
+
+void ui_unselect_tile(void);
+
+void ui_select_tile(TileCoords tc) {
+	ui_unselect_tile();
+	Tile* tile = get_tile(tc);
+	char const* name = g_tile_type_spec_table[tile->type].name;
+	wg_mtlttb_add_sub(g_tile_wg_mtlttb,
+		new_wg_text_line(
+			(char*)name,
+			(SDL_Color){255, 0, 0, 255}
+		)
+	);
+	for (int i = 0; i < tile->entity_count; i++) {
+		Entity* entity = tile->entities[i];
+		char* name;
+		switch (entity->type) {
+			case ENTITY_HUMAIN: name = "Human"; break;
+			default: assert(false);
+		}
+		wg_mtlttb_add_sub(g_tile_wg_mtlttb,
+			new_wg_text_line(
+				name,
+				(SDL_Color){255, 0, 0, 255}
+			)
+		);
+		switch (entity->faction) {
+			case FACTION_YELLOW: name = "Yellow"; break;
+			case FACTION_RED:    name = "Red";    break;
+			default: assert(false);
+		}
+		wg_mtlttb_add_sub(g_tile_wg_mtlttb,
+			new_wg_text_line(
+				name,
+				(SDL_Color){255, 0, 0, 255}
+			)
+		);
+	}
+}
+
+void ui_unselect_tile(void) {
+	wg_mtlttb_empty(g_tile_wg_mtlttb);
+}
+
+void refresh_ui(void) {
+	wg_mtlttb_empty(g_wg_root);
+	init_wg_tree();
+	if (g_sel_tile_exists) {
+		ui_select_tile(g_sel_tile_coords);
+	}
 }
 
 int main() {
 	renderer_init();
 	init_map();
-	
+	init_wg_tree();
+
 	/* Is grid line display enabled? */
 	bool render_lines = false;
-
-	/* Selected tile, if any. */
-	bool sel_tile_exists = false;
-	TileCoords sel_tile_coords = {0, 0};
-
-	init_wg_tree();
 
 	/* Game loop iteration time monitoring. */
 	Uint64 time = SDL_GetPerformanceCounter();
@@ -144,20 +199,22 @@ int main() {
 						break;
 						case SDLK_p:
 							/* Test spawing entity on selected tile. */
-							if (sel_tile_exists) {
-								Entity* entity = new_entity(ENTITY_HUMAIN, sel_tile_coords);
+							if (g_sel_tile_exists) {
+								Entity* entity = new_entity(ENTITY_HUMAIN, g_sel_tile_coords);
 								entity->faction = FACTION_YELLOW;
+								refresh_ui();
 							}
 						break;
 						case SDLK_m:
 							/* Test moving entity from selected tile to the right. */
-							if (sel_tile_exists) {
+							if (g_sel_tile_exists) {
 								Tile* sel_tile = 
-									&g_grid[sel_tile_coords.y * N_TILES_W + sel_tile_coords.x];
+									&g_grid[g_sel_tile_coords.y * N_TILES_W + g_sel_tile_coords.x];
 								if (1 <= sel_tile->entity_count) {
 									entity_move(sel_tile->entities[0],
-										(TileCoords){sel_tile_coords.x + 1, sel_tile_coords.y});
+										(TileCoords){g_sel_tile_coords.x + 1, g_sel_tile_coords.y});
 								}
+								refresh_ui();
 							}
 						break;
 					}
@@ -180,12 +237,14 @@ int main() {
 							if (!some_wg_got_the_click) {
 								TileCoords tc = window_pixel_to_tile_coords(wc);
 								bool sel_tile_is_alrady_tc =
-									sel_tile_exists && tile_coords_eq(sel_tile_coords, tc);
+									g_sel_tile_exists && tile_coords_eq(g_sel_tile_coords, tc);
 								if (tile_coords_are_valid(tc) && !sel_tile_is_alrady_tc) {
-									sel_tile_exists = true;
-									sel_tile_coords = tc;
+									g_sel_tile_exists = true;
+									g_sel_tile_coords = tc;
+									ui_select_tile(tc);
 								} else {
-									sel_tile_exists = false;
+									g_sel_tile_exists = false;
+									ui_unselect_tile();
 								}
 							}
 						break;
@@ -277,11 +336,11 @@ int main() {
 			}
 		}
 
-		if (sel_tile_exists) {
+		if (g_sel_tile_exists) {
 			/* Draw selection rect around the selected tile. */
 			SDL_Rect rect = {
-				.x = sel_tile_coords.x * tile_render_size - g_camera.pos.x,
-				.y = sel_tile_coords.y * tile_render_size - g_camera.pos.y,
+				.x = g_sel_tile_coords.x * tile_render_size - g_camera.pos.x,
+				.y = g_sel_tile_coords.y * tile_render_size - g_camera.pos.y,
 				.w = ceilf(tile_render_size),
 				.h = ceilf(tile_render_size)};
 			SDL_SetRenderDrawColor(g_renderer, 255, 255, 0, 255);
@@ -290,7 +349,7 @@ int main() {
 			SDL_RenderDrawRect(g_renderer, &rect);
 
 			Tile const* sel_tile = 
-				&g_grid[sel_tile_coords.y * N_TILES_W + sel_tile_coords.x];
+				&g_grid[g_sel_tile_coords.y * N_TILES_W + g_sel_tile_coords.x];
 
 			/* TODO: Redo the following lame UI stuff with the ui-dev's branch widgets. */
 
