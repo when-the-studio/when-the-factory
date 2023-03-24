@@ -41,7 +41,7 @@ static void test_callback_print(void* whatever) {
 
 static void test_callback_add(void* whatever) {
 	(void)whatever;
-	wg_mtlttb_add_sub(g_wg_root,
+	wg_multopleft_add_sub(g_wg_root,
 		new_wg_text_line(
 			"owo",
 			(SDL_Color){255, 0, 0, 255}
@@ -51,14 +51,14 @@ static void test_callback_add(void* whatever) {
 
 static void test_callback_clear(void* whatever) {
 	(void)whatever;
-	wg_mtlttb_empty(g_wg_root);
+	wg_multopleft_empty(g_wg_root);
 }
 
-Wg* g_tile_wg_mtlttb = NULL;
+Wg* g_tile_wg_multopleft = NULL;
 
 void init_wg_tree(void) {
-	g_wg_root = new_wg_mtlttb(10, 10, 10);
-	wg_mtlttb_add_sub(g_wg_root,
+	g_wg_root = new_wg_multopleft(10, 10, 10, ORIENTATION_TOP_TO_BOTTOM);
+	wg_multopleft_add_sub(g_wg_root,
 		new_wg_button(
 			new_wg_text_line(
 				"test xd",
@@ -68,13 +68,13 @@ void init_wg_tree(void) {
 			test_callback_print
 		)
 	);
-	wg_mtlttb_add_sub(g_wg_root,
+	wg_multopleft_add_sub(g_wg_root,
 		new_wg_text_line(
 			"test uwu !!! ballz ``sus amogus -1 +8 1000 gaming",
 			(SDL_Color){255, 0, 0, 255}
 		)
 	);
-	wg_mtlttb_add_sub(g_wg_root,
+	wg_multopleft_add_sub(g_wg_root,
 		new_wg_button(
 			new_wg_text_line(
 				"add",
@@ -84,7 +84,7 @@ void init_wg_tree(void) {
 			test_callback_add
 		)
 	);
-	wg_mtlttb_add_sub(g_wg_root,
+	wg_multopleft_add_sub(g_wg_root,
 		new_wg_button(
 			new_wg_text_line(
 				"clear",
@@ -94,8 +94,8 @@ void init_wg_tree(void) {
 			test_callback_clear
 		)
 	);
-	wg_mtlttb_add_sub(g_wg_root,
-		g_tile_wg_mtlttb = new_wg_mtlttb(10, 10, 0)
+	wg_multopleft_add_sub(g_wg_root,
+		g_tile_wg_multopleft = new_wg_multopleft(10, 10, 0, ORIENTATION_TOP_TO_BOTTOM)
 	);
 }
 
@@ -122,7 +122,7 @@ void ui_select_tile(TileCoords tc) {
 	ui_unselect_tile();
 	Tile* tile = get_tile(tc);
 	char const* name = g_tile_type_spec_table[tile->type].name;
-	wg_mtlttb_add_sub(g_tile_wg_mtlttb,
+	wg_multopleft_add_sub(g_tile_wg_multopleft,
 		new_wg_text_line(
 			(char*)name,
 			(SDL_Color){255, 0, 0, 255}
@@ -132,10 +132,12 @@ void ui_select_tile(TileCoords tc) {
 		EntId eid = tile->ents[i];
 		Ent* ent = get_ent(eid);
 		if (ent == NULL) continue;
+		Wg* wg_ent = new_wg_multopleft(10, 10, 0, ORIENTATION_LEFT_TO_RIGHT);
+		wg_multopleft_add_sub(g_tile_wg_multopleft, wg_ent);
 		switch (ent->type) {
 			case ENT_HUMAIN:;
 				EntDataHuman* data_human = ent->data;
-				wg_mtlttb_add_sub(g_tile_wg_mtlttb,
+				wg_multopleft_add_sub(wg_ent,
 					new_wg_text_line(
 						"Human",
 						(SDL_Color){255, 0, 0, 255}
@@ -147,7 +149,7 @@ void ui_select_tile(TileCoords tc) {
 					case FACTION_RED:    name = "Red";    break;
 					default: assert(false);
 				}
-				wg_mtlttb_add_sub(g_tile_wg_mtlttb,
+				wg_multopleft_add_sub(wg_ent,
 					new_wg_text_line(
 						name,
 						(SDL_Color){255, 0, 0, 255}
@@ -162,7 +164,7 @@ void ui_select_tile(TileCoords tc) {
 						.eid = eid,
 						.dst_pos = {tc.x + dir.dx, tc.y + dir.dy},
 					};
-					wg_mtlttb_add_sub(g_tile_wg_mtlttb,
+					wg_multopleft_add_sub(wg_ent,
 						new_wg_button(
 							new_wg_text_line(
 								dir.name,
@@ -175,7 +177,7 @@ void ui_select_tile(TileCoords tc) {
 				}
 			break;
 			case ENT_TEST_BLOCK:
-				wg_mtlttb_add_sub(g_tile_wg_mtlttb,
+				wg_multopleft_add_sub(wg_ent,
 					new_wg_text_line(
 						"Test block",
 						(SDL_Color){255, 0, 0, 255}
@@ -188,11 +190,11 @@ void ui_select_tile(TileCoords tc) {
 }
 
 void ui_unselect_tile(void) {
-	wg_mtlttb_empty(g_tile_wg_mtlttb);
+	wg_multopleft_empty(g_tile_wg_multopleft);
 }
 
 void refresh_ui(void) {
-	wg_mtlttb_empty(g_wg_root);
+	wg_multopleft_empty(g_wg_root);
 	init_wg_tree();
 	if (g_sel_tile_exists) {
 		ui_select_tile(g_sel_tile_coords);

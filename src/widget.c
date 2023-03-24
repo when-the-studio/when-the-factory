@@ -52,35 +52,37 @@ static void wg_text_line_delete(WgTextLine* wg) {
 	free(wg);
 }
 
-/* *** Multiple Top Left Top To Bottom widget section *** */
+/* *** Multiple Top Left widget section *** */
 
-struct WgMTLTTB {
+struct WgMulTopLeft {
 	Wg base;
 	Wg** sub_wgs;
 	int sub_wgs_count;
 	int spacing;
 	int offset_x, offset_y;
+	Orientation orientation;
 };
-typedef struct WgMTLTTB WgMTLTTB;
+typedef struct WgMulTopLeft WgMulTopLeft;
 
-Wg* new_wg_mtlttb(int spacing, int offset_x, int offset_y) {
-	WgMTLTTB* wg = malloc(sizeof(WgMTLTTB));
-	*wg = (WgMTLTTB){
+Wg* new_wg_multopleft(int spacing, int offset_x, int offset_y, Orientation orientation) {
+	WgMulTopLeft* wg = malloc(sizeof(WgMulTopLeft));
+	*wg = (WgMulTopLeft){
 		.base = {
-			.type = WG_MULTIPLE_TOP_LEFT_TOP_TO_BOTTOM,
+			.type = WG_MULTIPLE_TOP_LEFT,
 		},
 		.sub_wgs = NULL,
 		.sub_wgs_count = 0,
 		.spacing = spacing,
 		.offset_x = offset_x,
 		.offset_y = offset_y,
+		.orientation = orientation,
 	};
 	return (Wg*)wg;
 }
 
-void wg_mtlttb_add_sub(Wg* wg_, Wg* sub) {
-	assert(wg_->type == WG_MULTIPLE_TOP_LEFT_TOP_TO_BOTTOM);
-	WgMTLTTB* wg = (WgMTLTTB*)wg_;
+void wg_multopleft_add_sub(Wg* wg_, Wg* sub) {
+	assert(wg_->type == WG_MULTIPLE_TOP_LEFT);
+	WgMulTopLeft* wg = (WgMulTopLeft*)wg_;
 	if (wg->sub_wgs_count == 0) {
 		assert(wg->sub_wgs == NULL);
 		wg->sub_wgs_count = 1;
@@ -93,9 +95,9 @@ void wg_mtlttb_add_sub(Wg* wg_, Wg* sub) {
 	wg->sub_wgs[wg->sub_wgs_count-1] = sub;
 }
 
-void wg_mtlttb_empty(Wg* wg_) {
-	assert(wg_->type == WG_MULTIPLE_TOP_LEFT_TOP_TO_BOTTOM);
-	WgMTLTTB* wg = (WgMTLTTB*)wg_;
+void wg_multopleft_empty(Wg* wg_) {
+	assert(wg_->type == WG_MULTIPLE_TOP_LEFT);
+	WgMulTopLeft* wg = (WgMulTopLeft*)wg_;
 	for (int i = 0; i < wg->sub_wgs_count; i++) {
 		wg_delete(wg->sub_wgs[i]);
 	}
@@ -104,30 +106,46 @@ void wg_mtlttb_empty(Wg* wg_) {
 	wg->sub_wgs_count = 0;
 }
 
-static Dims wg_mtlttb_get_dims(WgMTLTTB const* wg) {
+static Dims wg_multopleft_get_dims(WgMulTopLeft const* wg) {
 	Dims dims = {0, 0};
 	for (int i = 0; i < wg->sub_wgs_count; i++) {
 		Dims sub_dims = wg_get_dims(wg->sub_wgs[i]);
-		dims.h += sub_dims.h;
-		if (i != 0) {
-			dims.h += wg->spacing;
+		switch (wg->orientation) {
+			case ORIENTATION_TOP_TO_BOTTOM:
+				dims.h += sub_dims.h;
+				if (i != 0) {
+					dims.h += wg->spacing;
+				}
+				dims.w = max(dims.w, sub_dims.w);
+			break;
+			case ORIENTATION_LEFT_TO_RIGHT:
+				dims.w += sub_dims.w;
+				if (i != 0) {
+					dims.w += wg->spacing;
+				}
+				dims.h = max(dims.h, sub_dims.h);
+			break;
+			default: assert(false);
 		}
-		dims.w = max(dims.w, sub_dims.w);
 	}
 	return dims;
 }
 
-static void wg_mtlttb_render(WgMTLTTB const* wg, int x, int y) {
+static void wg_multopleft_render(WgMulTopLeft const* wg, int x, int y) {
 	x += wg->offset_x;
 	y += wg->offset_y;
 	for (int i = 0; i < wg->sub_wgs_count; i++) {
 		wg_render(wg->sub_wgs[i], x, y);
 		Dims sub_dims = wg_get_dims(wg->sub_wgs[i]);
-		y += sub_dims.h + wg->spacing;
+		switch (wg->orientation) {
+			case ORIENTATION_TOP_TO_BOTTOM: y += sub_dims.h + wg->spacing; break;
+			case ORIENTATION_LEFT_TO_RIGHT: x += sub_dims.w + wg->spacing; break;
+			default: assert(false);
+		}
 	}
 }
 
-static bool wg_mtlttb_click(WgMTLTTB const* wg, int x, int y, int cx, int cy) {
+static bool wg_multopleft_click(WgMulTopLeft const* wg, int x, int y, int cx, int cy) {
 	x += wg->offset_x;
 	y += wg->offset_y;
 	for (int i = 0; i < wg->sub_wgs_count; i++) {
@@ -136,13 +154,17 @@ static bool wg_mtlttb_click(WgMTLTTB const* wg, int x, int y, int cx, int cy) {
 		if (r.x <= cx && cx < r.x + r.w && r.y <= cy && cy < r.y + r.h) {
 			return wg_click(wg->sub_wgs[i], x, y, cx, cy);
 		}
-		y += sub_dims.h + wg->spacing;
+		switch (wg->orientation) {
+			case ORIENTATION_TOP_TO_BOTTOM: y += sub_dims.h + wg->spacing; break;
+			case ORIENTATION_LEFT_TO_RIGHT: x += sub_dims.w + wg->spacing; break;
+			default: assert(false);
+		}
 	}
 	return false;
 }
 
-static void wg_mtlttb_delete(WgMTLTTB* wg) {
-	wg_mtlttb_empty((Wg*)wg);
+static void wg_multopleft_delete(WgMulTopLeft* wg) {
+	wg_multopleft_empty((Wg*)wg);
 	free(wg);
 }
 
@@ -201,8 +223,8 @@ Dims wg_get_dims(Wg const* wg) {
 		case WG_TEXT_LINE:
 			return wg_text_line_get_dims((WgTextLine const*)wg);
 		break;
-		case WG_MULTIPLE_TOP_LEFT_TOP_TO_BOTTOM:
-			return wg_mtlttb_get_dims((WgMTLTTB const*)wg);
+		case WG_MULTIPLE_TOP_LEFT:
+			return wg_multopleft_get_dims((WgMulTopLeft const*)wg);
 		break;
 		case WG_BUTTON:
 			return wg_button_get_dims((WgButton const*)wg);
@@ -216,8 +238,8 @@ void wg_render(Wg const* wg, int x, int y) {
 		case WG_TEXT_LINE:
 			wg_text_line_render((WgTextLine const*)wg, x, y);
 		break;
-		case WG_MULTIPLE_TOP_LEFT_TOP_TO_BOTTOM:
-			wg_mtlttb_render((WgMTLTTB const*)wg, x, y);
+		case WG_MULTIPLE_TOP_LEFT:
+			wg_multopleft_render((WgMulTopLeft const*)wg, x, y);
 		break;
 		case WG_BUTTON:
 			wg_button_render((WgButton const*)wg, x, y);
@@ -231,8 +253,8 @@ bool wg_click(Wg const* wg, int x, int y, int cx, int cy) {
 		case WG_TEXT_LINE:
 			return wg_text_line_click((WgTextLine const*)wg, x, y, cx, cy);
 		break;
-		case WG_MULTIPLE_TOP_LEFT_TOP_TO_BOTTOM:
-			return wg_mtlttb_click((WgMTLTTB const*)wg, x, y, cx, cy);
+		case WG_MULTIPLE_TOP_LEFT:
+			return wg_multopleft_click((WgMulTopLeft const*)wg, x, y, cx, cy);
 		break;
 		case WG_BUTTON:
 			return wg_button_click((WgButton const*)wg, x, y, cx, cy);
@@ -246,8 +268,8 @@ void wg_delete(Wg* wg) {
 		case WG_TEXT_LINE:
 			wg_text_line_delete((WgTextLine*)wg);
 		break;
-		case WG_MULTIPLE_TOP_LEFT_TOP_TO_BOTTOM:
-			wg_mtlttb_delete((WgMTLTTB*)wg);
+		case WG_MULTIPLE_TOP_LEFT:
+			wg_multopleft_delete((WgMulTopLeft*)wg);
 		break;
 		case WG_BUTTON:
 			wg_button_delete((WgButton*)wg);

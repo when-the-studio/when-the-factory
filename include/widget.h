@@ -12,7 +12,7 @@ typedef struct Dims Dims;
 
 enum WgType {
 	WG_TEXT_LINE,
-	WG_MULTIPLE_TOP_LEFT_TOP_TO_BOTTOM,
+	WG_MULTIPLE_TOP_LEFT,
 	WG_BUTTON,
 };
 typedef enum WgType WgType;
@@ -36,9 +36,15 @@ void wg_delete(Wg* wg);
 
 Wg* new_wg_text_line(char* string, SDL_Color fg_color);
 
-Wg* new_wg_mtlttb(int spacing, int offset_x, int offset_y);
-void wg_mtlttb_add_sub(Wg* wg, Wg* sub);
-void wg_mtlttb_empty(Wg* wg);
+enum Orientation {
+	ORIENTATION_TOP_TO_BOTTOM,
+	ORIENTATION_LEFT_TO_RIGHT,
+};
+typedef enum Orientation Orientation;
+
+Wg* new_wg_multopleft(int spacing, int offset_x, int offset_y, Orientation orientation);
+void wg_multopleft_add_sub(Wg* wg, Wg* sub);
+void wg_multopleft_empty(Wg* wg);
 
 Wg* new_wg_button(Wg* sub_wg, void* whatever, void (*left_click_callback)(void* whatever));
 
