@@ -112,17 +112,17 @@ static Dims wg_multopleft_get_dims(WgMulTopLeft const* wg) {
 		Dims sub_dims = wg_get_dims(wg->sub_wgs[i]);
 		switch (wg->orientation) {
 			case ORIENTATION_TOP_TO_BOTTOM:
-				dims.h += sub_dims.h;
 				if (i != 0) {
 					dims.h += wg->spacing;
 				}
+				dims.h += sub_dims.h;
 				dims.w = max(dims.w, sub_dims.w);
 			break;
 			case ORIENTATION_LEFT_TO_RIGHT:
-				dims.w += sub_dims.w;
 				if (i != 0) {
 					dims.w += wg->spacing;
 				}
+				dims.w += sub_dims.w;
 				dims.h = max(dims.h, sub_dims.h);
 			break;
 			default: assert(false);
@@ -151,9 +151,19 @@ static bool wg_multopleft_click(WgMulTopLeft const* wg, int x, int y, int cx, in
 	for (int i = 0; i < wg->sub_wgs_count; i++) {
 		Dims sub_dims = wg_get_dims(wg->sub_wgs[i]);
 		SDL_Rect r = {x, y, sub_dims.w, sub_dims.h};
+		#if 0
+		/* TODO: This does not work sometimes for the rightmost button of a left-to-right.
+		 * The reason for this bug seem non-obvious enough that it warrants investigation. */
 		if (r.x <= cx && cx < r.x + r.w && r.y <= cy && cy < r.y + r.h) {
-			return wg_click(wg->sub_wgs[i], x, y, cx, cy);
+			if (wg_click(wg->sub_wgs[i], x, y, cx, cy)) {
+				return true;
+			}
 		}
+		#else
+		if (wg_click(wg->sub_wgs[i], x, y, cx, cy)) {
+			return true;
+		}
+		#endif
 		switch (wg->orientation) {
 			case ORIENTATION_TOP_TO_BOTTOM: y += sub_dims.h + wg->spacing; break;
 			case ORIENTATION_LEFT_TO_RIGHT: x += sub_dims.w + wg->spacing; break;
