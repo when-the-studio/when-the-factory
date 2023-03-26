@@ -183,19 +183,17 @@ static void wg_multopleft_delete(WgMulTopLeft* wg) {
 struct WgButton {
 	Wg base;
 	Wg* sub_wg;
-	void* whatever;
-	void (*left_click_callback)(void* whatever);
+	CallbackWithData left_click_callback;
 };
 typedef struct WgButton WgButton;
 
-Wg* new_wg_button(Wg* sub_wg, void* whatever, void (*left_click_callback)(void* whatever)) {
+Wg* new_wg_button(Wg* sub_wg, CallbackWithData left_click_callback) {
 	WgButton* wg = malloc(sizeof(WgButton));
 	*wg = (WgButton){
 		.base = {
 			.type = WG_BUTTON,
 		},
 		.sub_wg = sub_wg,
-		.whatever = whatever,
 		.left_click_callback = left_click_callback,
 	};
 	return (Wg*)wg;
@@ -213,7 +211,7 @@ static bool wg_button_click(WgButton const* wg, int x, int y, int cx, int cy) {
 	Dims sub_dims = wg_get_dims(wg->sub_wg);
 	SDL_Rect r = {x, y, sub_dims.w, sub_dims.h};
 	if (r.x <= cx && cx < r.x + r.w && r.y <= cy && cy < r.y + r.h) {
-		wg->left_click_callback(wg->whatever);
+		wg->left_click_callback.func(wg->left_click_callback.whatever);
 		return true;
 	}
 	return false;

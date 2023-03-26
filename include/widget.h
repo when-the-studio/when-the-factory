@@ -10,6 +10,14 @@ struct Dims {
 };
 typedef struct Dims Dims;
 
+/* TODO: Move to some "utils.h" header file. */
+struct CallbackWithData {
+	void (*func)(void* whatever);
+	void* whatever;
+};
+typedef struct CallbackWithData CallbackWithData;
+
+
 enum WgType {
 	WG_TEXT_LINE,
 	WG_MULTIPLE_TOP_LEFT,
@@ -46,6 +54,6 @@ Wg* new_wg_multopleft(int spacing, int offset_x, int offset_y, Orientation orien
 void wg_multopleft_add_sub(Wg* wg, Wg* sub);
 void wg_multopleft_empty(Wg* wg);
 
-Wg* new_wg_button(Wg* sub_wg, void* whatever, void (*left_click_callback)(void* whatever));
+Wg* new_wg_button(Wg* sub_wg, CallbackWithData left_click_callback);
 
 #endif /* WHEN_THE_FACTORY_WIDGET_ */
