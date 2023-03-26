@@ -41,10 +41,11 @@ static void test_callback_print(void* whatever) {
 
 static void test_callback_add(void* whatever) {
 	(void)whatever;
+	int r = rand() % 256;
 	wg_multopleft_add_sub(g_wg_root,
 		new_wg_text_line(
 			"owo",
-			(SDL_Color){255, 0, 0, 255}
+			(SDL_Color){255, r, 255 - r, 255}
 		)
 	);
 }
@@ -62,7 +63,7 @@ void init_wg_tree(void) {
 		new_wg_button(
 			new_wg_text_line(
 				"test xd",
-				(SDL_Color){255, 0, 0, 255}
+				(SDL_Color){0, 0, 255, 255}
 			),
 			NULL,
 			test_callback_print
@@ -71,14 +72,14 @@ void init_wg_tree(void) {
 	wg_multopleft_add_sub(g_wg_root,
 		new_wg_text_line(
 			"test uwu !!! ballz ``sus amogus -1 +8 1000 gaming",
-			(SDL_Color){255, 0, 0, 255}
+			(SDL_Color){0, 0, 0, 255}
 		)
 	);
 	wg_multopleft_add_sub(g_wg_root,
 		new_wg_button(
 			new_wg_text_line(
 				"add",
-				(SDL_Color){255, 0, 0, 255}
+				(SDL_Color){0, 0, 255, 255}
 			),
 			NULL,
 			test_callback_add
@@ -125,7 +126,7 @@ void ui_select_tile(TileCoords tc) {
 	wg_multopleft_add_sub(g_tile_wg_multopleft,
 		new_wg_text_line(
 			(char*)name,
-			(SDL_Color){255, 0, 0, 255}
+			(SDL_Color){0, 0, 0, 255}
 		)
 	);
 	for (int i = 0; i < tile->ent_count; i++) {
@@ -140,19 +141,20 @@ void ui_select_tile(TileCoords tc) {
 				wg_multopleft_add_sub(wg_ent,
 					new_wg_text_line(
 						"Human",
-						(SDL_Color){255, 0, 0, 255}
+						(SDL_Color){0, 0, 0, 255}
 					)
 				);
 				char* name;
+				SDL_Color color;
 				switch (data_human->faction) {
-					case FACTION_YELLOW: name = "Yellow"; break;
-					case FACTION_RED:    name = "Red";    break;
+					case FACTION_YELLOW: name = "Yellow"; color = (SDL_Color){255, 255, 0, 255}; break;
+					case FACTION_RED:    name = "Red";    color = (SDL_Color){255, 0,   0, 255}; break;
 					default: assert(false);
 				}
 				wg_multopleft_add_sub(wg_ent,
 					new_wg_text_line(
 						name,
-						(SDL_Color){255, 0, 0, 255}
+						color
 					)
 				);
 				typedef struct { int dx, dy; char* name; } Dir;
@@ -168,7 +170,7 @@ void ui_select_tile(TileCoords tc) {
 						new_wg_button(
 							new_wg_text_line(
 								dir.name,
-								(SDL_Color){255, 0, 0, 255}
+								(SDL_Color){0, 0, 255, 255}
 							),
 							data,
 							test_callback_move_entity
@@ -176,11 +178,12 @@ void ui_select_tile(TileCoords tc) {
 					);
 				}
 			break;
-			case ENT_TEST_BLOCK:
+			case ENT_TEST_BLOCK:;
+				EntDataTestBlock* data_block = ent->data;
 				wg_multopleft_add_sub(wg_ent,
 					new_wg_text_line(
 						"Test block",
-						(SDL_Color){255, 0, 0, 255}
+						data_block->color
 					)
 				);
 			break;
