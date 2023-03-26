@@ -150,10 +150,10 @@ static bool wg_multopleft_click(WgMulTopLeft const* wg, int x, int y, int cx, in
 	y += wg->offset_y;
 	for (int i = 0; i < wg->sub_wgs_count; i++) {
 		Dims sub_dims = wg_get_dims(wg->sub_wgs[i]);
-		SDL_Rect r = {x, y, sub_dims.w, sub_dims.h};
 		#if 0
 		/* TODO: This does not work sometimes for the rightmost button of a left-to-right.
 		 * The reason for this bug seem non-obvious enough that it warrants investigation. */
+		SDL_Rect r = {x, y, sub_dims.w, sub_dims.h};
 		if (r.x <= cx && cx < r.x + r.w && r.y <= cy && cy < r.y + r.h) {
 			if (wg_click(wg->sub_wgs[i], x, y, cx, cy)) {
 				return true;

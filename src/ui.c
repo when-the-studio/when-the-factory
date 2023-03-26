@@ -25,7 +25,7 @@ static void test_callback_clear(void* whatever) {
 	wg_multopleft_empty(g_wg_root);
 }
 
-Wg* g_tile_wg_multopleft = NULL;
+static Wg* s_tile_info_wg = NULL;
 
 void init_wg_tree(void) {
 	g_wg_root = new_wg_multopleft(10, 10, 10, ORIENTATION_TOP_TO_BOTTOM);
@@ -66,16 +66,13 @@ void init_wg_tree(void) {
 		)
 	);
 	wg_multopleft_add_sub(g_wg_root,
-		g_tile_wg_multopleft = new_wg_multopleft(10, 10, 0, ORIENTATION_TOP_TO_BOTTOM)
+		s_tile_info_wg = new_wg_multopleft(10, 10, 0, ORIENTATION_TOP_TO_BOTTOM)
 	);
 }
 
 /* Selected tile, if any. */
 bool g_sel_tile_exists = false;
 TileCoords g_sel_tile_coords = {0, 0};
-
-void ui_unselect_tile(void);
-void refresh_selected_tile_ui(void);
 
 struct CallbackMoveEntityData {
 	EntId eid;
@@ -91,9 +88,12 @@ void test_callback_move_entity(void* whatever) {
 
 void ui_select_tile(TileCoords tc) {
 	ui_unselect_tile();
+	g_sel_tile_exists = true;
+	g_sel_tile_coords = tc;
+
 	Tile* tile = get_tile(tc);
 	char const* name = g_tile_type_spec_table[tile->type].name;
-	wg_multopleft_add_sub(g_tile_wg_multopleft,
+	wg_multopleft_add_sub(s_tile_info_wg,
 		new_wg_text_line(
 			(char*)name,
 			(SDL_Color){0, 0, 0, 255}
@@ -104,7 +104,7 @@ void ui_select_tile(TileCoords tc) {
 		Ent* ent = get_ent(eid);
 		if (ent == NULL) continue;
 		Wg* wg_ent = new_wg_multopleft(10, 10, 0, ORIENTATION_LEFT_TO_RIGHT);
-		wg_multopleft_add_sub(g_tile_wg_multopleft, wg_ent);
+		wg_multopleft_add_sub(s_tile_info_wg, wg_ent);
 		switch (ent->type) {
 			case ENT_HUMAIN:;
 				EntDataHuman* data_human = ent->data;
@@ -163,11 +163,12 @@ void ui_select_tile(TileCoords tc) {
 }
 
 void ui_unselect_tile(void) {
-	wg_multopleft_empty(g_tile_wg_multopleft);
+	g_sel_tile_exists = false;
+	wg_multopleft_empty(s_tile_info_wg);
 }
 
 void refresh_selected_tile_ui(void) {
-	wg_multopleft_empty(g_tile_wg_multopleft);
+	wg_multopleft_empty(s_tile_info_wg);
 	if (g_sel_tile_exists) {
 		ui_select_tile(g_sel_tile_coords);
 	}

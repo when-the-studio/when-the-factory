@@ -142,11 +142,8 @@ int main() {
 								bool sel_tile_is_alrady_tc =
 									g_sel_tile_exists && tile_coords_eq(g_sel_tile_coords, tc);
 								if (tile_coords_are_valid(tc) && !sel_tile_is_alrady_tc) {
-									g_sel_tile_exists = true;
-									g_sel_tile_coords = tc;
 									ui_select_tile(tc);
 								} else {
-									g_sel_tile_exists = false;
 									ui_unselect_tile();
 								}
 							}
