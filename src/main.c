@@ -280,7 +280,7 @@ int main() {
 
 		render_string_pixel("test uwu !!! ballz ``sus amogus -1 +8 1000",
 			(WinCoords){10, 10}, PP_TOP_LEFT,
-			(SDL_Color){0, 0, 0, 255});
+			(SDL_Color){255, 0, 0, 255});
 		SDL_RenderPresent(g_renderer);
 	}
 	return 0;

@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
 #include "renderer.h"
@@ -29,16 +30,56 @@ void renderer_init(void) {
 		assert(false);
 	}
 	
+	/* Load the spritesheet for tiles and stuff. */
 	SDL_Surface* surface = IMG_Load("../assets/images/spritesheet-test-01.png");
 	assert(surface != NULL);
 	g_spritesheet = SDL_CreateTextureFromSurface(g_renderer, surface);
 	SDL_FreeSurface(surface);
 	assert(g_spritesheet != NULL);
 
+	/* Load the spritesheet for glyphs of the font.
+	 * The image uses opaque black on a fully transparent background
+	 * (these colors make it a bit nicer to edit in a pixel-art editor),
+	 * but in order to change the color of the glyphs when rendering them, it is better to
+	 * have the glyphs opaque white, so we convert opaque black to opaque white here. */
 	surface = IMG_Load("../assets/images/spritesheet-font-01.png");
 	assert(surface != NULL);
-	s_spritesheet_font = SDL_CreateTextureFromSurface(g_renderer, surface);
+	SDL_Surface* surface_tmp = SDL_ConvertSurfaceFormat(surface, SDL_PIXELFORMAT_RGBA32, 0);
 	SDL_FreeSurface(surface);
+	surface = surface_tmp;
+	assert(surface != NULL);
+	assert(surface->format->format == SDL_PIXELFORMAT_RGBA32);
+	typedef struct PixelRGBA32 {uint8_t r, g, b, a;} PixelRGBA32;
+	assert(sizeof(PixelRGBA32) * 8 == surface->format->BitsPerPixel);
+	SDL_LockSurface(surface);
+	PixelRGBA32* src_pixels = surface->pixels;
+	PixelRGBA32* dst_pixels = calloc(surface->w * surface->h, sizeof(PixelRGBA32));
+	for (int y = 0; y < surface->h; y++) for (int x = 0; x < surface->w; x++) {
+		PixelRGBA32 src = src_pixels[y * surface->w + x];
+		PixelRGBA32* dst = &dst_pixels[y * surface->w + x];
+		if (src.r == 0 && src.g == 0 && src.b == 0 && src.a == 255) {
+			/* Map opaque black to opaque white. */
+			*dst = (PixelRGBA32){255, 255, 255, 255};
+		} else if (src.a == 0) {
+			/* Ignore the fully transparent pixels. */
+			*dst = src;
+		} else {
+			/* The font glyph spritesheet contains a pixel which is neither fully transparent
+			 * nor fully opaque black, this should be handled here explicitely (like should
+			 * we ignore it? what about the coloring of text? etc.). */
+			assert(false);
+		}
+	}
+	SDL_UnlockSurface(surface);
+	SDL_Surface* surface_modified = SDL_CreateRGBSurfaceWithFormatFrom(dst_pixels,
+		surface->w, surface->h, 32, surface->pitch, SDL_PIXELFORMAT_RGBA32);
+	SDL_FreeSurface(surface);
+	#if 0
+		/* Can be used to see how we modify the glyph spritesheet for debugging. */
+		SDL_SaveBMP(surface_modified, "modified-spritesheet-font.bmp");
+	#endif
+	s_spritesheet_font = SDL_CreateTextureFromSurface(g_renderer, surface_modified);
+	SDL_FreeSurface(surface_modified);
 	assert(s_spritesheet_font != NULL);
 
 	IMG_Quit();
@@ -87,8 +128,11 @@ static int string_pixel_width(char const* string, int scale, int spacing) {
 }
 
 void render_string_pixel(char const* string, WinCoords wc, PinPoint pp, SDL_Color color) {
-	/* TODO: Use the given color instead of just black. */
 	/* TODO: Take scale and spacing as parameters, in a nice way. */
+
+	int color_mod_is_supported_if_zero = SDL_SetTextureColorMod(s_spritesheet_font,
+		color.r, color.g, color.b);
+	assert(color_mod_is_supported_if_zero == 0);
 
 	int scale = 3;
 	int spacing = 2;
