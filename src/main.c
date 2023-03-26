@@ -35,6 +35,11 @@ void render_tile_ground(TileType tile_type, SDL_Rect dst_rect) {
 	SDL_RenderCopy(g_renderer, g_spritesheet, &rect_in_spritesheet, &dst_rect);
 }
 
+void render_human(SDL_Rect dst_rect) {
+	SDL_Rect rect_in_spritesheet = {0, 16, 3, 4};
+	SDL_RenderCopy(g_renderer, g_spritesheet, &rect_in_spritesheet, &dst_rect);
+}
+
 int main() {
 	renderer_init();
 	init_map();
@@ -209,10 +214,13 @@ int main() {
 
 				switch (ent->type) {
 					case ENT_HUMAIN: {
-						int ew = 0.1f * tile_render_size;
-						int eh = 0.3f * tile_render_size;
+						int ew = 0.3f * tile_render_size;
+						int eh = 0.4f * tile_render_size;
+						/* Draw human sprite. */
 						SDL_Rect rect = {
 							dst_rect.x + ex - ew / 2.0f, dst_rect.y + ey - eh / 2.0f, ew, eh};
+						render_human(rect);
+						/* Draw faction color. */
 						EntDataHuman* data = ent->data;
 						switch (data->faction) {
 							case FACTION_YELLOW:
@@ -223,7 +231,11 @@ int main() {
 							break;
 							default: assert(false);
 						}
-						SDL_RenderFillRect(g_renderer, &rect);
+						#define FACTION_SIDE 8
+						SDL_Rect faction_rect = {
+							rect.x + rect.w/2 - FACTION_SIDE/2, rect.y - FACTION_SIDE/2 - FACTION_SIDE,
+							FACTION_SIDE, FACTION_SIDE};
+						SDL_RenderFillRect(g_renderer, &faction_rect);
 					break; }
 
 					case ENT_TEST_BLOCK: {
