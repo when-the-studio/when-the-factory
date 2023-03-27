@@ -91,7 +91,7 @@ void init_map(void) {
 	for(int y = 0; y < N_TILES_H; ++y) for(int x = 0; x < N_TILES_W; ++x) {
 		TileType* tt = &tt_grid_src[y * N_TILES_W + x];
 		*tt = rand() % TILE_TYPE_NUM;
-		
+
 		/* Put some water at the edges. */
 		#define MARGIN 2
 		if (x < MARGIN || x >= N_TILES_W-MARGIN || y < MARGIN || y >= N_TILES_H-MARGIN) {
@@ -125,11 +125,14 @@ void init_map(void) {
 					}
 				}
 			}
-			
+
 			/* Modify the terrain. */
 			switch (tt_src) {
 				case TILE_FOREST:
-					if (neighbors_forest <= 1) {
+					if (neighbors_forest <= 1 || neighbors_river <= 1) {
+						*tt_dst = TILE_PLAIN;
+					}
+					if (neighbors_forest >= 4 && neighbors_river <= 3) {
 						*tt_dst = TILE_PLAIN;
 					}
 				break;
@@ -139,8 +142,18 @@ void init_map(void) {
 					}
 				break;
 				case TILE_RIVER:
-					if (neighbors_river <= 1) {
+					if (neighbors_river <= 1 || neighbors_river >= 6) {
 						*tt_dst = TILE_PLAIN;
+					}
+				case TILE_PLAIN:
+					if (neighbors_river >= 2) {
+						*tt_dst = TILE_FOREST;
+					}
+					if (neighbors_mountain >= 7) {
+						*tt_dst = TILE_MOUTAIN;
+					}
+					if (neighbors_plain >= 8) {
+						*tt_dst =(rand() % 4) ? TILE_FOREST : TILE_RIVER;
 					}
 				break;
 			}

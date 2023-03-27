@@ -7,8 +7,8 @@
 
 #define TILE_SIZE 100
 
-#define N_TILES_H 50
-#define N_TILES_W 50
+#define N_TILES_H 250
+#define N_TILES_W 250
 #define N_TILES (N_TILES_H * N_TILES_W)
 
 /* Type of terrain for each tile of the map. */
