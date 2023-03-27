@@ -145,6 +145,7 @@ void init_map(void) {
 					if (neighbors_river <= 1 || neighbors_river >= 6) {
 						*tt_dst = TILE_PLAIN;
 					}
+				break;
 				case TILE_PLAIN:
 					if (neighbors_river >= 2) {
 						*tt_dst = TILE_FOREST;
