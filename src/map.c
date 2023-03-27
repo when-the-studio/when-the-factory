@@ -82,16 +82,89 @@ void entity_move(Entity* entity, TileCoords new_pos) {
 Tile* g_grid = NULL;
 
 void init_map(void) {
+	/* Terrain generation on tile types.
+	 * We use two grids so that each generation step can read from one grid and write to the next,
+	 * so that there is no problems araising from reading what we are modifying (which can introduce
+	 * asymmetry due to the order in which we process each tile). */
+	TileType* tt_grid_src = malloc(N_TILES * sizeof(TileType));
+	TileType* tt_grid_dst = malloc(N_TILES * sizeof(TileType));
+	for(int y = 0; y < N_TILES_H; ++y) for(int x = 0; x < N_TILES_W; ++x) {
+		TileType* tt = &tt_grid_src[y * N_TILES_W + x];
+		*tt = rand() % TILE_TYPE_NUM;
+		
+		/* Put some water at the edges. */
+		#define MARGIN 2
+		if (x < MARGIN || x >= N_TILES_W-MARGIN || y < MARGIN || y >= N_TILES_H-MARGIN) {
+			*tt = TILE_RIVER;
+		}
+	}
+
+	for (int gen_i = 0; gen_i < 6; gen_i++) {
+		for(int y = 0; y < N_TILES_H; ++y) for(int x = 0; x < N_TILES_W; ++x) {
+			TileType tt_src = tt_grid_src[y * N_TILES_W + x];
+			TileType* tt_dst = &tt_grid_dst[y * N_TILES_W + x];
+			*tt_dst = tt_src;
+
+			/* Count neighbors. */
+			typedef struct Dir {int dx, dy;} Dir;
+			Dir dirs[8] = {{-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 1}, {1, -1}, {1, 0}, {1, 1}};
+			int neighbors_forest = 0;
+			int neighbors_mountain = 0;
+			int neighbors_river = 0;
+			int neighbors_plain = 0;
+			for (int dir_i = 0; dir_i < 8; dir_i++) {
+				int neighbor_x = x + dirs[dir_i].dx;
+				int neighbor_y = y + dirs[dir_i].dy;
+				if (0 <= neighbor_x && neighbor_x < N_TILES_W && 0 <= neighbor_y && neighbor_y < N_TILES_H) {
+					TileType neighbor = tt_grid_src[neighbor_y * N_TILES_W + neighbor_x];
+					switch (neighbor) {
+						case TILE_FOREST:  neighbors_forest++;   break;
+						case TILE_MOUTAIN: neighbors_mountain++; break;
+						case TILE_RIVER:   neighbors_river++;    break;
+						case TILE_PLAIN:   neighbors_plain++;    break;
+					}
+				}
+			}
+			
+			/* Modify the terrain. */
+			switch (tt_src) {
+				case TILE_FOREST:
+					if (neighbors_forest <= 1) {
+						*tt_dst = TILE_PLAIN;
+					}
+				break;
+				case TILE_MOUTAIN:
+					if (neighbors_mountain <= 1) {
+						*tt_dst = TILE_PLAIN;
+					}
+				break;
+				case TILE_RIVER:
+					if (neighbors_river <= 1) {
+						*tt_dst = TILE_PLAIN;
+					}
+				break;
+			}
+		}
+
+		/* Swap src and dst for next round. */
+		TileType* tmp = tt_grid_src;
+		tt_grid_src = tt_grid_dst;
+		tt_grid_dst = tmp;
+	}
+
 	g_grid = malloc(N_TILES * sizeof(Tile));
 	for(int y = 0; y < N_TILES_H; ++y) for(int x = 0; x < N_TILES_W; ++x) {
 		TileCoords tc = {x, y};
 		Tile* tile = get_tile(tc);
 		*tile = (Tile){
-			.type = rand() % TILE_TYPE_NUM,
+			.type = tt_grid_src[y * N_TILES_W + x],
 			.entities = NULL,
 			.entity_count = 0,
 		};
 	}
+
+	free(tt_grid_src);
+	free(tt_grid_dst);
 }
 
 Tile* get_tile(TileCoords coords) {
