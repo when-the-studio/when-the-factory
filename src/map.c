@@ -105,23 +105,21 @@ void init_map(void) {
 			TileType* tt_dst = &tt_grid_dst[y * N_TILES_W + x];
 			*tt_dst = tt_src;
 
-			/* Count neighbors. */
+			/* Count neighbors, both in the 3x3 square around the tile (`neighbors_8`)
+			 * and in the '+' shape of tiles adjacent to the tile (`neighbors_4`). */
 			typedef struct Dir {int dx, dy;} Dir;
+			#define DIR_ADJACENT(dir_) (abs(dir_.dx) + abs(dir_.dy) == 1)
 			Dir dirs[8] = {{-1, -1}, {-1, 0}, {-1, 1}, {0, -1}, {0, 1}, {1, -1}, {1, 0}, {1, 1}};
-			int neighbors_forest = 0;
-			int neighbors_mountain = 0;
-			int neighbors_river = 0;
-			int neighbors_plain = 0;
+			int neighbors_8[TILE_TYPE_NUM] = {0};
+			int neighbors_4[TILE_TYPE_NUM] = {0};
 			for (int dir_i = 0; dir_i < 8; dir_i++) {
 				int neighbor_x = x + dirs[dir_i].dx;
 				int neighbor_y = y + dirs[dir_i].dy;
 				if (0 <= neighbor_x && neighbor_x < N_TILES_W && 0 <= neighbor_y && neighbor_y < N_TILES_H) {
-					TileType neighbor = tt_grid_src[neighbor_y * N_TILES_W + neighbor_x];
-					switch (neighbor) {
-						case TILE_FOREST:  neighbors_forest++;   break;
-						case TILE_MOUTAIN: neighbors_mountain++; break;
-						case TILE_RIVER:   neighbors_river++;    break;
-						case TILE_PLAIN:   neighbors_plain++;    break;
+					TileType neighbor_tt = tt_grid_src[neighbor_y * N_TILES_W + neighbor_x];
+					neighbors_8[neighbor_tt]++;
+					if (DIR_ADJACENT(dirs[dir_i])) {
+						neighbors_4[neighbor_tt]++;
 					}
 				}
 			}
@@ -129,32 +127,32 @@ void init_map(void) {
 			/* Modify the terrain. */
 			switch (tt_src) {
 				case TILE_FOREST:
-					if (neighbors_forest <= 1 || neighbors_river <= 1) {
+					if (neighbors_8[TILE_FOREST] <= 1 || neighbors_8[TILE_RIVER] <= 1) {
 						*tt_dst = TILE_PLAIN;
 					}
-					if (neighbors_forest >= 4 && neighbors_river <= 3) {
+					if (neighbors_8[TILE_FOREST] >= 4 && neighbors_8[TILE_RIVER] <= 3) {
 						*tt_dst = TILE_PLAIN;
 					}
 				break;
 				case TILE_MOUTAIN:
-					if (neighbors_mountain <= 1) {
+					if (neighbors_8[TILE_MOUTAIN] <= 1) {
 						*tt_dst = TILE_PLAIN;
 					}
 				break;
 				case TILE_RIVER:
-					if (neighbors_river <= 1 || neighbors_river >= 6) {
+					if (neighbors_8[TILE_RIVER] <= 1 || neighbors_8[TILE_RIVER] >= 6) {
 						*tt_dst = TILE_PLAIN;
 					}
 				break;
 				case TILE_PLAIN:
-					if (neighbors_river >= 2) {
+					if (neighbors_8[TILE_RIVER] >= 2) {
 						*tt_dst = TILE_FOREST;
 					}
-					if (neighbors_mountain >= 7) {
+					if (neighbors_8[TILE_MOUTAIN] >= 7) {
 						*tt_dst = TILE_MOUTAIN;
 					}
-					if (neighbors_plain >= 8) {
-						*tt_dst =(rand() % 4) ? TILE_FOREST : TILE_RIVER;
+					if (neighbors_8[TILE_PLAIN] >= 8) {
+						*tt_dst = (rand() % 4) ? TILE_FOREST : TILE_RIVER;
 					}
 				break;
 			}
