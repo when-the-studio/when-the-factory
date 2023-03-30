@@ -2,6 +2,9 @@
 #include <assert.h>
 #include "map.h"
 
+int g_map_w = 250;
+int g_map_h = 250;
+
 TileTypeSpec g_tile_type_spec_table[TILE_TYPE_NUM] = {
 	[TILE_PLAIN] = {
 		.rect_in_spritesheet = {0, 0, 8, 8},
@@ -23,8 +26,8 @@ TileTypeSpec g_tile_type_spec_table[TILE_TYPE_NUM] = {
 
 bool tile_coords_are_valid(TileCoords coords) {
 	return
-		0 <= coords.x && coords.x < N_TILES_W &&
-		0 <= coords.y && coords.y < N_TILES_H;
+		0 <= coords.x && coords.x < g_map_w &&
+		0 <= coords.y && coords.y < g_map_h;
 }
 
 bool tile_coords_eq(TileCoords a, TileCoords b) {
@@ -72,8 +75,8 @@ void entity_delete(Entity* entity) {
 
 void entity_move(Entity* entity, TileCoords new_pos) {
 	TileCoords old_pos = entity->pos;
-	Tile* old_tile = &g_grid[old_pos.y * N_TILES_W + old_pos.x];
-	Tile* new_tile = &g_grid[new_pos.y * N_TILES_W + new_pos.x];
+	Tile* old_tile = &g_grid[old_pos.y * g_map_w + old_pos.x];
+	Tile* new_tile = &g_grid[new_pos.y * g_map_w + new_pos.x];
 	remove_entity_from_tile_list(entity, old_tile);
 	add_entity_to_tile_list(entity, new_tile);
 	entity->pos = new_pos;
@@ -88,21 +91,21 @@ void init_map(void) {
 	 * asymmetry due to the order in which we process each tile). */
 	TileType* tt_grid_src = malloc(N_TILES * sizeof(TileType));
 	TileType* tt_grid_dst = malloc(N_TILES * sizeof(TileType));
-	for(int y = 0; y < N_TILES_H; ++y) for(int x = 0; x < N_TILES_W; ++x) {
-		TileType* tt = &tt_grid_src[y * N_TILES_W + x];
+	for(int y = 0; y < g_map_h; ++y) for(int x = 0; x < g_map_w; ++x) {
+		TileType* tt = &tt_grid_src[y * g_map_w + x];
 		*tt = rand() % TILE_TYPE_NUM;
 
 		/* Put some water at the edges. */
 		#define MARGIN 2
-		if (x < MARGIN || x >= N_TILES_W-MARGIN || y < MARGIN || y >= N_TILES_H-MARGIN) {
+		if (x < MARGIN || x >= g_map_w-MARGIN || y < MARGIN || y >= g_map_h-MARGIN) {
 			*tt = TILE_RIVER;
 		}
 	}
 
 	for (int gen_i = 0; gen_i < 6; gen_i++) {
-		for(int y = 0; y < N_TILES_H; ++y) for(int x = 0; x < N_TILES_W; ++x) {
-			TileType tt_src = tt_grid_src[y * N_TILES_W + x];
-			TileType* tt_dst = &tt_grid_dst[y * N_TILES_W + x];
+		for(int y = 0; y < g_map_h; ++y) for(int x = 0; x < g_map_w; ++x) {
+			TileType tt_src = tt_grid_src[y * g_map_w + x];
+			TileType* tt_dst = &tt_grid_dst[y * g_map_w + x];
 			*tt_dst = tt_src;
 
 			/* Count neighbors, both in the 3x3 square around the tile (`neighbors_8`)
@@ -115,8 +118,8 @@ void init_map(void) {
 			for (int dir_i = 0; dir_i < 8; dir_i++) {
 				int neighbor_x = x + dirs[dir_i].dx;
 				int neighbor_y = y + dirs[dir_i].dy;
-				if (0 <= neighbor_x && neighbor_x < N_TILES_W && 0 <= neighbor_y && neighbor_y < N_TILES_H) {
-					TileType neighbor_tt = tt_grid_src[neighbor_y * N_TILES_W + neighbor_x];
+				if (0 <= neighbor_x && neighbor_x < g_map_w && 0 <= neighbor_y && neighbor_y < g_map_h) {
+					TileType neighbor_tt = tt_grid_src[neighbor_y * g_map_w + neighbor_x];
 					neighbors_8[neighbor_tt]++;
 					if (DIR_ADJACENT(dirs[dir_i])) {
 						neighbors_4[neighbor_tt]++;
@@ -165,11 +168,11 @@ void init_map(void) {
 	}
 
 	g_grid = malloc(N_TILES * sizeof(Tile));
-	for(int y = 0; y < N_TILES_H; ++y) for(int x = 0; x < N_TILES_W; ++x) {
+	for(int y = 0; y < g_map_h; ++y) for(int x = 0; x < g_map_w; ++x) {
 		TileCoords tc = {x, y};
 		Tile* tile = get_tile(tc);
 		*tile = (Tile){
-			.type = tt_grid_src[y * N_TILES_W + x],
+			.type = tt_grid_src[y * g_map_w + x],
 			.entities = NULL,
 			.entity_count = 0,
 		};
@@ -181,5 +184,5 @@ void init_map(void) {
 
 Tile* get_tile(TileCoords coords) {
 	assert(tile_coords_are_valid(coords));
-	return &g_grid[coords.y * N_TILES_W + coords.x];
+	return &g_grid[coords.y * g_map_w + coords.x];
 }
