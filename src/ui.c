@@ -90,12 +90,16 @@ void ui_select_tile(TileCoords tc) {
 		EntId eid = tile->ents[i];
 		Ent* ent = get_ent(eid);
 		if (ent == NULL) continue;
-		Wg* wg_ent = new_wg_multopleft(10, 10, 0, ORIENTATION_LEFT_TO_RIGHT);
-		wg_multopleft_add_sub(s_wg_tile_info, wg_ent);
+		Wg* wg_ent = NULL;
 		switch (ent->type) {
 			case ENT_HUMAIN:;
+				wg_ent = new_wg_multopleft(6, 0, 0, ORIENTATION_TOP_TO_BOTTOM);
+				Wg* wg_ent_info = new_wg_multopleft(6, 0, 0, ORIENTATION_LEFT_TO_RIGHT);
+				wg_multopleft_add_sub(wg_ent, wg_ent_info);
+				Wg* wg_ent_buttons = new_wg_multopleft(4, 0, 0, ORIENTATION_LEFT_TO_RIGHT);
+				wg_multopleft_add_sub(wg_ent, wg_ent_buttons);
 				EntDataHuman* data_human = ent->data;
-				wg_multopleft_add_sub(wg_ent,
+				wg_multopleft_add_sub(wg_ent_info,
 					new_wg_text_line("Human", RGB(0, 0, 0))
 				);
 				char* name;
@@ -105,7 +109,7 @@ void ui_select_tile(TileCoords tc) {
 					case FACTION_RED:    name = "Red";    color = (SDL_Color){255, 0,   0, 255}; break;
 					default: assert(false);
 				}
-				wg_multopleft_add_sub(wg_ent,
+				wg_multopleft_add_sub(wg_ent_info,
 					new_wg_text_line(name, color)
 				);
 				typedef struct { int dx, dy; char* name; } Dir;
@@ -117,15 +121,20 @@ void ui_select_tile(TileCoords tc) {
 						.eid = eid,
 						.dst_pos = {tc.x + dir.dx, tc.y + dir.dy},
 					};
-					wg_multopleft_add_sub(wg_ent,
+					wg_multopleft_add_sub(wg_ent_buttons,
 						new_wg_button(
-							new_wg_text_line(dir.name, RGB(0, 0, 255)),
+							new_wg_box(
+								new_wg_text_line(dir.name, RGB(0, 0, 255)),
+								6, 6, 3,
+								RGB(0, 0, 0), RGB(255, 255, 255)
+							),
 							(CallbackWithData){.func = test_callback_move_entity, .whatever = data}
 						)
 					);
 				}
 			break;
 			case ENT_TEST_BLOCK:;
+				wg_ent = new_wg_multopleft(10, 0, 0, ORIENTATION_LEFT_TO_RIGHT);
 				EntDataTestBlock* data_block = ent->data;
 				wg_multopleft_add_sub(wg_ent,
 					new_wg_text_line("Test block", data_block->color)
@@ -133,6 +142,14 @@ void ui_select_tile(TileCoords tc) {
 			break;
 			default: assert(false);
 		}
+		assert(wg_ent != NULL);
+		wg_multopleft_add_sub(s_wg_tile_info, 
+			new_wg_box(
+				wg_ent,
+				6, 6, 3,
+				RGB(0, 0, 0), RGB(200, 200, 255)
+			)
+		);
 	}
 }
 
