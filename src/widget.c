@@ -224,64 +224,133 @@ static void wg_button_delete(WgButton* wg) {
 	free(wg);
 }
 
+/* *** Box widget section *** */
+
+struct WgBox {
+	Wg base;
+	Wg* sub_wg;
+	int margin_x, margin_y;
+	SDL_Color line_color, bg_color;
+};
+typedef struct WgBox WgBox;
+
+Wg* new_wg_box(Wg* sub_wg, int margin_x, int margin_y, SDL_Color line_color, SDL_Color bg_color) {
+	WgBox* wg = malloc(sizeof(WgBox));
+	*wg = (WgBox){
+		.base = {
+			.type = WG_BOX,
+		},
+		.sub_wg = sub_wg,
+		.margin_x = margin_x,
+		.margin_y = margin_y,
+		.line_color = line_color,
+		.bg_color = bg_color,
+	};
+	return (Wg*)wg;
+}
+
+static Dims wg_box_get_dims(WgBox const* wg) {
+	Dims dims = wg_get_dims(wg->sub_wg);
+	dims.w += wg->margin_x * 2;
+	dims.h += wg->margin_y * 2;
+	return dims;
+}
+
+static void wg_box_render(WgBox const* wg, int x, int y) {
+	Dims dims = wg_box_get_dims(wg);
+	SDL_Rect r = {x, y, dims.w, dims.h};
+	/* Draw the backgound. */
+	SDL_SetRenderDrawColor(g_renderer,
+		wg->bg_color.r, wg->bg_color.g, wg->bg_color.b, wg->bg_color.a);
+	SDL_RenderFillRect(g_renderer, &r);
+	/* Draw the outline with a thickness of 2 pixels
+	 * (SDL_RenderDrawRect only draws with thickness of 1 pixel so we call it twice). */
+	SDL_SetRenderDrawColor(g_renderer,
+		wg->line_color.r, wg->line_color.g, wg->line_color.b, wg->line_color.a);
+	SDL_RenderDrawRect(g_renderer, &r);
+	r.x++; r.y++; r.w -= 2; r.h -= 2;
+	SDL_RenderDrawRect(g_renderer, &r);
+	/* Draw the sub widget (at the end so it covers the backgound). */
+	wg_render(wg->sub_wg, x + wg->margin_x, y + wg->margin_y);
+}
+
+static bool wg_box_click(WgBox const* wg, int x, int y, int cx, int cy) {
+	Dims sub_dims = wg_get_dims(wg->sub_wg);
+	SDL_Rect sr = {x + wg->margin_x, y + wg->margin_y, sub_dims.w, sub_dims.h};
+	Dims dims = wg_box_get_dims(wg);
+	SDL_Rect r = {x, y, dims.w, dims.h};
+	if (sr.x <= cx && cx < sr.x + sr.w && sr.y <= cy && cy < sr.y + sr.h) {
+		return wg_click(wg->sub_wg, x + wg->margin_x, y + wg->margin_y, cx, cy);
+	} else if (r.x <= cx && cx < r.x + r.w && r.y <= cy && cy < r.y + r.h) {
+		return true;
+	} else {
+		return false;
+	}
+}
+
+static void wg_box_delete(WgBox* wg) {
+	wg_delete(wg->sub_wg);
+	free(wg);
+}
+
 /* *** Dynamic dispatch section *** */
 
 Dims wg_get_dims(Wg const* wg) {
 	switch (wg->type) {
-		case WG_TEXT_LINE:
-			return wg_text_line_get_dims((WgTextLine const*)wg);
-		break;
-		case WG_MULTIPLE_TOP_LEFT:
-			return wg_multopleft_get_dims((WgMulTopLeft const*)wg);
-		break;
-		case WG_BUTTON:
-			return wg_button_get_dims((WgButton const*)wg);
-		break;
+		#define CASE(type_value_, func_, type_) \
+			case type_value_: \
+				return func_##_get_dims((type_ const*)wg); \
+			break
+		CASE(WG_TEXT_LINE,         wg_text_line,  WgTextLine);
+		CASE(WG_MULTIPLE_TOP_LEFT, wg_multopleft, WgMulTopLeft);
+		CASE(WG_BUTTON,            wg_button,     WgButton);
+		CASE(WG_BOX,               wg_box,        WgBox);
+		#undef CASE
 		default: assert(false);
 	}
 }
 
 void wg_render(Wg const* wg, int x, int y) {
 	switch (wg->type) {
-		case WG_TEXT_LINE:
-			wg_text_line_render((WgTextLine const*)wg, x, y);
-		break;
-		case WG_MULTIPLE_TOP_LEFT:
-			wg_multopleft_render((WgMulTopLeft const*)wg, x, y);
-		break;
-		case WG_BUTTON:
-			wg_button_render((WgButton const*)wg, x, y);
-		break;
+		#define CASE(type_value_, func_, type_) \
+			case type_value_: \
+				func_##_render((type_ const*)wg, x, y); \
+			break
+		CASE(WG_TEXT_LINE,         wg_text_line,  WgTextLine);
+		CASE(WG_MULTIPLE_TOP_LEFT, wg_multopleft, WgMulTopLeft);
+		CASE(WG_BUTTON,            wg_button,     WgButton);
+		CASE(WG_BOX,               wg_box,        WgBox);
+		#undef CASE
 		default: assert(false);
 	}
 }
 
 bool wg_click(Wg const* wg, int x, int y, int cx, int cy) {
 	switch (wg->type) {
-		case WG_TEXT_LINE:
-			return wg_text_line_click((WgTextLine const*)wg, x, y, cx, cy);
-		break;
-		case WG_MULTIPLE_TOP_LEFT:
-			return wg_multopleft_click((WgMulTopLeft const*)wg, x, y, cx, cy);
-		break;
-		case WG_BUTTON:
-			return wg_button_click((WgButton const*)wg, x, y, cx, cy);
-		break;
+		#define CASE(type_value_, func_, type_) \
+			case type_value_: \
+				return func_##_click((type_ const*)wg, x, y, cx, cy); \
+			break
+		CASE(WG_TEXT_LINE,         wg_text_line,  WgTextLine);
+		CASE(WG_MULTIPLE_TOP_LEFT, wg_multopleft, WgMulTopLeft);
+		CASE(WG_BUTTON,            wg_button,     WgButton);
+		CASE(WG_BOX,               wg_box,        WgBox);
+		#undef CASE
 		default: assert(false);
 	}
 }
 
 void wg_delete(Wg* wg) {
 	switch (wg->type) {
-		case WG_TEXT_LINE:
-			wg_text_line_delete((WgTextLine*)wg);
-		break;
-		case WG_MULTIPLE_TOP_LEFT:
-			wg_multopleft_delete((WgMulTopLeft*)wg);
-		break;
-		case WG_BUTTON:
-			wg_button_delete((WgButton*)wg);
-		break;
+		#define CASE(type_value_, func_, type_) \
+			case type_value_: \
+				func_##_delete((type_*)wg); \
+			break
+		CASE(WG_TEXT_LINE,         wg_text_line,  WgTextLine);
+		CASE(WG_MULTIPLE_TOP_LEFT, wg_multopleft, WgMulTopLeft);
+		CASE(WG_BUTTON,            wg_button,     WgButton);
+		CASE(WG_BOX,               wg_box,        WgBox);
+		#undef CASE
 		default: assert(false);
 	}
 }

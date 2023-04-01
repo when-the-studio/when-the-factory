@@ -22,6 +22,7 @@ enum WgType {
 	WG_TEXT_LINE,
 	WG_MULTIPLE_TOP_LEFT,
 	WG_BUTTON,
+	WG_BOX,
 };
 typedef enum WgType WgType;
 
@@ -55,5 +56,7 @@ void wg_multopleft_add_sub(Wg* wg, Wg* sub);
 void wg_multopleft_empty(Wg* wg);
 
 Wg* new_wg_button(Wg* sub_wg, CallbackWithData left_click_callback);
+
+Wg* new_wg_box(Wg* sub_wg, int margin_x, int margin_y, SDL_Color line_color, SDL_Color bg_color);
 
 #endif /* WHEN_THE_FACTORY_WIDGET_ */

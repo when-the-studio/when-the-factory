@@ -50,6 +50,13 @@ void init_wg_tree(void) {
 		)
 	);
 	wg_multopleft_add_sub(g_wg_root,
+		new_wg_box(
+			new_wg_text_line("box", RGB(0, 0, 0)),
+			5, 5,
+			RGB(0, 0, 0), RGB(255, 255, 0)
+		)
+	);
+	wg_multopleft_add_sub(g_wg_root,
 		s_wg_tile_info = new_wg_multopleft(10, 10, 0, ORIENTATION_TOP_TO_BOTTOM)
 	);
 }
