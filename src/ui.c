@@ -52,7 +52,7 @@ void init_wg_tree(void) {
 	wg_multopleft_add_sub(g_wg_root,
 		new_wg_box(
 			new_wg_text_line("box", RGB(0, 0, 0)),
-			5, 5,
+			5, 5, 3,
 			RGB(0, 0, 0), RGB(255, 255, 0)
 		)
 	);

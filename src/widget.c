@@ -230,11 +230,14 @@ struct WgBox {
 	Wg base;
 	Wg* sub_wg;
 	int margin_x, margin_y;
+	int line_thickness;
 	SDL_Color line_color, bg_color;
 };
 typedef struct WgBox WgBox;
 
-Wg* new_wg_box(Wg* sub_wg, int margin_x, int margin_y, SDL_Color line_color, SDL_Color bg_color) {
+Wg* new_wg_box(Wg* sub_wg, int margin_x, int margin_y, int line_thickness,
+	SDL_Color line_color, SDL_Color bg_color
+) {
 	WgBox* wg = malloc(sizeof(WgBox));
 	*wg = (WgBox){
 		.base = {
@@ -243,6 +246,7 @@ Wg* new_wg_box(Wg* sub_wg, int margin_x, int margin_y, SDL_Color line_color, SDL
 		.sub_wg = sub_wg,
 		.margin_x = margin_x,
 		.margin_y = margin_y,
+		.line_thickness = line_thickness,
 		.line_color = line_color,
 		.bg_color = bg_color,
 	};
@@ -263,13 +267,14 @@ static void wg_box_render(WgBox const* wg, int x, int y) {
 	SDL_SetRenderDrawColor(g_renderer,
 		wg->bg_color.r, wg->bg_color.g, wg->bg_color.b, wg->bg_color.a);
 	SDL_RenderFillRect(g_renderer, &r);
-	/* Draw the outline with a thickness of 2 pixels
-	 * (SDL_RenderDrawRect only draws with thickness of 1 pixel so we call it twice). */
+	/* Draw the outline (SDL_RenderDrawRect only draws with thickness of 1 pixel
+	 * so we call it multiple times). */
 	SDL_SetRenderDrawColor(g_renderer,
 		wg->line_color.r, wg->line_color.g, wg->line_color.b, wg->line_color.a);
-	SDL_RenderDrawRect(g_renderer, &r);
-	r.x++; r.y++; r.w -= 2; r.h -= 2;
-	SDL_RenderDrawRect(g_renderer, &r);
+	for (int i = 0; i < wg->line_thickness; i++) {
+		SDL_RenderDrawRect(g_renderer, &r);
+		r.x++; r.y++; r.w -= 2; r.h -= 2;
+	}
 	/* Draw the sub widget (at the end so it covers the backgound). */
 	wg_render(wg->sub_wg, x + wg->margin_x, y + wg->margin_y);
 }
