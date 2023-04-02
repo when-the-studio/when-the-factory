@@ -59,6 +59,7 @@ void ent_move(EntId eid, TileCoords new_pos);
 
 struct EntDataHuman {
 	FactionIdent faction;
+	bool already_moved_this_turn;
 };
 typedef struct EntDataHuman EntDataHuman;
 EntId ent_new_human(TileCoords pos, FactionIdent faction);

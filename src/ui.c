@@ -71,8 +71,16 @@ struct CallbackMoveEntityData {
 typedef struct CallbackMoveEntityData CallbackMoveEntityData;
 
 void test_callback_move_entity(void* whatever) {
+	/* Move the entity. */
 	CallbackMoveEntityData* data = whatever;
 	ent_move(data->eid, data->dst_pos);
+
+	/* Mark it as having already moved. */
+	Ent* ent = get_ent(data->eid);
+	assert(ent->type == ENT_HUMAIN);
+	EntDataHuman* data_human = ent->data;
+	data_human->already_moved_this_turn = true;
+	
 	refresh_selected_tile_ui();
 }
 
@@ -112,25 +120,32 @@ void ui_select_tile(TileCoords tc) {
 				wg_multopleft_add_sub(wg_ent_info,
 					new_wg_text_line(name, color)
 				);
-				typedef struct { int dx, dy; char* name; } Dir;
-				Dir dirs[4] = {{1, 0, "Right"}, {0, 1, "Down"}, {-1, 0, "Left"}, {0, -1, "Up"}};
-				for (int dir_i = 0; dir_i < 4; dir_i++) {
-					Dir dir = dirs[dir_i];
-					CallbackMoveEntityData* data = malloc(sizeof(CallbackMoveEntityData));
-					*data = (CallbackMoveEntityData){
-						.eid = eid,
-						.dst_pos = {tc.x + dir.dx, tc.y + dir.dy},
-					};
+				if (data_human->already_moved_this_turn) {
 					wg_multopleft_add_sub(wg_ent_buttons,
-						new_wg_button(
-							new_wg_box(
-								new_wg_text_line(dir.name, RGB(0, 0, 255)),
-								6, 6, 3,
-								RGB(0, 0, 0), RGB(255, 255, 255)
-							),
-							(CallbackWithData){.func = test_callback_move_entity, .whatever = data}
-						)
+						new_wg_text_line("already moved", RGB(150, 150, 150))
 					);
+				} else {
+					/* The human can move and has (temporary, TODO better) buttons to do so. */
+					typedef struct { int dx, dy; char* name; } Dir;
+					Dir dirs[4] = {{1, 0, "Right"}, {0, 1, "Down"}, {-1, 0, "Left"}, {0, -1, "Up"}};
+					for (int dir_i = 0; dir_i < 4; dir_i++) {
+						Dir dir = dirs[dir_i];
+						CallbackMoveEntityData* data = malloc(sizeof(CallbackMoveEntityData));
+						*data = (CallbackMoveEntityData){
+							.eid = eid,
+							.dst_pos = {tc.x + dir.dx, tc.y + dir.dy},
+						};
+						wg_multopleft_add_sub(wg_ent_buttons,
+							new_wg_button(
+								new_wg_box(
+									new_wg_text_line(dir.name, RGB(0, 0, 255)),
+									6, 6, 3,
+									RGB(0, 0, 0), RGB(255, 255, 255)
+								),
+								(CallbackWithData){.func = test_callback_move_entity, .whatever = data}
+							)
+						);
+					}
 				}
 			break;
 			case ENT_TEST_BLOCK:;
