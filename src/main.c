@@ -31,6 +31,61 @@ void render_tile_ground(TileType tile_type, SDL_Rect dst_rect) {
 	SDL_RenderCopy(g_renderer, g_spritesheet, &rect_in_spritesheet, &dst_rect);
 }
 
+void render_tile_building(Building * building, SDL_Rect dst_rect) {
+	if (building != NULL){
+		SDL_Rect rect_in_spritesheet;
+		switch (building->type)
+		{
+		case BUILDING_EMITTER:
+			rect_in_spritesheet = g_building_type_spec_table[BUILDING_TX_EMITTER].rect_in_spritesheet;
+			break;
+		case BUILDING_RECEIVER:
+			if (building->powered){
+				rect_in_spritesheet = g_building_type_spec_table[BUILDING_TX_RECEIVER_ON].rect_in_spritesheet;
+			} else {
+				rect_in_spritesheet = g_building_type_spec_table[BUILDING_TX_RECEIVER_OFF].rect_in_spritesheet;
+			}
+			break;
+		default:
+			break;
+		}
+		SDL_RenderCopy(g_renderer, g_spritesheet, &rect_in_spritesheet, &dst_rect);
+	} else {
+		printf("[ERROR] Missing building !");
+	}
+}
+
+void setFlow(Tile * tile, bool powered) {
+	if (tile->flow_count > 0){
+		tile->flows[0]->powered = powered;
+	} else if (tile->building != NULL && tile->building->type == BUILDING_RECEIVER) {
+		tile->building->powered = powered;
+	}
+}
+
+void render_tile_flow(Flow * flow, SDL_Rect dst_rect) {
+	if (flow != NULL){
+		SDL_Rect rect_in_spritesheet;
+		switch (flow->type)
+		{
+		case ELECTRICITY:
+			// Cringe af but is just to test. The true way of storing and evaluating directions must be discussed.
+			if (flow->connections[0]==NORTH && flow->connections[1]==SOUTH ){
+				rect_in_spritesheet = g_flow_type_spec_table[ELECTRICITY_STRAIGHT].rect_in_spritesheet;
+				SDL_RenderCopyEx(g_renderer, g_spritesheet, &rect_in_spritesheet, &dst_rect, 90, NULL, SDL_FLIP_NONE);
+			} else {
+				rect_in_spritesheet = g_flow_type_spec_table[ELECTRICITY_TURN].rect_in_spritesheet;
+				SDL_RenderCopyEx(g_renderer, g_spritesheet, &rect_in_spritesheet, &dst_rect, -90, NULL, SDL_FLIP_NONE);
+			}
+			break;
+		default:
+			break;
+		}
+	} else {
+		printf("[ERROR] Missing flow !");
+	}
+}
+
 int main() {
 	renderer_init();
 	init_map();
@@ -62,6 +117,7 @@ int main() {
 				 * So we just filter out these 'fake' KEYDOWN events. */
 				continue;
 			}
+			
 			switch (event.type) {
 				case SDL_QUIT:
 					running = false;
@@ -83,6 +139,30 @@ int main() {
 							if (sel_tile_exists) {
 								Entity* entity = new_entity(ENTITY_HUMAIN, sel_tile_coords);
 								entity->faction = FACTION_YELLOW;
+							}
+						break;
+						case SDLK_n:
+							/* Test spawing building on selected tile. */
+							if (sel_tile_exists) {								
+								new_building(BUILDING_EMITTER, sel_tile_coords);						
+							}
+						break;
+						case SDLK_b:
+							/* Test spawing building on selected tile. */
+							if (sel_tile_exists) {
+								new_building(BUILDING_RECEIVER, sel_tile_coords);							
+							}
+						break;
+						case SDLK_g:
+							/* Test spawing cable on selected tile. */
+							if (sel_tile_exists) {
+								new_flow(ELECTRICITY, sel_tile_coords, NORTH, SOUTH);							
+							}
+						break;
+						case SDLK_h:
+							/* Test spawing cable on selected tile. */
+							if (sel_tile_exists) {
+								new_flow(ELECTRICITY, sel_tile_coords, SOUTH, WEST);								
 							}
 						break;
 						case SDLK_m:
@@ -163,6 +243,77 @@ int main() {
 				.w = ceilf(tile_render_size),
 				.h = ceilf(tile_render_size)};
 			render_tile_ground(tile->type, dst_rect);
+
+			
+			for (int flow_i = 0; flow_i < tile->flow_count; flow_i++){
+				Flow* flow = tile->flows[flow_i];
+				assert(flow != NULL);
+				render_tile_flow(flow, dst_rect);
+				if(flow->powered){
+					
+					TileCoords neighPosFLow;
+					Tile * neighTile;
+					for (int connection_i=0; connection_i < 2; connection_i++){
+						neighPosFLow.x = tc.x;
+						neighPosFLow.y = tc.y;
+						printf("CONNEC\n");
+						fflush(stdout);
+						switch (flow->connections[connection_i])
+						{
+						case NORTH:
+							neighPosFLow.x += 0;
+							neighPosFLow.y += -1;
+
+							break;
+						case SOUTH:
+							neighPosFLow.x += 0;
+							neighPosFLow.y += 1;
+							break;
+						case EAST:
+							neighPosFLow.x += 1;
+							neighPosFLow.y += 0;
+							break;
+						case WEST:
+							neighPosFLow.x += -1;
+							neighPosFLow.y += 0;
+							break;
+						
+						default:
+							break;
+						}
+						printf("%d", neighPosFLow.x);
+						printf("e");
+						printf("%d", neighPosFLow.y);
+						fflush(stdout);
+						neighTile = get_tile(neighPosFLow);
+						setFlow(neighTile, true);
+					}
+				}
+			}
+
+			if (tile->building != NULL){
+				render_tile_building(tile->building, dst_rect);
+				if (tile->building->type == BUILDING_EMITTER){
+					for (int xi=-1; xi<2; xi++){
+						for (int yi=-1; yi<2; yi++){
+							TileCoords neighPos = {tc.x+xi, tc.y+yi};							
+							Tile * neighTile = get_tile(neighPos);
+							if ((xi!=0 || yi!=0) && neighTile->flow_count>0){
+								neighTile->flows[0]->powered = true;
+								printf("%d", xi);
+								printf(" y:");
+								printf("%d", yi);
+								printf("\n");
+								fflush(stdout);
+							}
+						}
+					}
+					printf("END\n");
+					fflush(stdout);
+				}
+			}
+
+			
 
 			for (int entity_i = 0; entity_i < tile->entity_count; entity_i++) {
 				Entity* entity = tile->entities[entity_i];
