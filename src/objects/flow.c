@@ -6,15 +6,10 @@ CardinalType getOpposedDirection(CardinalType direction){
 		(performance ?)
 	 */
 	switch (direction){
-	case NORTH:
-		return SOUTH;
-	case SOUTH:
-		return NORTH;
-	case WEST:
-		return EAST;
-	case EAST:
-		return WEST;
-	default:
-		return NORTH;
+		case NORTH: return SOUTH;
+		case SOUTH: return NORTH;
+		case WEST:	return EAST;
+		case EAST:	return WEST;
+		default:		return NORTH;
 	}
 }

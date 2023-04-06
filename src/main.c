@@ -270,27 +270,26 @@ int main() {
 					for (int connection_i=0; connection_i < 2; connection_i++){
 						neighPosFLow.x = tc.x;
 						neighPosFLow.y = tc.y;
-						switch (flow->connections[connection_i])
-						{
-						case NORTH:
-							neighPosFLow.x += 0;
-							neighPosFLow.y += -1;
+						switch (flow->connections[connection_i]){
+							case NORTH:
+								neighPosFLow.x += 0;
+								neighPosFLow.y += -1;
 
 							break;
-						case SOUTH:
-							neighPosFLow.x += 0;
-							neighPosFLow.y += 1;
+							case SOUTH:
+								neighPosFLow.x += 0;
+								neighPosFLow.y += 1;
 							break;
-						case EAST:
-							neighPosFLow.x += 1;
-							neighPosFLow.y += 0;
+							case EAST:
+								neighPosFLow.x += 1;
+								neighPosFLow.y += 0;
 							break;
-						case WEST:
-							neighPosFLow.x += -1;
-							neighPosFLow.y += 0;
+							case WEST:
+								neighPosFLow.x += -1;
+								neighPosFLow.y += 0;
 							break;
-						
-						default:
+							
+							default:
 							break;
 						}
 						neighTile = get_tile(neighPosFLow);
@@ -303,6 +302,9 @@ int main() {
 				render_tile_building(tile->building, dst_rect);
 				if (tile->building->type == BUILDING_EMITTER){
 					int offsets[] = {1, 0, -1, 0, 1};
+					/* Uses the array 'offsets' to get the four adjacent tiles.
+						The order is EAST (1,0), NORTH (0,-1), WEST (-1, 0) and SOUTH (0, 1)
+					*/
 					for (int tile_i=0; tile_i<4; tile_i++){
 						TileCoords neighPos = {tc.x+offsets[tile_i], tc.y+offsets[tile_i+1]};							
 						Tile * neighTile = get_tile(neighPos);
