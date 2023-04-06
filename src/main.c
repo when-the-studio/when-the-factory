@@ -60,7 +60,7 @@ void setFlow(Tile * tile, bool powered, CardinalType entry) {
 	Flow * flow;
 	for (int i=0; i<tile->flow_count; i++){
 		flow = tile->flows[i];
-		if (abs((int)(flow->connections[0]-entry)) == 2 || abs((int)(flow->connections[1]-entry)) == 2){
+		if (flow->connections[0] == entry || flow->connections[1] == entry){
 			flow->powered = powered;
 		}
 	}
@@ -80,10 +80,10 @@ void render_tile_flow(Flow * flow, SDL_Rect dst_rect) {
 			// Cringe af but is just to test. The true way of storing and evaluating directions must be discussed.
 			if (straight){
 				rect_in_spritesheet = g_flow_type_spec_table[ELECTRICITY_STRAIGHT].rect_in_spritesheet;
-				angle = 90 * (flow->connections[0] == NORTH);
+				angle = 90 * (flow->connections[0] == SOUTH);
 			} else {
 				rect_in_spritesheet = g_flow_type_spec_table[ELECTRICITY_TURN].rect_in_spritesheet;
-				angle = 90 * flow->connections[1] * !(flow->connections[0] == NORTH && flow->connections[1] == WEST);
+				angle = 90 * (4-flow->connections[1]) * !(flow->connections[0] == WEST && flow->connections[1] == NORTH);
 			}
 			SDL_RenderCopyEx(g_renderer, g_spritesheet, &rect_in_spritesheet, &dst_rect, angle, NULL, SDL_FLIP_NONE);
 			break;
@@ -294,7 +294,7 @@ int main() {
 							break;
 						}
 						neighTile = get_tile(neighPosFLow);
-						setFlow(neighTile, true, flow->connections[connection_i]);
+						setFlow(neighTile, true, getOpposedDirection(flow->connections[connection_i]));
 					}
 				}
 			}
@@ -302,20 +302,15 @@ int main() {
 			if (tile->building != NULL){
 				render_tile_building(tile->building, dst_rect);
 				if (tile->building->type == BUILDING_EMITTER){
-					for (int xi=-1; xi<2; xi++){
-						for (int yi=-1; yi<2; yi++){
-							TileCoords neighPos = {tc.x+xi, tc.y+yi};							
-							Tile * neighTile = get_tile(neighPos);
-							if ((xi!=0 || yi!=0) && neighTile->flow_count>0){
-								neighTile->flows[0]->powered = true;
-								
-							}
-						}
+					int offsets[] = {1, 0, -1, 0, 1};
+					for (int tile_i=0; tile_i<4; tile_i++){
+						TileCoords neighPos = {tc.x+offsets[tile_i], tc.y+offsets[tile_i+1]};							
+						Tile * neighTile = get_tile(neighPos);
+						setFlow(neighTile, true, (CardinalType)(tile_i));
+						
 					}
 				}
 			}
-
-			
 
 			for (int entity_i = 0; entity_i < tile->entity_count; entity_i++) {
 				Entity* entity = tile->entities[entity_i];

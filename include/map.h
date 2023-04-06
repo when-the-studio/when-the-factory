@@ -80,6 +80,9 @@ typedef struct Tile Tile;
 /* This is the map, which is a grid of tiles. */
 extern Tile* g_grid;
 
+
+Flow* new_flow(FlowType type, TileCoords pos, CardinalType entry, CardinalType exit);
+
 /* Initilises the grid with random tiles. */
 void init_map(void);
 

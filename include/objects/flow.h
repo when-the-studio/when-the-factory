@@ -2,12 +2,14 @@
 #define WHEN_THE_FACTORY_FLOW_
 
 #include "utils.h"
+#include <stdbool.h>
+#include <SDL2/SDL.h>
 
 enum CardinalType {
-	NORTH,
-	EAST,
-	SOUTH,
 	WEST,
+	SOUTH,
+	EAST,
+	NORTH,
 
 	CARDINAL_TYPE_NUM
 };
@@ -49,6 +51,6 @@ struct Flow {
 };
 typedef struct Flow Flow;
 
-Flow* new_flow(FlowType type, TileCoords pos, CardinalType entry, CardinalType exit);
+CardinalType getOpposedDirection(CardinalType direction);
 
 #endif
