@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include "map.h"
+#include "flow.h"
 
 
 FlowTypeSpec g_flow_type_spec_table[FLOW_TX_NUM] = {
@@ -83,9 +84,7 @@ static void remove_entity_from_tile_list(Entity* entity, Tile* tile) {
 }
 
 
-static void add_building_to_tile(Building* building, Tile* tile) {
-	tile->building = building;
-}
+
 
 static void remove_building_from_tile(Building* building, Tile* tile) {
 	tile->building = NULL;
@@ -139,21 +138,12 @@ void entity_move(Entity* entity, TileCoords new_pos) {
 	entity->pos = new_pos;
 }
 
-Building* new_building(BuildingType type, TileCoords pos) {
-	Building* building = malloc(sizeof(Building));
-	*building = (Building){
-		.type = type,
-		.pos = pos,
-		.powered = false,
-	};
-	Tile* tile = get_tile(pos);
-	add_building_to_tile(building, tile);
-	
-	return building;
-}
-
 Flow* new_flow(FlowType type, TileCoords pos, CardinalType entry, CardinalType exit) {
 	Flow* flow = malloc(sizeof(Flow));
+	CardinalType connectionsSort[2] = {entry, exit};
+	int cmpfunc (const void * a, const void * b) {
+   	return ( *(int*)a - *(int*)b );
+	}
 	*flow = (Flow){
 		.type = type,
 		.pos = pos,
@@ -161,6 +151,7 @@ Flow* new_flow(FlowType type, TileCoords pos, CardinalType entry, CardinalType e
 		.capacity = 10,
 		.powered = false,
 	};
+	qsort(flow->connections, 2, sizeof(int), cmpfunc);
 	Tile* tile = get_tile(pos);
 	add_flow_to_tile_list(flow, tile);
 	

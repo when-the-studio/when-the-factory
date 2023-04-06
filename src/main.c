@@ -55,10 +55,16 @@ void render_tile_building(Building * building, SDL_Rect dst_rect) {
 	}
 }
 
-void setFlow(Tile * tile, bool powered) {
-	if (tile->flow_count > 0){
-		tile->flows[0]->powered = powered;
-	} else if (tile->building != NULL && tile->building->type == BUILDING_RECEIVER) {
+void setFlow(Tile * tile, bool powered, CardinalType entry) {
+	assert(tile != NULL);
+	Flow * flow;
+	for (int i=0; i<tile->flow_count; i++){
+		flow = tile->flows[i];
+		if (abs((int)(flow->connections[0]-entry)) == 2 || abs((int)(flow->connections[1]-entry)) == 2){
+			flow->powered = powered;
+		}
+	}
+	if (tile->building != NULL && tile->building->type == BUILDING_RECEIVER) {
 		tile->building->powered = powered;
 	}
 }
@@ -66,17 +72,20 @@ void setFlow(Tile * tile, bool powered) {
 void render_tile_flow(Flow * flow, SDL_Rect dst_rect) {
 	if (flow != NULL){
 		SDL_Rect rect_in_spritesheet;
+		int angle = 0;
+		bool straight = flow->connections[1] - flow->connections[0] == 2;
 		switch (flow->type)
 		{
 		case ELECTRICITY:
 			// Cringe af but is just to test. The true way of storing and evaluating directions must be discussed.
-			if (flow->connections[0]==NORTH && flow->connections[1]==SOUTH ){
+			if (straight){
 				rect_in_spritesheet = g_flow_type_spec_table[ELECTRICITY_STRAIGHT].rect_in_spritesheet;
-				SDL_RenderCopyEx(g_renderer, g_spritesheet, &rect_in_spritesheet, &dst_rect, 90, NULL, SDL_FLIP_NONE);
+				angle = 90 * (flow->connections[0] == NORTH);
 			} else {
 				rect_in_spritesheet = g_flow_type_spec_table[ELECTRICITY_TURN].rect_in_spritesheet;
-				SDL_RenderCopyEx(g_renderer, g_spritesheet, &rect_in_spritesheet, &dst_rect, -90, NULL, SDL_FLIP_NONE);
+				angle = 90 * flow->connections[1] * !(flow->connections[0] == NORTH && flow->connections[1] == WEST);
 			}
+			SDL_RenderCopyEx(g_renderer, g_spritesheet, &rect_in_spritesheet, &dst_rect, angle, NULL, SDL_FLIP_NONE);
 			break;
 		default:
 			break;
@@ -103,6 +112,7 @@ int main() {
 
 	/* Main game loop. */
 	bool running = true;
+	int cable_orientation = NORTH;
 	while (running) {
 		last_time = time;
 		time = SDL_GetPerformanceCounter();
@@ -156,14 +166,18 @@ int main() {
 						case SDLK_g:
 							/* Test spawing cable on selected tile. */
 							if (sel_tile_exists) {
-								new_flow(ELECTRICITY, sel_tile_coords, NORTH, SOUTH);							
+								new_flow(ELECTRICITY, sel_tile_coords, cable_orientation, (cable_orientation+2)%4);							
 							}
 						break;
 						case SDLK_h:
 							/* Test spawing cable on selected tile. */
 							if (sel_tile_exists) {
-								new_flow(ELECTRICITY, sel_tile_coords, SOUTH, WEST);								
+								new_flow(ELECTRICITY, sel_tile_coords, cable_orientation, (cable_orientation+1)%4);								
 							}
+						break;
+						case SDLK_j:
+							/* Test rotating cable to be placed on selected tile. */
+							cable_orientation = (cable_orientation+1)%4;
 						break;
 						case SDLK_m:
 							/* Test moving entity from selected tile to the right. */
@@ -256,8 +270,6 @@ int main() {
 					for (int connection_i=0; connection_i < 2; connection_i++){
 						neighPosFLow.x = tc.x;
 						neighPosFLow.y = tc.y;
-						printf("CONNEC\n");
-						fflush(stdout);
 						switch (flow->connections[connection_i])
 						{
 						case NORTH:
@@ -281,12 +293,8 @@ int main() {
 						default:
 							break;
 						}
-						printf("%d", neighPosFLow.x);
-						printf("e");
-						printf("%d", neighPosFLow.y);
-						fflush(stdout);
 						neighTile = get_tile(neighPosFLow);
-						setFlow(neighTile, true);
+						setFlow(neighTile, true, flow->connections[connection_i]);
 					}
 				}
 			}
@@ -300,16 +308,10 @@ int main() {
 							Tile * neighTile = get_tile(neighPos);
 							if ((xi!=0 || yi!=0) && neighTile->flow_count>0){
 								neighTile->flows[0]->powered = true;
-								printf("%d", xi);
-								printf(" y:");
-								printf("%d", yi);
-								printf("\n");
-								fflush(stdout);
+								
 							}
 						}
 					}
-					printf("END\n");
-					fflush(stdout);
 				}
 			}
 
