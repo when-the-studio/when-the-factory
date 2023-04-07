@@ -3,6 +3,21 @@
 #include "entity.h"
 #include "map.h"
 
+FactionSpec g_faction_spec_table[FACTION_IDENT_NUM] = {
+	[FACTION_YELLOW] = {
+		.is_player = true,
+		.name = "Yellow",
+		.color = {255, 255, 0},
+	},
+	[FACTION_RED] = {
+		.is_player = false,
+		.name = "Red",
+		.color = {255, 0, 0},
+	},
+};
+
+FactionIdent g_faction_currently_playing = FACTION_YELLOW;
+
 bool eid_null(EntId eid) {
 	return eid_eq(eid, EID_NULL);
 }

@@ -104,47 +104,44 @@ void ui_select_tile(TileCoords tc) {
 				wg_ent = new_wg_multopleft(6, 0, 0, ORIENTATION_TOP_TO_BOTTOM);
 				Wg* wg_ent_info = new_wg_multopleft(6, 0, 0, ORIENTATION_LEFT_TO_RIGHT);
 				wg_multopleft_add_sub(wg_ent, wg_ent_info);
-				Wg* wg_ent_buttons = new_wg_multopleft(4, 0, 0, ORIENTATION_LEFT_TO_RIGHT);
-				wg_multopleft_add_sub(wg_ent, wg_ent_buttons);
 				EntDataHuman* data_human = ent->data;
 				wg_multopleft_add_sub(wg_ent_info,
 					new_wg_text_line("Human", RGB(0, 0, 0))
 				);
-				char* name;
-				SDL_Color color;
-				switch (data_human->faction) {
-					case FACTION_YELLOW: name = "Yellow"; color = (SDL_Color){255, 255, 0, 255}; break;
-					case FACTION_RED:    name = "Red";    color = (SDL_Color){255, 0,   0, 255}; break;
-					default: assert(false);
-				}
+				char* faction_name = g_faction_spec_table[data_human->faction].name;
+				SDL_Color faction_color = g_faction_spec_table[data_human->faction].color;
 				wg_multopleft_add_sub(wg_ent_info,
-					new_wg_text_line(name, color)
+					new_wg_text_line(faction_name, faction_color)
 				);
-				if (data_human->already_moved_this_turn) {
-					wg_multopleft_add_sub(wg_ent_buttons,
-						new_wg_text_line("already moved", RGB(150, 150, 150))
-					);
-				} else {
-					/* The human can move and has (temporary, TODO better) buttons to do so. */
-					typedef struct { int dx, dy; char* name; } Dir;
-					Dir dirs[4] = {{1, 0, "Right"}, {0, 1, "Down"}, {-1, 0, "Left"}, {0, -1, "Up"}};
-					for (int dir_i = 0; dir_i < 4; dir_i++) {
-						Dir dir = dirs[dir_i];
-						CallbackMoveEntityData* data = malloc(sizeof(CallbackMoveEntityData));
-						*data = (CallbackMoveEntityData){
-							.eid = eid,
-							.dst_pos = {tc.x + dir.dx, tc.y + dir.dy},
-						};
+				if (data_human->faction == g_faction_currently_playing) {
+					Wg* wg_ent_buttons = new_wg_multopleft(4, 0, 0, ORIENTATION_LEFT_TO_RIGHT);
+					wg_multopleft_add_sub(wg_ent, wg_ent_buttons);
+					if (data_human->already_moved_this_turn) {
 						wg_multopleft_add_sub(wg_ent_buttons,
-							new_wg_button(
-								new_wg_box(
-									new_wg_text_line(dir.name, RGB(0, 0, 255)),
-									6, 6, 3,
-									RGB(0, 0, 0), RGB(255, 255, 255)
-								),
-								(CallbackWithData){.func = test_callback_move_entity, .whatever = data}
-							)
+							new_wg_text_line("already moved", RGB(150, 150, 150))
 						);
+					} else {
+						/* The human can move and has (temporary, TODO better) buttons to do so. */
+						typedef struct { int dx, dy; char* name; } Dir;
+						Dir dirs[4] = {{1, 0, "Right"}, {0, 1, "Down"}, {-1, 0, "Left"}, {0, -1, "Up"}};
+						for (int dir_i = 0; dir_i < 4; dir_i++) {
+							Dir dir = dirs[dir_i];
+							CallbackMoveEntityData* data = malloc(sizeof(CallbackMoveEntityData));
+							*data = (CallbackMoveEntityData){
+								.eid = eid,
+								.dst_pos = {tc.x + dir.dx, tc.y + dir.dy},
+							};
+							wg_multopleft_add_sub(wg_ent_buttons,
+								new_wg_button(
+									new_wg_box(
+										new_wg_text_line(dir.name, RGB(0, 0, 255)),
+										6, 6, 3,
+										RGB(0, 0, 0), RGB(255, 255, 255)
+									),
+									(CallbackWithData){.func = test_callback_move_entity, .whatever = data}
+								)
+							);
+						}
 					}
 				}
 			break;
