@@ -41,12 +41,46 @@ static void next_faction_to_play(void) {
 	}
 }
 
+void move_human(EntId eid, TileCoords dst_pos) {
+	ent_move(eid, dst_pos);
+
+	/* Mark it as having already moved. */
+	Ent* ent = get_ent(eid);
+	assert(ent->type == ENT_HUMAIN);
+	EntDataHuman* data_human = ent->data;
+	data_human->already_moved_this_turn = true;
+
+	refresh_selected_tile_ui();
+}
+
+static void random_ai_play(void) {
+	assert(!g_faction_spec_table[g_faction_currently_playing].is_player);
+
+	for (int y = 0; y < N_TILES_H; y++) for (int x = 0; x < N_TILES_W; x++) {
+		TileCoords tc = (TileCoords){x, y};
+		Tile* tile = get_tile((TileCoords){x, y});
+		for (int i = 0; i < tile->ent_count; i++) {
+			EntId eid = tile->ents[i];
+			Ent* ent = get_ent(eid);
+			if (ent == NULL) continue;
+			if (ent->type == ENT_HUMAIN) {
+				EntDataHuman* human_data = ent->data;
+				if (human_data->faction == g_faction_currently_playing
+					&& !human_data->already_moved_this_turn
+				) {
+					TileCoords dst_pos = tc;
+					*(rand() % 2 == 0 ? &dst_pos.x : &dst_pos.y) += (rand() % 2) * 2 - 1;
+					move_human(eid, dst_pos);
+				}
+			}
+		}
+	}
+}
+
 static void callback_end_turn(void* whatever) {
 	(void)whatever;
-	next_faction_to_play();
-	while (!g_faction_spec_table[g_faction_currently_playing].is_player) {
-		/* TODO: Play as the AI. */
-		next_faction_to_play();
+	while (next_faction_to_play(), !g_faction_spec_table[g_faction_currently_playing].is_player) {
+		random_ai_play();
 	}
 }
 
@@ -109,15 +143,7 @@ typedef struct CallbackMoveEntityData CallbackMoveEntityData;
 void test_callback_move_entity(void* whatever) {
 	/* Move the entity. */
 	CallbackMoveEntityData* data = whatever;
-	ent_move(data->eid, data->dst_pos);
-
-	/* Mark it as having already moved. */
-	Ent* ent = get_ent(data->eid);
-	assert(ent->type == ENT_HUMAIN);
-	EntDataHuman* data_human = ent->data;
-	data_human->already_moved_this_turn = true;
-	
-	refresh_selected_tile_ui();
+	move_human(data->eid, data->dst_pos);
 }
 
 void ui_select_tile(TileCoords tc) {
