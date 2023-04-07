@@ -24,6 +24,32 @@ static void test_callback_clear(void* whatever) {
 	wg_multopleft_empty(g_wg_root);
 }
 
+static void next_faction_to_play(void) {
+	g_faction_currently_playing = (g_faction_currently_playing + 1) % FACTION_IDENT_NUM;
+
+	/* Reset the "already moved this turn" flags on entities. */
+	for (int y = 0; y < N_TILES_H; y++) for (int x = 0; x < N_TILES_W; x++) {
+		Tile* tile = get_tile((TileCoords){x, y});
+		for (int i = 0; i < tile->ent_count; i++) {
+			Ent* ent = get_ent(tile->ents[i]);
+			if (ent == NULL) continue;
+			if (ent->type == ENT_HUMAIN) {
+				EntDataHuman* human_data = ent->data;
+				human_data->already_moved_this_turn = false;
+			}
+		}
+	}
+}
+
+static void callback_end_turn(void* whatever) {
+	(void)whatever;
+	next_faction_to_play();
+	while (!g_faction_spec_table[g_faction_currently_playing].is_player) {
+		/* TODO: Play as the AI. */
+		next_faction_to_play();
+	}
+}
+
 static Wg* s_wg_tile_info = NULL;
 
 void init_wg_tree(void) {
@@ -58,6 +84,16 @@ void init_wg_tree(void) {
 	);
 	wg_multopleft_add_sub(g_wg_root,
 		s_wg_tile_info = new_wg_multopleft(10, 10, 0, ORIENTATION_TOP_TO_BOTTOM)
+	);
+	wg_multopleft_add_sub(g_wg_root,
+		new_wg_button(
+			new_wg_box(
+				new_wg_text_line("end turn", RGB(0, 0, 0)),
+				5, 5, 3,
+				RGB(0, 0, 0), RGB(255, 255, 255)
+			),
+			(CallbackWithData){.func = callback_end_turn, .whatever = NULL}
+		)
 	);
 }
 
