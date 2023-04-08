@@ -25,6 +25,16 @@ enum FactionIdent {
 };
 typedef enum FactionIdent FactionIdent;
 
+struct FactionSpec {
+	bool is_player;
+	char* name;
+	SDL_Color color;
+};
+typedef struct FactionSpec FactionSpec;
+
+extern FactionSpec g_faction_spec_table[FACTION_IDENT_NUM];
+extern FactionIdent g_faction_currently_playing;
+
 /* Entity, something that is not a tile terrain but rather ON a tile. */
 struct Ent {
 	EntType type;
@@ -59,6 +69,7 @@ void ent_move(EntId eid, TileCoords new_pos);
 
 struct EntDataHuman {
 	FactionIdent faction;
+	bool already_moved_this_turn;
 };
 typedef struct EntDataHuman EntDataHuman;
 EntId ent_new_human(TileCoords pos, FactionIdent faction);
