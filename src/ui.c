@@ -6,58 +6,12 @@
 
 #define RGB(r_, g_, b_) ((SDL_Color){(r_), (g_), (b_), 255})
 
-static void test_callback_print(void* whatever) {
-	(void)whatever;
-	printf("test uwu\n");
-}
-
-static void test_callback_add(void* whatever) {
-	(void)whatever;
-	int r = rand() % 256;
-	wg_multopleft_add_sub(g_wg_root,
-		new_wg_text_line("owo", RGB(255, r, 255 - r))
-	);
-}
-
-static void test_callback_clear(void* whatever) {
-	(void)whatever;
-	wg_multopleft_empty(g_wg_root);
-}
-
 static Wg* s_wg_tile_info = NULL;
 
 void init_wg_tree(void) {
 	g_wg_root = new_wg_multopleft(10, 10, 10, ORIENTATION_TOP_TO_BOTTOM);
 	wg_multopleft_add_sub(g_wg_root,
-		new_wg_button(
-			new_wg_text_line("test xd", RGB(0, 0, 255)),
-			(CallbackWithData){.func = test_callback_print, .whatever = NULL}
-		)
-	);
-	wg_multopleft_add_sub(g_wg_root,
-		new_wg_text_line("test uwu !!! ballz ``sus amogus -1 +8 1000 gaming", RGB(0, 0, 0))
-	);
-	wg_multopleft_add_sub(g_wg_root,
-		new_wg_button(
-			new_wg_text_line("add", RGB(0, 0, 255)),
-			(CallbackWithData){.func = test_callback_add, .whatever = NULL}
-		)
-	);
-	wg_multopleft_add_sub(g_wg_root,
-		new_wg_button(
-			new_wg_text_line("clear (will cause crash when selecting tile xd)", RGB(255, 0, 0)),
-			(CallbackWithData){.func = test_callback_clear, .whatever = NULL}
-		)
-	);
-	wg_multopleft_add_sub(g_wg_root,
-		new_wg_box(
-			new_wg_text_line("box", RGB(0, 0, 0)),
-			5, 5, 3,
-			RGB(0, 0, 0), RGB(255, 255, 0)
-		)
-	);
-	wg_multopleft_add_sub(g_wg_root,
-		s_wg_tile_info = new_wg_multopleft(10, 10, 0, ORIENTATION_TOP_TO_BOTTOM)
+		s_wg_tile_info = new_wg_multopleft(10, 0, 0, ORIENTATION_TOP_TO_BOTTOM)
 	);
 }
 
