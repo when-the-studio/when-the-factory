@@ -23,6 +23,7 @@ enum WgType {
 	WG_MULTIPLE_TOP_LEFT,
 	WG_BUTTON,
 	WG_BOX,
+	WG_SPRITE,
 };
 typedef enum WgType WgType;
 
@@ -59,5 +60,7 @@ Wg* new_wg_button(Wg* sub_wg, CallbackWithData left_click_callback);
 
 Wg* new_wg_box(Wg* sub_wg, int margin_x, int margin_y, int line_thickness,
 	SDL_Color line_color, SDL_Color bg_color);
+
+Wg* new_wg_sprite(SDL_Rect rect_in_spritesheet, int w, int h);
 
 #endif /* WHEN_THE_FACTORY_WIDGET_ */

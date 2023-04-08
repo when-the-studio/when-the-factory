@@ -298,6 +298,48 @@ static void wg_box_delete(WgBox* wg) {
 	free(wg);
 }
 
+/* *** Sprite widget section *** */
+
+struct WgSprite {
+	Wg base;
+	SDL_Rect rect_in_spritesheet;
+	int w, h;
+};
+typedef struct WgSprite WgSprite;
+
+Wg* new_wg_sprite(SDL_Rect rect_in_spritesheet, int w, int h) {
+	WgSprite* wg = malloc(sizeof(WgSprite));
+	*wg = (WgSprite){
+		.base = {
+			.type = WG_SPRITE,
+		},
+		.rect_in_spritesheet = rect_in_spritesheet,
+		.w = w,
+		.h = h,
+	};
+	return (Wg*)wg;
+}
+
+static Dims wg_sprite_get_dims(WgSprite const* wg) {
+	return (Dims){wg->w, wg->h};
+}
+
+static void wg_sprite_render(WgSprite const* wg, int x, int y) {
+	Dims dims = wg_sprite_get_dims(wg);
+	SDL_Rect dst_rect = {x, y, dims.w, dims.h};
+	SDL_RenderCopy(g_renderer, g_spritesheet, &wg->rect_in_spritesheet, &dst_rect);
+}
+
+static bool wg_sprite_click(WgSprite const* wg, int x, int y, int cx, int cy) {
+	Dims dims = wg_sprite_get_dims(wg);
+	SDL_Rect r = {x, y, dims.w, dims.h};
+	return r.x <= cx && cx < r.x + r.w && r.y <= cy && cy < r.y + r.h;
+}
+
+static void wg_sprite_delete(WgSprite* wg) {
+	free(wg);
+}
+
 /* *** Dynamic dispatch section *** */
 
 Dims wg_get_dims(Wg const* wg) {
@@ -310,6 +352,7 @@ Dims wg_get_dims(Wg const* wg) {
 		CASE(WG_MULTIPLE_TOP_LEFT, wg_multopleft, WgMulTopLeft);
 		CASE(WG_BUTTON,            wg_button,     WgButton);
 		CASE(WG_BOX,               wg_box,        WgBox);
+		CASE(WG_SPRITE,            wg_sprite,     WgSprite);
 		#undef CASE
 		default: assert(false);
 	}
@@ -325,6 +368,7 @@ void wg_render(Wg const* wg, int x, int y) {
 		CASE(WG_MULTIPLE_TOP_LEFT, wg_multopleft, WgMulTopLeft);
 		CASE(WG_BUTTON,            wg_button,     WgButton);
 		CASE(WG_BOX,               wg_box,        WgBox);
+		CASE(WG_SPRITE,            wg_sprite,     WgSprite);
 		#undef CASE
 		default: assert(false);
 	}
@@ -340,6 +384,7 @@ bool wg_click(Wg const* wg, int x, int y, int cx, int cy) {
 		CASE(WG_MULTIPLE_TOP_LEFT, wg_multopleft, WgMulTopLeft);
 		CASE(WG_BUTTON,            wg_button,     WgButton);
 		CASE(WG_BOX,               wg_box,        WgBox);
+		CASE(WG_SPRITE,            wg_sprite,     WgSprite);
 		#undef CASE
 		default: assert(false);
 	}
@@ -355,6 +400,7 @@ void wg_delete(Wg* wg) {
 		CASE(WG_MULTIPLE_TOP_LEFT, wg_multopleft, WgMulTopLeft);
 		CASE(WG_BUTTON,            wg_button,     WgButton);
 		CASE(WG_BOX,               wg_box,        WgBox);
+		CASE(WG_SPRITE,            wg_sprite,     WgSprite);
 		#undef CASE
 		default: assert(false);
 	}

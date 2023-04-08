@@ -11,7 +11,7 @@ static Wg* s_wg_tile_info = NULL;
 void init_wg_tree(void) {
 	g_wg_root = new_wg_multopleft(10, 10, 10, ORIENTATION_TOP_TO_BOTTOM);
 	wg_multopleft_add_sub(g_wg_root,
-		s_wg_tile_info = new_wg_multopleft(10, 0, 0, ORIENTATION_TOP_TO_BOTTOM)
+		s_wg_tile_info = new_wg_multopleft(5, 0, 0, ORIENTATION_TOP_TO_BOTTOM)
 	);
 }
 
@@ -37,12 +37,23 @@ void ui_select_tile(TileCoords tc) {
 
 	Tile* tile = get_tile(tc);
 	char const* name = g_tile_type_spec_table[tile->type].name;
+	Wg* wg_terrain_info = new_wg_multopleft(6, 0, 0, ORIENTATION_LEFT_TO_RIGHT);
 	wg_multopleft_add_sub(s_wg_tile_info, 
 		new_wg_box(
-			new_wg_text_line((char*)name, RGB(0, 0, 0)),
-			6, 6, 3,
+			wg_terrain_info,
+			7, 7, 3,
 			RGB(0, 0, 0), RGB(200, 200, 255)
 		)
+	);
+	int ui_terrain_sprite_side = 5 * 3 * 3;
+	wg_multopleft_add_sub(wg_terrain_info, 
+		new_wg_sprite(
+			g_tile_type_spec_table[tile->type].rect_in_spritesheet,
+			ui_terrain_sprite_side, ui_terrain_sprite_side
+		)
+	);
+	wg_multopleft_add_sub(wg_terrain_info, 
+		new_wg_text_line((char*)name, RGB(0, 0, 0))
 	);
 	for (int i = 0; i < tile->ent_count; i++) {
 		EntId eid = tile->ents[i];
