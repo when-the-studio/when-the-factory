@@ -241,3 +241,13 @@ Tile* get_tile(TileCoords coords) {
 	assert(tile_coords_are_valid(coords));
 	return &g_grid[coords.y * g_map_w + coords.x];
 }
+
+bool tile_is_walkable(Tile const* tile) {
+	if (tile->type == TILE_MOUTAIN || tile->type == TILE_RIVER) {
+		return false;
+	}
+	if (tile->building != NULL) {
+		return false;
+	}
+	return true;
+}

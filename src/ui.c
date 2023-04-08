@@ -54,7 +54,10 @@ static void random_ai_play(void) {
 						TileCoords dst_pos = tc;
 						*(rand() % 2 == 0 ? &dst_pos.x : &dst_pos.y) += (rand() % 2) * 2 - 1;
 						if (tile_coords_are_valid(dst_pos)) {
-							move_human(eid, dst_pos);
+							Tile const* dst_tile = get_tile(dst_pos);
+							if (tile_is_walkable(dst_tile)) {
+								move_human(eid, dst_pos);
+							}
 						}
 					}
 				}
@@ -161,10 +164,14 @@ void ui_select_tile(TileCoords tc) {
 						Dir dirs[4] = {{1, 0, "Right"}, {0, 1, "Down"}, {-1, 0, "Left"}, {0, -1, "Up"}};
 						for (int dir_i = 0; dir_i < 4; dir_i++) {
 							Dir dir = dirs[dir_i];
+							TileCoords dst_pos = {tc.x + dir.dx, tc.y + dir.dy};
+							if (!tile_coords_are_valid(dst_pos)) continue;
+							Tile const* dst_tile = get_tile(dst_pos);
+							if (!tile_is_walkable(dst_tile)) continue;
 							CallbackMoveEntityData* data = malloc(sizeof(CallbackMoveEntityData));
 							*data = (CallbackMoveEntityData){
 								.eid = eid,
-								.dst_pos = {tc.x + dir.dx, tc.y + dir.dy},
+								.dst_pos = dst_pos,
 							};
 							wg_multopleft_add_sub(wg_ent_buttons,
 								new_wg_button(

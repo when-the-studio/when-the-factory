@@ -59,5 +59,6 @@ Flow* new_flow(FlowType type, TileCoords pos, CardinalType entry, CardinalType e
 void init_map(void);
 
 Tile* get_tile(TileCoords coords);
+bool tile_is_walkable(Tile const* tile);
 
 #endif // WHEN_THE_FACTORY_MAP_
