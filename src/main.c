@@ -40,6 +40,70 @@ void render_human(SDL_Rect dst_rect) {
 	SDL_RenderCopy(g_renderer, g_spritesheet, &rect_in_spritesheet, &dst_rect);
 }
 
+void render_tile_building(Building * building, SDL_Rect dst_rect) {
+	if (building != NULL){
+		SDL_Rect rect_in_spritesheet;
+		switch (building->type)
+		{
+		case BUILDING_EMITTER:
+			rect_in_spritesheet = g_building_type_spec_table[BUILDING_TX_EMITTER].rect_in_spritesheet;
+			break;
+		case BUILDING_RECEIVER:
+			if (building->powered){
+				rect_in_spritesheet = g_building_type_spec_table[BUILDING_TX_RECEIVER_ON].rect_in_spritesheet;
+			} else {
+				rect_in_spritesheet = g_building_type_spec_table[BUILDING_TX_RECEIVER_OFF].rect_in_spritesheet;
+			}
+			break;
+		default:
+			break;
+		}
+		SDL_RenderCopy(g_renderer, g_spritesheet, &rect_in_spritesheet, &dst_rect);
+	} else {
+		printf("[ERROR] Missing building !");
+	}
+}
+
+void setFlow(Tile * tile, bool powered, CardinalType entry) {
+	assert(tile != NULL);
+	Flow * flow;
+	for (int i=0; i<tile->flow_count; i++){
+		flow = tile->flows[i];
+		if (flow->connections[0] == entry || flow->connections[1] == entry){
+			flow->powered = powered;
+		}
+	}
+	if (tile->building != NULL && tile->building->type == BUILDING_RECEIVER) {
+		tile->building->powered = powered;
+	}
+}
+
+void render_tile_flow(Flow * flow, SDL_Rect dst_rect) {
+	if (flow != NULL){
+		SDL_Rect rect_in_spritesheet;
+		int angle = 0;
+		bool straight = flow->connections[1] - flow->connections[0] == 2;
+		switch (flow->type)
+		{
+		case ELECTRICITY:
+			// Cringe af but is just to test. The true way of storing and evaluating directions must be discussed.
+			if (straight){
+				rect_in_spritesheet = g_flow_type_spec_table[ELECTRICITY_STRAIGHT].rect_in_spritesheet;
+				angle = 90 * (flow->connections[0] == SOUTH);
+			} else {
+				rect_in_spritesheet = g_flow_type_spec_table[ELECTRICITY_TURN].rect_in_spritesheet;
+				angle = 90 * (4-flow->connections[1]) * !(flow->connections[0] == WEST && flow->connections[1] == NORTH);
+			}
+			SDL_RenderCopyEx(g_renderer, g_spritesheet, &rect_in_spritesheet, &dst_rect, angle, NULL, SDL_FLIP_NONE);
+			break;
+		default:
+			break;
+		}
+	} else {
+		printf("[ERROR] Missing flow !");
+	}
+}
+
 int main() {
 	renderer_init();
 	init_map();
@@ -54,6 +118,7 @@ int main() {
 
 	/* Main game loop. */
 	bool running = true;
+	int cable_orientation = NORTH;
 	while (running) {
 		last_time = time;
 		time = SDL_GetPerformanceCounter();
@@ -68,6 +133,7 @@ int main() {
 				 * So we just filter out these 'fake' KEYDOWN events. */
 				continue;
 			}
+			
 			switch (event.type) {
 				case SDL_QUIT:
 					running = false;
@@ -96,6 +162,34 @@ int main() {
 								}
 								refresh_selected_tile_ui();
 							}
+						break;
+						case SDLK_n:
+							/* Test spawing building on selected tile. */
+							if (g_sel_tile_exists) {
+								new_building(BUILDING_EMITTER, g_sel_tile_coords);
+							}
+						break;
+						case SDLK_b:
+							/* Test spawing building on selected tile. */
+							if (g_sel_tile_exists) {
+								new_building(BUILDING_RECEIVER, g_sel_tile_coords);
+							}
+						break;
+						case SDLK_g:
+							/* Test spawing cable on selected tile. */
+							if (g_sel_tile_exists) {
+								new_flow(ELECTRICITY, g_sel_tile_coords, cable_orientation, (cable_orientation+2)%4);
+							}
+						break;
+						case SDLK_h:
+							/* Test spawing cable on selected tile. */
+							if (g_sel_tile_exists) {
+								new_flow(ELECTRICITY, g_sel_tile_coords, cable_orientation, (cable_orientation+1)%4);
+							}
+						break;
+						case SDLK_j:
+							/* Test rotating cable to be placed on selected tile. */
+							cable_orientation = (cable_orientation+1)%4;
 						break;
 						case SDLK_m:
 							/* Test moving entities from selected tile to adjacent tiles. */
@@ -190,6 +284,62 @@ int main() {
 				.h = ceilf(tile_render_size)};
 			render_tile_ground(tile->type, dst_rect);
 
+			
+			for (int flow_i = 0; flow_i < tile->flow_count; flow_i++){
+				Flow* flow = tile->flows[flow_i];
+				assert(flow != NULL);
+				render_tile_flow(flow, dst_rect);
+				if(flow->powered){
+					
+					TileCoords neighPosFLow;
+					Tile * neighTile;
+					for (int connection_i=0; connection_i < 2; connection_i++){
+						neighPosFLow.x = tc.x;
+						neighPosFLow.y = tc.y;
+						switch (flow->connections[connection_i]){
+							case NORTH:
+								neighPosFLow.x += 0;
+								neighPosFLow.y += -1;
+
+							break;
+							case SOUTH:
+								neighPosFLow.x += 0;
+								neighPosFLow.y += 1;
+							break;
+							case EAST:
+								neighPosFLow.x += 1;
+								neighPosFLow.y += 0;
+							break;
+							case WEST:
+								neighPosFLow.x += -1;
+								neighPosFLow.y += 0;
+							break;
+							
+							default:
+							break;
+						}
+						neighTile = get_tile(neighPosFLow);
+						setFlow(neighTile, true, getOpposedDirection(flow->connections[connection_i]));
+					}
+				}
+			}
+
+			if (tile->building != NULL){
+				render_tile_building(tile->building, dst_rect);
+				if (tile->building->type == BUILDING_EMITTER){
+					int offsets[] = {1, 0, -1, 0, 1};
+					/* Uses the array 'offsets' to get the four adjacent tiles.
+						The order is EAST (1,0), NORTH (0,-1), WEST (-1, 0) and SOUTH (0, 1)
+					*/
+					for (int tile_i=0; tile_i<4; tile_i++){
+						TileCoords neighPos = {tc.x+offsets[tile_i], tc.y+offsets[tile_i+1]};							
+						Tile * neighTile = get_tile(neighPos);
+						setFlow(neighTile, true, (CardinalType)(tile_i));
+						
+					}
+				}
+			}
+
 			int true_ent_count = 0;
 			for (int ent_i = 0; ent_i < tile->ent_count; ent_i++) {
 				if (get_ent(tile->ents[ent_i]) != NULL) {
@@ -214,6 +364,10 @@ int main() {
 						int ew = 0.3f * tile_render_size;
 						int eh = 0.4f * tile_render_size;
 						/* Draw human sprite. */
+						int ex = (float)(ent_i+1) / (float)(tile->ent_count+1)
+							* tile_render_size;
+						int ey = (1.0f - (float)(ent_i+1) / (float)(tile->ent_count+1))
+							* tile_render_size;
 						SDL_Rect rect = {
 							dst_rect.x + ex - ew / 2.0f, dst_rect.y + ey - eh / 2.0f, ew, eh};
 						render_human(rect);

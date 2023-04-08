@@ -1,7 +1,23 @@
 #include <stdlib.h>
 #include <assert.h>
+
 #include "map.h"
 #include "entity.h"
+#include "flow.h"
+#include "utils.h"
+
+
+FlowTypeSpec g_flow_type_spec_table[FLOW_TX_NUM] = {
+	[ELECTRICITY_STRAIGHT] = {
+		.rect_in_spritesheet = {16, 16, 8, 8},
+		.name = "Electric cable (straight)",
+	},
+	[ELECTRICITY_TURN] = {
+		.rect_in_spritesheet = {24, 16, 8, 8},
+		.name = "Electric cable (turn)",
+	},
+};
+
 
 TileTypeSpec g_tile_type_spec_table[TILE_TYPE_NUM] = {
 	[TILE_PLAIN] = {
@@ -21,6 +37,22 @@ TileTypeSpec g_tile_type_spec_table[TILE_TYPE_NUM] = {
 		.name = "Forest",
 	},
 };
+
+BuildingTypeSpec g_building_type_spec_table[BUILDING_TX_NUM] = {
+	[BUILDING_TX_EMITTER] = {
+		.rect_in_spritesheet = {0, 24, 8, 8},
+		.name = "Power Plant",
+	},
+	[BUILDING_TX_RECEIVER_OFF] = {
+		.rect_in_spritesheet = {8, 24, 8, 8},
+		.name = "Shield off",
+	},
+	[BUILDING_TX_RECEIVER_ON] = {
+		.rect_in_spritesheet = {16, 24, 8, 8},
+		.name = "Shield on",
+	},
+};
+
 
 bool tile_coords_are_valid(TileCoords coords) {
 	return
@@ -57,6 +89,48 @@ void remove_eid_from_tile_list(EntId eid, Tile* tile) {
 	tile->ents = realloc(tile->ents, tile->ent_count * sizeof(Ent*));
 }
 
+static void remove_building_from_tile(Tile* tile) {
+	tile->building = NULL;
+}
+
+static void add_flow_to_tile_list(Flow* flow, Tile* tile) {
+	tile->flow_count++;
+	tile->flows = realloc(tile->flows, tile->flow_count * sizeof(Flow*));
+	tile->flows[tile->flow_count-1] = flow;
+}
+
+static void remove_flow_from_tile_list(Flow* flow, Tile* tile) {
+	int flow_index_in_tile = -1;
+	for (int i = 0; i < tile->flow_count; i++) {
+		if (tile->flows[i] == flow) {
+			flow_index_in_tile = i;
+			break;
+		}
+	}
+	assert(flow_index_in_tile != -1);
+	for (int i = flow_index_in_tile; i < tile->flow_count - 1; i++) {
+		tile->flows[i] = tile->flows[i+1];
+	}
+	tile->flow_count--;
+	tile->flows = realloc(tile->flows, tile->flow_count * sizeof(Flow*));
+}
+
+Flow* new_flow(FlowType type, TileCoords pos, CardinalType entry, CardinalType exit) {
+	Flow* flow = malloc(sizeof(Flow));
+	*flow = (Flow){
+		.type = type,
+		.pos = pos,
+		.connections = {entry, exit},
+		.capacity = 10,
+		.powered = false,
+	};
+	qsort(flow->connections, 2, sizeof(int), cmpInt);
+	Tile* tile = get_tile(pos);
+	add_flow_to_tile_list(flow, tile);
+	
+	return flow;
+}
+
 Tile* g_grid = NULL;
 
 void init_map(void) {
@@ -68,6 +142,9 @@ void init_map(void) {
 			.type = rand() % TILE_TYPE_NUM,
 			.ents = NULL,
 			.ent_count = 0,
+			.building = NULL,
+			.flows = NULL,
+			.flow_count = 0,
 		};
 	}
 }
