@@ -10,7 +10,7 @@ static void next_faction_to_play(void) {
 	g_faction_currently_playing = (g_faction_currently_playing + 1) % FACTION_IDENT_NUM;
 
 	/* Reset the "already moved this turn" flags on entities. */
-	for (int y = 0; y < N_TILES_H; y++) for (int x = 0; x < N_TILES_W; x++) {
+	for (int y = 0; y < g_map_h; y++) for (int x = 0; x < g_map_w; x++) {
 		Tile* tile = get_tile((TileCoords){x, y});
 		for (int i = 0; i < tile->ent_count; i++) {
 			Ent* ent = get_ent(tile->ents[i]);
@@ -38,7 +38,7 @@ void move_human(EntId eid, TileCoords dst_pos) {
 static void random_ai_play(void) {
 	assert(!g_faction_spec_table[g_faction_currently_playing].is_player);
 
-	for (int y = 0; y < N_TILES_H; y++) for (int x = 0; x < N_TILES_W; x++) {
+	for (int y = 0; y < g_map_h; y++) for (int x = 0; x < g_map_w; x++) {
 		TileCoords tc = (TileCoords){x, y};
 		Tile* tile = get_tile((TileCoords){x, y});
 		for (int i = 0; i < tile->ent_count; i++) {

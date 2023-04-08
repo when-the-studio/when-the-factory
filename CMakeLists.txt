@@ -42,6 +42,7 @@ target_link_libraries(wtf
 	${SDL2_LIBRARIES}
 	${SDL2_IMAGE_LIBRARIES}
 	${SDL2_TTF_LIBRARIES}
+	m
 )
 
 set_target_properties(wtf

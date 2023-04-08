@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <assert.h>
+#include <string.h>
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
@@ -104,7 +105,19 @@ void render_tile_flow(Flow * flow, SDL_Rect dst_rect) {
 	}
 }
 
-int main() {
+int main(int argc, char const** argv) {
+	for (int i = 1; i < argc; i++) {
+		if (strcmp(argv[i], "--map-size") == 0) {
+			i++;
+			assert(i < argc);
+			int map_size = atoi(argv[i]);
+			g_map_w = map_size;
+			g_map_h = map_size;
+		} else {
+			printf("Unknown command line parameter \"%s\"\n", argv[i]);
+		}
+	}
+
 	renderer_init();
 	init_map();
 	init_wg_tree();
@@ -274,7 +287,7 @@ int main() {
 		/* Draw tiles. */
 		float tile_render_size = TILE_SIZE * g_camera.zoom;
 		for (int i = 0; i < N_TILES; ++i) {
-			TileCoords tc = {.x = i % N_TILES_W, .y = i / N_TILES_W};
+			TileCoords tc = {.x = i % g_map_w, .y = i / g_map_w};
 			Tile const* tile = get_tile(tc);
 
 			SDL_Rect dst_rect = {
@@ -408,15 +421,15 @@ int main() {
 		if (render_lines) {
 			/* Draw grid lines. */
 			SDL_SetRenderDrawColor(g_renderer, 0, 0, 0, 255);
-			for (int y = 0; y < N_TILES_W+1; ++y) {
+			for (int y = 0; y < g_map_w+1; ++y) {
 				WinCoords a = tile_coords_to_window_pixel((TileCoords){0, y});
-				WinCoords b = tile_coords_to_window_pixel((TileCoords){N_TILES_W, y});
+				WinCoords b = tile_coords_to_window_pixel((TileCoords){g_map_w, y});
 				SDL_RenderDrawLine(g_renderer, a.x, a.y,   b.x, b.y);
 				SDL_RenderDrawLine(g_renderer, a.x, a.y-1, b.x, b.y-1);
 			}
-			for (int x = 0; x < N_TILES_H+1; ++x) {
+			for (int x = 0; x < g_map_h+1; ++x) {
 				WinCoords a = tile_coords_to_window_pixel((TileCoords){x, 0});
-				WinCoords b = tile_coords_to_window_pixel((TileCoords){x, N_TILES_H});
+				WinCoords b = tile_coords_to_window_pixel((TileCoords){x, g_map_h});
 				SDL_RenderDrawLine(g_renderer, a.x,   a.y, b.x,   b.y);
 				SDL_RenderDrawLine(g_renderer, a.x-1, a.y, b.x-1, b.y);
 			}

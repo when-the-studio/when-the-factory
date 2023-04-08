@@ -9,9 +9,9 @@
 
 #define TILE_SIZE 100
 
-#define N_TILES_H 50
-#define N_TILES_W 50
-#define N_TILES (N_TILES_H * N_TILES_W)
+extern int g_map_w;
+extern int g_map_h;
+#define N_TILES (g_map_w * g_map_h)
 
 /* Type of terrain for each tile of the map. */
 enum TileType {

@@ -16,7 +16,7 @@ typedef struct Camera Camera;
 #define SMOOTHNESS 50.0f
 #define BASE_SPEED 2.0f
 #define ZOOM_MAX 4.0f
-#define ZOOM_MIN 0.1f
+#define ZOOM_MIN 0.04f
 
 extern Camera g_camera;
 

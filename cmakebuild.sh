@@ -21,17 +21,17 @@ help_function() {
 
 run() {
 	cd bin
-	./wtf
+	./wtf $@
 	cd ..
 }
 
 
 build
 ## Parsing Command Line arguments
-while getopts 'rh?' a
+while getopts ':rh?' a
 do
 	case $a in
-		r) run;;
+		r) shift $(($OPTIND - 1)); run "$@";;
 		h) help_function;;
 	esac
 done
