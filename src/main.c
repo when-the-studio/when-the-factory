@@ -251,8 +251,8 @@ int main() {
 			}
 		}
 
-		/* Draw grid lines if enabled. */
 		if (render_lines) {
+			/* Draw grid lines. */
 			SDL_SetRenderDrawColor(g_renderer, 0, 0, 0, 255);
 			for (int y = 0; y < N_TILES_W+1; ++y) {
 				WinCoords a = tile_coords_to_window_pixel((TileCoords){0, y});
@@ -279,77 +279,6 @@ int main() {
 			SDL_RenderDrawRect(g_renderer, &rect);
 			rect.x -= 1; rect.y -= 1; rect.w += 2; rect.h += 2;
 			SDL_RenderDrawRect(g_renderer, &rect);
-
-			Tile const* sel_tile = 
-				&g_grid[g_sel_tile_coords.y * N_TILES_W + g_sel_tile_coords.x];
-
-			/* TODO: Redo the following lame UI stuff with the ui-dev's branch widgets. */
-
-			/* Draw the selected tile information in a corner. */
-			SDL_Rect ui_rect = {.x = 10, .y = WINDOW_H - 190, .w = 150, .h = 180};
-			SDL_SetRenderDrawColor(g_renderer, 200, 200, 200, 255);
-			SDL_RenderFillRect(g_renderer, &ui_rect);
-			SDL_SetRenderDrawColor(g_renderer, 0, 0, 0, 255);
-			SDL_RenderDrawRect(g_renderer, &ui_rect);
-			ui_rect.x -= 1; ui_rect.y -= 1; ui_rect.w += 2; ui_rect.h += 2;
-			SDL_RenderDrawRect(g_renderer, &ui_rect);
-			ui_rect.x += 1; ui_rect.y += 1; ui_rect.w -= 2; ui_rect.h -= 2;
-			
-			rect = (SDL_Rect){.x = 35, .y = WINDOW_H - 135, .w = 100, .h = 100};
-			render_tile_ground(sel_tile->type, rect);
-			char const* name = g_tile_type_spec_table[sel_tile->type].name;
-			render_string_pixel(name,
-				(WinCoords){10 + 150/2, WINDOW_H - 175}, PP_TOP_CENTER,
-				(SDL_Color){0, 0, 0, 255});
-
-			for (int ent_i = 0; ent_i < sel_tile->ent_count; ent_i++) {
-				EntId eid = (sel_tile->ents[ent_i]);
-				Ent* ent = get_ent(eid);
-				if (ent == NULL) continue;
-
-				ui_rect.x += ui_rect.w + 10;
-				SDL_SetRenderDrawColor(g_renderer, 200, 200, 200, 255);
-				SDL_RenderFillRect(g_renderer, &ui_rect);
-				SDL_SetRenderDrawColor(g_renderer, 0, 0, 0, 255);
-				SDL_RenderDrawRect(g_renderer, &ui_rect);
-				ui_rect.x -= 1; ui_rect.y -= 1; ui_rect.w += 2; ui_rect.h += 2;
-				SDL_RenderDrawRect(g_renderer, &ui_rect);
-				ui_rect.x += 1; ui_rect.y += 1; ui_rect.w -= 2; ui_rect.h -= 2;
-
-				switch (ent->type) {
-					case ENT_HUMAIN: {
-						render_string_pixel("Human",
-							(WinCoords){ui_rect.x + ui_rect.w/2, WINDOW_H - 175}, PP_TOP_CENTER,
-							(SDL_Color){0, 0, 0, 255});
-						EntDataHuman* data = ent->data;
-						char const* faction_name;
-						switch (data->faction) {
-							case FACTION_YELLOW: faction_name = "Yellow"; break;
-							case FACTION_RED:    faction_name = "Red";    break;
-							default: assert(false);
-						}
-						render_string_pixel(faction_name,
-							(WinCoords){ui_rect.x + ui_rect.w/2, WINDOW_H - 175 + 40}, PP_TOP_CENTER,
-							(SDL_Color){0, 0, 0, 255});
-					break; }
-
-					case ENT_TEST_BLOCK: {
-						render_string_pixel("Test Block",
-							(WinCoords){ui_rect.x + ui_rect.w/2, WINDOW_H - 175}, PP_TOP_CENTER,
-							(SDL_Color){0, 0, 0, 255});
-						EntDataTestBlock* data = ent->data;
-						SDL_SetRenderDrawColor(g_renderer,
-							data->color.r, data->color.g, data->color.b, 255);
-						rect.w = ui_rect.w / 2;
-						rect.h = rect.w;
-						rect.x = ui_rect.x + ui_rect.w / 2 - rect.w / 2;
-						rect.y = ui_rect.y + ui_rect.h / 2 - rect.h / 2;
-						SDL_RenderFillRect(g_renderer, &rect);
-					break; }
-
-					default: assert(false);
-				}
-			}
 		}
 
 		wg_render(g_wg_root, 0, 0);
