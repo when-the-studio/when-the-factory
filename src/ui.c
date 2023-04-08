@@ -50,9 +50,13 @@ static void random_ai_play(void) {
 				if (human_data->faction == g_faction_currently_playing
 					&& !human_data->already_moved_this_turn
 				) {
-					TileCoords dst_pos = tc;
-					*(rand() % 2 == 0 ? &dst_pos.x : &dst_pos.y) += (rand() % 2) * 2 - 1;
-					move_human(eid, dst_pos);
+					if (rand() % 7 != 0) {
+						TileCoords dst_pos = tc;
+						*(rand() % 2 == 0 ? &dst_pos.x : &dst_pos.y) += (rand() % 2) * 2 - 1;
+						if (tile_coords_are_valid(dst_pos)) {
+							move_human(eid, dst_pos);
+						}
+					}
 				}
 			}
 		}
