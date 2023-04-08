@@ -70,7 +70,9 @@ static void random_ai_play(void) {
 				) {
 					TileCoords dst_pos = tc;
 					*(rand() % 2 == 0 ? &dst_pos.x : &dst_pos.y) += (rand() % 2) * 2 - 1;
-					move_human(eid, dst_pos);
+					if (tile_coords_are_valid(dst_pos)) {
+						move_human(eid, dst_pos);
+					}
 				}
 			}
 		}
