@@ -37,8 +37,12 @@ void ui_select_tile(TileCoords tc) {
 
 	Tile* tile = get_tile(tc);
 	char const* name = g_tile_type_spec_table[tile->type].name;
-	wg_multopleft_add_sub(s_wg_tile_info,
-		new_wg_text_line((char*)name, RGB(0, 0, 0))
+	wg_multopleft_add_sub(s_wg_tile_info, 
+		new_wg_box(
+			new_wg_text_line((char*)name, RGB(0, 0, 0)),
+			6, 6, 3,
+			RGB(0, 0, 0), RGB(200, 200, 255)
+		)
 	);
 	for (int i = 0; i < tile->ent_count; i++) {
 		EntId eid = tile->ents[i];
