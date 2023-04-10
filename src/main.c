@@ -385,8 +385,7 @@ int main(int argc, char const** argv) {
 							dst_rect.x + ex - ew / 2.0f, dst_rect.y + ey - eh / 2.0f, ew, eh};
 						render_human(rect);
 						/* Draw faction color. */
-						EntDataHuman* data = ent->data;
-						switch (data->faction) {
+						switch (ent->human.faction) {
 							case FACTION_YELLOW:
 								SDL_SetRenderDrawColor(g_renderer, 255, 255, 0, 255);
 							break;
@@ -407,9 +406,8 @@ int main(int argc, char const** argv) {
 						int eh = 0.2f * tile_render_size;
 						SDL_Rect rect = {
 							dst_rect.x + ex - ew / 2.0f, dst_rect.y + ey - eh / 2.0f, ew, eh};
-						EntDataTestBlock* data = ent->data;
-						SDL_SetRenderDrawColor(g_renderer,
-							data->color.r, data->color.g, data->color.b, 255);
+						SDL_Color color = ent->test_block.color;
+						SDL_SetRenderDrawColor(g_renderer, color.r, color.g, color.b, 255);
 						SDL_RenderFillRect(g_renderer, &rect);
 					break; }
 

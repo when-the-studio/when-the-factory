@@ -41,7 +41,15 @@ struct Ent {
 	/* TODO: Add support for an entity being "inside" an other entity
 	 * instead of directly on a tile. */
 	TileCoords pos;
-	void* data;
+	union {
+		struct EntDataHuman {
+			FactionIdent faction;
+			bool already_moved_this_turn;
+		} human;
+		struct EntDataTestBlock {
+			SDL_Color color;
+		} test_block;
+	};
 };
 typedef struct Ent Ent;
 
@@ -67,17 +75,8 @@ EntId ent_new(TileCoords pos);
 void ent_delete(EntId eid);
 void ent_move(EntId eid, TileCoords new_pos);
 
-struct EntDataHuman {
-	FactionIdent faction;
-	bool already_moved_this_turn;
-};
-typedef struct EntDataHuman EntDataHuman;
 EntId ent_new_human(TileCoords pos, FactionIdent faction);
 
-struct EntDataTestBlock {
-	SDL_Color color;
-};
-typedef struct EntDataTestBlock EntDataTestBlock;
 EntId ent_new_test_block(TileCoords pos, SDL_Color color);
 
 #endif // WHEN_THE_FACTORY_ENTITY_

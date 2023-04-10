@@ -16,8 +16,7 @@ static void next_faction_to_play(void) {
 			Ent* ent = get_ent(tile->ents[i]);
 			if (ent == NULL) continue;
 			if (ent->type == ENT_HUMAIN) {
-				EntDataHuman* human_data = ent->data;
-				human_data->already_moved_this_turn = false;
+				ent->human.already_moved_this_turn = false;
 			}
 		}
 	}
@@ -29,8 +28,7 @@ void move_human(EntId eid, TileCoords dst_pos) {
 	/* Mark it as having already moved. */
 	Ent* ent = get_ent(eid);
 	assert(ent->type == ENT_HUMAIN);
-	EntDataHuman* data_human = ent->data;
-	data_human->already_moved_this_turn = true;
+	ent->human.already_moved_this_turn = true;
 
 	refresh_selected_tile_ui();
 }
@@ -46,9 +44,8 @@ static void random_ai_play(void) {
 			Ent* ent = get_ent(eid);
 			if (ent == NULL) continue;
 			if (ent->type == ENT_HUMAIN) {
-				EntDataHuman* human_data = ent->data;
-				if (human_data->faction == g_faction_currently_playing
-					&& !human_data->already_moved_this_turn
+				if (ent->human.faction == g_faction_currently_playing
+					&& !ent->human.already_moved_this_turn
 				) {
 					if (rand() % 7 != 0) {
 						TileCoords dst_pos = tc;
@@ -142,19 +139,18 @@ void ui_select_tile(TileCoords tc) {
 				wg_ent = new_wg_multopleft(6, 0, 0, ORIENTATION_TOP_TO_BOTTOM);
 				Wg* wg_ent_info = new_wg_multopleft(6, 0, 0, ORIENTATION_LEFT_TO_RIGHT);
 				wg_multopleft_add_sub(wg_ent, wg_ent_info);
-				EntDataHuman* data_human = ent->data;
 				wg_multopleft_add_sub(wg_ent_info,
 					new_wg_text_line("Human", RGB(0, 0, 0))
 				);
-				char* faction_name = g_faction_spec_table[data_human->faction].name;
-				SDL_Color faction_color = g_faction_spec_table[data_human->faction].color;
+				char* faction_name = g_faction_spec_table[ent->human.faction].name;
+				SDL_Color faction_color = g_faction_spec_table[ent->human.faction].color;
 				wg_multopleft_add_sub(wg_ent_info,
 					new_wg_text_line(faction_name, faction_color)
 				);
-				if (data_human->faction == g_faction_currently_playing) {
+				if (ent->human.faction == g_faction_currently_playing) {
 					Wg* wg_ent_buttons = new_wg_multopleft(4, 0, 0, ORIENTATION_LEFT_TO_RIGHT);
 					wg_multopleft_add_sub(wg_ent, wg_ent_buttons);
-					if (data_human->already_moved_this_turn) {
+					if (ent->human.already_moved_this_turn) {
 						wg_multopleft_add_sub(wg_ent_buttons,
 							new_wg_text_line("already moved", RGB(150, 150, 150))
 						);
@@ -189,9 +185,8 @@ void ui_select_tile(TileCoords tc) {
 			break;
 			case ENT_TEST_BLOCK:;
 				wg_ent = new_wg_multopleft(10, 0, 0, ORIENTATION_LEFT_TO_RIGHT);
-				EntDataTestBlock* data_block = ent->data;
 				wg_multopleft_add_sub(wg_ent,
-					new_wg_text_line("Test block", data_block->color)
+					new_wg_text_line("Test block", ent->test_block.color)
 				);
 			break;
 			default: assert(false);
