@@ -1,5 +1,6 @@
 #ifndef WHEN_THE_FACTORY_CAMERA_
 #define WHEN_THE_FACTORY_CAMERA_
+
 #include <SDL2/SDL.h>
 
 #include "map.h"

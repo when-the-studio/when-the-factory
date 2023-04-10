@@ -1,5 +1,6 @@
 #ifndef WHEN_THE_FACTORY_BLUIDING_
 #define WHEN_THE_FACTORY_BLUIDING_
+
 #include <stdbool.h> 
 #include <SDL2/SDL.h>
 #include "utils.h"
@@ -41,6 +42,5 @@ typedef struct BuildingTypeSpec BuildingTypeSpec;
 extern BuildingTypeSpec g_building_type_spec_table[BUILDING_TX_NUM];
 
 Building* new_building(BuildingType type, TileCoords pos);
-
 
 #endif

@@ -17,4 +17,3 @@ Building* new_building(BuildingType type, TileCoords pos) {
 	
 	return building;
 }
-
