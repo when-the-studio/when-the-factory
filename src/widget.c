@@ -2,11 +2,6 @@
 #include "widget.h"
 #include "renderer.h"
 
-/* TODO: Move to some "utils.c" source file. */
-int max(int a, int b) {
-	return a < b ? b : a;
-}
-
 Wg* g_wg_root = NULL;
 
 /* *** Text Line widget section *** */
@@ -196,7 +191,7 @@ static bool wg_button_click(Wg const* wg, int x, int y, int cx, int cy) {
 	Dims sub_dims = wg_get_dims(wg->button.sub_wg);
 	SDL_Rect r = {x, y, sub_dims.w, sub_dims.h};
 	if (r.x <= cx && cx < r.x + r.w && r.y <= cy && cy < r.y + r.h) {
-		wg->button.left_click_callback.func(wg->button.left_click_callback.whatever);
+		call_callback(wg->button.left_click_callback);
 		return true;
 	}
 	return false;

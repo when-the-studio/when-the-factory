@@ -3,20 +3,7 @@
 
 #include <stdbool.h>
 #include <SDL2/SDL.h>
-
-/* TODO: Move to some "utils.h" header file. */
-struct Dims {
-	int w, h;
-};
-typedef struct Dims Dims;
-
-/* TODO: Move to some "utils.h" header file. */
-struct CallbackWithData {
-	void (*func)(void* whatever);
-	void* whatever;
-};
-typedef struct CallbackWithData CallbackWithData;
-
+#include "utils.h"
 
 enum WgType {
 	WG_TEXT_LINE,
