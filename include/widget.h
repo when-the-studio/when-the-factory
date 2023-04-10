@@ -27,13 +27,44 @@ enum WgType {
 };
 typedef enum WgType WgType;
 
-/* Widget, a UI component that may be part of a tree of widgets.
- * Using some sort of inheritence, pointers to `Wg`s often actually point to
- * larger structures that hold data specific to whatever type of widget they are. */
+enum Orientation {
+	ORIENTATION_TOP_TO_BOTTOM,
+	ORIENTATION_LEFT_TO_RIGHT,
+};
+typedef enum Orientation Orientation;
+
+/* Widget, a UI component that may be part of a tree of widgets. */
+typedef struct Wg Wg;
 struct Wg {
 	WgType type;
+	union {
+		struct WgDataTextLine {
+			char* string;
+			SDL_Color fg_color;
+		} text_line;
+		struct WgDataMulTopLeft {
+			Wg** sub_wgs;
+			int sub_wgs_count;
+			int spacing;
+			int offset_x, offset_y;
+			Orientation orientation;
+		} multl;
+		struct WgDataButton {
+			Wg* sub_wg;
+			CallbackWithData left_click_callback;
+		} button;
+		struct WgDataBox {
+			Wg* sub_wg;
+			int margin_x, margin_y;
+			int line_thickness;
+			SDL_Color line_color, bg_color;
+		} box;
+		struct WgDataSprite {
+			SDL_Rect rect_in_spritesheet;
+			int w, h;
+		} sprite;
+	};
 };
-typedef struct Wg Wg;
 
 /* The root of the whole widget tree. */
 extern Wg* g_wg_root;
@@ -45,12 +76,6 @@ bool wg_click(Wg const* wg, int x, int y, int cx, int cy);
 void wg_delete(Wg* wg);
 
 Wg* new_wg_text_line(char* string, SDL_Color fg_color);
-
-enum Orientation {
-	ORIENTATION_TOP_TO_BOTTOM,
-	ORIENTATION_LEFT_TO_RIGHT,
-};
-typedef enum Orientation Orientation;
 
 Wg* new_wg_multopleft(int spacing, int offset_x, int offset_y, Orientation orientation);
 void wg_multopleft_add_sub(Wg* wg, Wg* sub);
