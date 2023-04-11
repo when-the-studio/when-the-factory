@@ -7,7 +7,7 @@
 #include "utils.h"
 
 
-FlowTypeSpec g_flow_type_spec_table[FLOW_TX_NUM] = {
+CableTypeSpec g_cable_type_spec_table[CABLE_TX_NUM] = {
 	[ELECTRICITY_STRAIGHT] = {
 		.rect_in_spritesheet = {16, 16, 8, 8},
 		.name = "Electric cable (straight)",
@@ -96,13 +96,13 @@ static void remove_building_from_tile(Tile* tile) {
 	tile->building = NULL;
 }
 
-static void add_flow_to_tile_list(Flow* flow, Tile* tile) {
+static void add_flow_to_tile_list(Cable* flow, Tile* tile) {
 	tile->flow_count++;
-	tile->flows = realloc(tile->flows, tile->flow_count * sizeof(Flow*));
+	tile->flows = realloc(tile->flows, tile->flow_count * sizeof(Cable*));
 	tile->flows[tile->flow_count-1] = flow;
 }
 
-static void remove_flow_from_tile_list(Flow* flow, Tile* tile) {
+static void remove_flow_from_tile_list(Cable* flow, Tile* tile) {
 	int flow_index_in_tile = -1;
 	for (int i = 0; i < tile->flow_count; i++) {
 		if (tile->flows[i] == flow) {
@@ -115,13 +115,12 @@ static void remove_flow_from_tile_list(Flow* flow, Tile* tile) {
 		tile->flows[i] = tile->flows[i+1];
 	}
 	tile->flow_count--;
-	tile->flows = realloc(tile->flows, tile->flow_count * sizeof(Flow*));
+	tile->flows = realloc(tile->flows, tile->flow_count * sizeof(Cable*));
 }
 
-Flow* new_flow(FlowType type, TileCoords pos, CardinalType entry, CardinalType exit) {
-	Flow* flow = malloc(sizeof(Flow));
-	*flow = (Flow){
-		.type = type,
+Cable* new_flow(TileCoords pos, CardinalType entry, CardinalType exit) {
+	Cable* flow = malloc(sizeof(Cable));
+	*flow = (Cable){
 		.pos = pos,
 		.connections = {entry, exit},
 		.capacity = 10,

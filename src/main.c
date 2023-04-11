@@ -67,7 +67,7 @@ void render_tile_building(Building * building, SDL_Rect dst_rect) {
 
 void setFlow(Tile * tile, bool powered, CardinalType entry) {
 	assert(tile != NULL);
-	Flow * flow;
+	Cable * flow;
 	for (int i=0; i<tile->flow_count; i++){
 		flow = tile->flows[i];
 		if (flow->connections[0] == entry || flow->connections[1] == entry){
@@ -79,29 +79,20 @@ void setFlow(Tile * tile, bool powered, CardinalType entry) {
 	}
 }
 
-void render_tile_flow(Flow * flow, SDL_Rect dst_rect) {
+void render_tile_flow(Cable * flow, SDL_Rect dst_rect) {
 	if (flow != NULL){
 		SDL_Rect rect_in_spritesheet;
 		int angle = 0;
 		bool straight = flow->connections[1] - flow->connections[0] == 2;
-		switch (flow->type)
-		{
-		case ELECTRICITY:
 			// Cringe af but is just to test. The true way of storing and evaluating directions must be discussed.
 			if (straight){
-				rect_in_spritesheet = g_flow_type_spec_table[ELECTRICITY_STRAIGHT].rect_in_spritesheet;
+				rect_in_spritesheet = g_cable_type_spec_table[ELECTRICITY_STRAIGHT].rect_in_spritesheet;
 				angle = 90 * (flow->connections[0] == SOUTH);
 			} else {
-				rect_in_spritesheet = g_flow_type_spec_table[ELECTRICITY_TURN].rect_in_spritesheet;
+				rect_in_spritesheet = g_cable_type_spec_table[ELECTRICITY_TURN].rect_in_spritesheet;
 				angle = 90 * (4-flow->connections[1]) * !(flow->connections[0] == WEST && flow->connections[1] == NORTH);
 			}
 			SDL_RenderCopyEx(g_renderer, g_spritesheet, &rect_in_spritesheet, &dst_rect, angle, NULL, SDL_FLIP_NONE);
-			break;
-		default:
-			break;
-		}
-	} else {
-		printf("[ERROR] Missing flow !");
 	}
 }
 
@@ -191,13 +182,13 @@ int main(int argc, char const** argv) {
 						case SDLK_g:
 							/* Test spawing cable on selected tile. */
 							if (g_sel_tile_exists) {
-								new_flow(ELECTRICITY, g_sel_tile_coords, cable_orientation, (cable_orientation+2)%4);
+								new_flow(g_sel_tile_coords, cable_orientation, (cable_orientation+2)%4);
 							}
 						break;
 						case SDLK_h:
 							/* Test spawing cable on selected tile. */
 							if (g_sel_tile_exists) {
-								new_flow(ELECTRICITY, g_sel_tile_coords, cable_orientation, (cable_orientation+1)%4);
+								new_flow(g_sel_tile_coords, cable_orientation, (cable_orientation+1)%4);
 							}
 						break;
 						case SDLK_j:
@@ -299,7 +290,7 @@ int main(int argc, char const** argv) {
 
 			
 			for (int flow_i = 0; flow_i < tile->flow_count; flow_i++){
-				Flow* flow = tile->flows[flow_i];
+				Cable* flow = tile->flows[flow_i];
 				assert(flow != NULL);
 				render_tile_flow(flow, dst_rect);
 				if(flow->powered){

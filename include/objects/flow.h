@@ -15,42 +15,51 @@ enum CardinalType {
 };
 typedef enum CardinalType CardinalType;
 
-enum FlowType {
-	ELECTRICITY,
-	CONVEYER,
-	FLUID,
-
-	FLOW_TYPE_NUM
-};
-typedef enum FlowType FlowType;
-
-enum FlowTextureType {
+enum CableTexture {
 	ELECTRICITY_STRAIGHT,
 	ELECTRICITY_TURN,
 
-	FLOW_TX_NUM
+	CABLE_TX_NUM
 };
-typedef enum FlowType FlowType;
+typedef enum CableTexture CableTexture;
 
 /* Describes a type of a flow. */
-struct FlowTypeSpec {
+struct CableTypeSpec {
 	SDL_Rect rect_in_spritesheet;
 	char const* name;
 };
-typedef struct FlowTypeSpec FlowTypeSpec;
+typedef struct CableTypeSpec CableTypeSpec;
 
-extern FlowTypeSpec g_flow_type_spec_table[FLOW_TX_NUM];
+extern CableTypeSpec g_cable_type_spec_table[CABLE_TX_NUM];
 
 /* An actual flow */
-struct Flow {
-	FlowType type;
-	int capacity;
+struct Cable {
 	TileCoords pos;
 	CardinalType connections[2];
+	int maxFlow;
+	int capacity;	
 	bool powered;
 };
-typedef struct Flow Flow;
+typedef struct Cable Cable;
+
+struct Fluid {
+	TileCoords pos;
+	CardinalType connections[2];
+	int maxFlow;
+	int capacity;
+};
+typedef struct Fluid Fluid;
+
+struct Conveyor {
+	TileCoords pos;
+	CardinalType input;
+	CardinalType output;
+	int maxFlow;
+	int capacity;
+};
+typedef struct Conveyor Conveyor;
 
 CardinalType getOpposedDirection(CardinalType direction);
+void updateCableNetwork();
 
 #endif
