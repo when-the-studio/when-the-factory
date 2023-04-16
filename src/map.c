@@ -16,6 +16,14 @@ CableTypeSpec g_cable_type_spec_table[CABLE_TX_NUM] = {
 		.rect_in_spritesheet = {24, 16, 8, 8},
 		.name = "Electric cable (turn)",
 	},
+	[ELECTRICITY_STRAIGHT_ON] = {
+		.rect_in_spritesheet = {16, 8, 8, 8},
+		.name = "Electric cable (straight)",
+	},
+	[ELECTRICITY_TURN_ON] = {
+		.rect_in_spritesheet = {24, 8, 8, 8},
+		.name = "Electric cable (turn)",
+	},
 };
 
 
@@ -126,7 +134,10 @@ Cable* new_flow(TileCoords pos, CardinalType entry, CardinalType exit) {
 		.capacity = 10,
 		.powered = false,
 	};
-	qsort(flow->connections, 2, sizeof(int), cmpInt);
+	if (entry > exit){
+		flow->connections[0] = exit;
+		flow->connections[1] = entry;
+	}
 	Tile* tile = get_tile(pos);
 	add_flow_to_tile_list(flow, tile);
 	

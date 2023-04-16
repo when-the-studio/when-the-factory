@@ -65,20 +65,6 @@ void render_tile_building(Building * building, SDL_Rect dst_rect) {
 	}
 }
 
-void setFlow(Tile * tile, bool powered, CardinalType entry) {
-	assert(tile != NULL);
-	Cable * flow;
-	for (int i=0; i<tile->flow_count; i++){
-		flow = tile->flows[i];
-		if (flow->connections[0] == entry || flow->connections[1] == entry){
-			flow->powered = powered;
-		}
-	}
-	if (tile->building != NULL && tile->building->type == BUILDING_RECEIVER) {
-		tile->building->powered = powered;
-	}
-}
-
 void render_tile_flow(Cable * flow, SDL_Rect dst_rect) {
 	if (flow != NULL){
 		SDL_Rect rect_in_spritesheet;
@@ -87,9 +73,16 @@ void render_tile_flow(Cable * flow, SDL_Rect dst_rect) {
 			// Cringe af but is just to test. The true way of storing and evaluating directions must be discussed.
 			if (straight){
 				rect_in_spritesheet = g_cable_type_spec_table[ELECTRICITY_STRAIGHT].rect_in_spritesheet;
+				if (flow->powered){
+					rect_in_spritesheet = g_cable_type_spec_table[ELECTRICITY_STRAIGHT_ON].rect_in_spritesheet;
+				}
+				
 				angle = 90 * (flow->connections[0] == SOUTH);
 			} else {
 				rect_in_spritesheet = g_cable_type_spec_table[ELECTRICITY_TURN].rect_in_spritesheet;
+				if (flow->powered){
+					rect_in_spritesheet = g_cable_type_spec_table[ELECTRICITY_TURN_ON].rect_in_spritesheet;
+				}
 				angle = 90 * (4-flow->connections[1]) * !(flow->connections[0] == WEST && flow->connections[1] == NORTH);
 			}
 			SDL_RenderCopyEx(g_renderer, g_spritesheet, &rect_in_spritesheet, &dst_rect, angle, NULL, SDL_FLIP_NONE);
@@ -171,24 +164,28 @@ int main(int argc, char const** argv) {
 							/* Test spawing building on selected tile. */
 							if (g_sel_tile_exists) {
 								new_building(BUILDING_EMITTER, g_sel_tile_coords);
+								updateSurroundings(g_sel_tile_coords);
 							}
 						break;
 						case SDLK_b:
 							/* Test spawing building on selected tile. */
 							if (g_sel_tile_exists) {
 								new_building(BUILDING_RECEIVER, g_sel_tile_coords);
+								updateSurroundings(g_sel_tile_coords);
 							}
 						break;
 						case SDLK_g:
 							/* Test spawing cable on selected tile. */
 							if (g_sel_tile_exists) {
 								new_flow(g_sel_tile_coords, cable_orientation, (cable_orientation+2)%4);
+								updateSurroundings(g_sel_tile_coords);
 							}
 						break;
 						case SDLK_h:
 							/* Test spawing cable on selected tile. */
 							if (g_sel_tile_exists) {
 								new_flow(g_sel_tile_coords, cable_orientation, (cable_orientation+1)%4);
+								updateSurroundings(g_sel_tile_coords);
 							}
 						break;
 						case SDLK_j:
@@ -323,7 +320,7 @@ int main(int argc, char const** argv) {
 							break;
 						}
 						neighTile = get_tile(neighPosFLow);
-						setFlow(neighTile, true, getOpposedDirection(flow->connections[connection_i]));
+						//updateCableNetwork(neighPosFLow, true, getOpposedDirection(flow->connections[connection_i]));
 					}
 				}
 			}
@@ -338,7 +335,7 @@ int main(int argc, char const** argv) {
 					for (int tile_i=0; tile_i<4; tile_i++){
 						TileCoords neighPos = {tc.x+offsets[tile_i], tc.y+offsets[tile_i+1]};							
 						Tile * neighTile = get_tile(neighPos);
-						setFlow(neighTile, true, (CardinalType)(tile_i));
+						//updateCableNetwork(neighPos, true, (CardinalType)(tile_i));
 						
 					}
 				}

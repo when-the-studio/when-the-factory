@@ -7,6 +7,13 @@ struct TileCoords {
 };
 typedef struct TileCoords TileCoords;
 
+/*  */
+struct Array {
+	int size;
+	void * arr;
+};
+typedef struct Array Array;
+
 /* Function used by qsort */
 int cmpInt (const void * a, const void * b);
 

@@ -15,9 +15,20 @@ enum CardinalType {
 };
 typedef enum CardinalType CardinalType;
 
+enum FlowType {
+	ELECTRIC_CABLE,
+	FLUID,
+	CONVEYOR,
+
+	FLOW_TYPE_NUM
+};
+typedef enum FlowType FlowType;
+
 enum CableTexture {
 	ELECTRICITY_STRAIGHT,
 	ELECTRICITY_TURN,
+	ELECTRICITY_STRAIGHT_ON,
+	ELECTRICITY_TURN_ON,
 
 	CABLE_TX_NUM
 };
@@ -60,6 +71,7 @@ struct Conveyor {
 typedef struct Conveyor Conveyor;
 
 CardinalType getOpposedDirection(CardinalType direction);
-void updateCableNetwork();
+void updateCableNetwork(TileCoords tc);
+void updateSurroundings(TileCoords tc);
 
 #endif
