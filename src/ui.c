@@ -195,13 +195,22 @@ void ui_select_tile(TileCoords tc) {
 			default: assert(false);
 		}
 		assert(wg_ent != NULL);
-		wg_multopleft_add_sub(s_wg_tile_info, 
-			new_wg_box(
-				wg_ent,
-				6, 6, 3,
-				RGB(0, 0, 0), RGB(200, 200, 255)
-			)
+		Wg* wg_ent_box = new_wg_box(
+			wg_ent,
+			6, 6, 3,
+			RGB(0, 0, 0), RGB(200, 200, 255)
 		);
+		if (eid_eq(g_sel_ent_id, eid)) {
+			wg_multopleft_add_sub(s_wg_tile_info,
+				new_wg_box(
+					wg_ent_box,
+					10, 0, 0,
+					(SDL_Color){0, 0, 0, 0}, (SDL_Color){0, 0, 0, 0}
+				)
+			);
+		} else {
+			wg_multopleft_add_sub(s_wg_tile_info, wg_ent_box);
+		}
 	}
 }
 
@@ -215,4 +224,18 @@ void refresh_selected_tile_ui(void) {
 	if (g_sel_tile_exists) {
 		ui_select_tile(g_sel_tile_coords);
 	}
+}
+
+bool g_sel_ent_exists = false;
+EntId g_sel_ent_id = EID_NULL;
+void ui_select_ent(EntId eid) {
+	g_sel_ent_exists = !eid_null(eid);
+	g_sel_ent_id = eid;
+	refresh_selected_tile_ui();
+}
+
+void ui_unselect_ent(void) {
+	g_sel_ent_exists = false;
+	g_sel_ent_id = EID_NULL;
+	refresh_selected_tile_ui();
 }

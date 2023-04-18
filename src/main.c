@@ -227,6 +227,20 @@ int main(int argc, char const** argv) {
 								refresh_selected_tile_ui();
 							}
 						break;
+						case SDLK_TAB:
+							/* Select entity in selected tile or something. */
+							if (g_sel_tile_exists) {
+								Tile* sel_tile = get_tile(g_sel_tile_coords);
+								for (int i = 0; i < sel_tile->ent_count; i++) {
+									EntId eid = sel_tile->ents[i];
+									Ent* ent = get_ent(eid);
+									if (ent == NULL) continue;
+									if (ent->type != ENT_HUMAIN) continue;
+									if (ent->human.faction != g_faction_currently_playing) continue;
+									ui_select_ent(eid);
+								}
+							}
+						break;
 					}
 				break;
 				case SDL_KEYUP:
@@ -297,6 +311,15 @@ int main(int argc, char const** argv) {
 				.h = ceilf(tile_render_size)};
 			render_tile_ground(tile->type, dst_rect);
 
+			if (g_sel_tile_exists && tile_coords_eq(g_sel_tile_coords, tc)) {
+				/* Draw selection rect around the selected tile. */
+				SDL_Rect rect = dst_rect;
+				SDL_SetRenderDrawColor(g_renderer, 255, 255, 0, 255);
+				for (int i = 0; i < 2; i++) {
+					SDL_RenderDrawRect(g_renderer, &rect);
+					rect.x += 1; rect.y += 1; rect.w -= 2; rect.h -= 2;
+				}
+			}
 			
 			for (int flow_i = 0; flow_i < tile->flow_count; flow_i++){
 				Flow* flow = tile->flows[flow_i];
@@ -398,7 +421,22 @@ int main(int argc, char const** argv) {
 						SDL_Rect faction_rect = {
 							rect.x + rect.w/2 - FACTION_SIDE/2, rect.y - FACTION_SIDE/2 - FACTION_SIDE,
 							FACTION_SIDE, FACTION_SIDE};
+						if (g_sel_ent_exists && eid_eq(g_sel_ent_id, eid)) {
+							faction_rect.y -= 2;
+						}
 						SDL_RenderFillRect(g_renderer, &faction_rect);
+						if (g_sel_ent_exists && eid_eq(g_sel_ent_id, eid)) {
+							SDL_SetRenderDrawColor(g_renderer, 255, 255, 255, 255);
+							for (int i = 0; i < 2; i++) {
+								faction_rect.x-=1; faction_rect.y-=1; faction_rect.w+=2; faction_rect.h+=2;
+								SDL_RenderDrawRect(g_renderer, &faction_rect);
+							}
+							SDL_SetRenderDrawColor(g_renderer, 0, 0, 0, 255);
+							for (int i = 0; i < 2; i++) {
+								faction_rect.x-=1; faction_rect.y-=1; faction_rect.w+=2; faction_rect.h+=2;
+								SDL_RenderDrawRect(g_renderer, &faction_rect);
+							}
+						}
 					break; }
 
 					case ENT_TEST_BLOCK: {
@@ -431,19 +469,6 @@ int main(int argc, char const** argv) {
 				SDL_RenderDrawLine(g_renderer, a.x,   a.y, b.x,   b.y);
 				SDL_RenderDrawLine(g_renderer, a.x-1, a.y, b.x-1, b.y);
 			}
-		}
-
-		if (g_sel_tile_exists) {
-			/* Draw selection rect around the selected tile. */
-			SDL_Rect rect = {
-				.x = g_sel_tile_coords.x * tile_render_size - g_camera.pos.x,
-				.y = g_sel_tile_coords.y * tile_render_size - g_camera.pos.y,
-				.w = ceilf(tile_render_size),
-				.h = ceilf(tile_render_size)};
-			SDL_SetRenderDrawColor(g_renderer, 255, 255, 0, 255);
-			SDL_RenderDrawRect(g_renderer, &rect);
-			rect.x -= 1; rect.y -= 1; rect.w += 2; rect.h += 2;
-			SDL_RenderDrawRect(g_renderer, &rect);
 		}
 
 		wg_render(g_wg_root, 0, 0);

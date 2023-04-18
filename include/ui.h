@@ -19,4 +19,12 @@ void ui_unselect_tile(void);
  * calling this ensures that the UI is updated. */
 void refresh_selected_tile_ui(void);
 
+/* Selected entity, if any.
+ * These should be modified via `ui_select_ent` and `ui_unselect_ent` to ensure
+ * that the UI is consistent with the entity that appears selected on the map. */
+extern bool g_sel_ent_exists;
+extern EntId g_sel_ent_id;
+void ui_select_ent(EntId eid);
+void ui_unselect_ent(void);
+
 #endif /* WHEN_THE_FACTORY_UI_ */
