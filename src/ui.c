@@ -68,6 +68,9 @@ static void callback_end_turn(void* whatever) {
 	while (next_faction_to_play(), !g_faction_spec_table[g_faction_currently_playing].is_player) {
 		random_ai_play();
 	}
+	if (g_sel_tile_exists) {
+		ui_select_tile(g_sel_tile_coords);
+	}
 }
 
 static Wg* s_wg_tile_info = NULL;
