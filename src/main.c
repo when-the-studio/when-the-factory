@@ -105,6 +105,8 @@ void render_tile_flow(Flow * flow, SDL_Rect dst_rect) {
 	}
 }
 
+void move_human(EntId eid, TileCoords dst_pos);
+
 int main(int argc, char const** argv) {
 	for (int i = 1; i < argc; i++) {
 		if (strcmp(argv[i], "--map-size") == 0) {
@@ -152,6 +154,36 @@ int main(int argc, char const** argv) {
 					running = false;
 				break;
 				case SDL_KEYDOWN:
+					if (SDL_GetKeyboardState(NULL)[SDL_SCANCODE_LCTRL] && g_sel_ent_exists) {
+						EntId eid = g_sel_ent_id;
+						Ent* ent = get_ent(eid);
+						if (ent != NULL &&
+							ent->type == ENT_HUMAIN &&
+							ent->human.faction == g_faction_currently_playing &&
+							(!ent->human.already_moved_this_turn)
+						) {
+							bool moving = false;
+							int dx = 0, dy = 0;
+							switch (event.key.keysym.sym) {
+								case SDLK_DOWN:  dy = +1; moving = true; break;
+								case SDLK_UP:    dy = -1; moving = true; break;
+								case SDLK_RIGHT: dx = +1; moving = true; break;
+								case SDLK_LEFT:  dx = -1; moving = true; break;
+							}
+							if (moving) {
+								TileCoords dst_pos = ent->pos;
+								dst_pos.x += dx;
+								dst_pos.y += dy;
+								if (tile_coords_are_valid(dst_pos)) {
+									Tile const* dst_tile = get_tile(dst_pos);
+									if (tile_is_walkable(dst_tile)) {
+										move_human(eid, dst_pos);
+									}
+								}
+							}
+						}
+						break;
+					}
 					switch (event.key.keysym.sym) {
 						case SDLK_ESCAPE:
 							running = false;
