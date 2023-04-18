@@ -30,8 +30,7 @@ struct Wg {
 			SDL_Color fg_color;
 		} text_line;
 		struct WgDataMulTopLeft {
-			Wg** sub_wgs;
-			int sub_wgs_count;
+			DA(Wg*) sub_wgs;
 			int spacing;
 			int offset_x, offset_y;
 			Orientation orientation;
