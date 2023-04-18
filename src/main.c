@@ -227,18 +227,42 @@ int main(int argc, char const** argv) {
 								refresh_selected_tile_ui();
 							}
 						break;
+						case SDLK_i:
+							if (g_sel_tile_exists) {
+								ent_new_human(g_sel_tile_coords, FACTION_YELLOW);
+							}
+						break;
+						case SDLK_u:
+							if (g_sel_tile_exists) {
+								ent_new_human(g_sel_tile_coords, FACTION_RED);
+							}
+						break;
 						case SDLK_TAB:
 							/* Select entity in selected tile or something. */
 							if (g_sel_tile_exists) {
 								Tile* sel_tile = get_tile(g_sel_tile_coords);
+								bool sel_eid_is_in_sel_tile = false;
+								int sel_eid_in_sel_tile_index = -1;
 								for (int i = 0; i < sel_tile->ent_count; i++) {
+									EntId eid = sel_tile->ents[i];
+									if (eid_eq(g_sel_ent_id, eid)) {
+										sel_eid_is_in_sel_tile = true;
+										sel_eid_in_sel_tile_index = i;
+										break;
+									}
+								}
+								int start_index = (sel_eid_in_sel_tile_index + 1) % sel_tile->ent_count;
+								int i = start_index;
+								do {
 									EntId eid = sel_tile->ents[i];
 									Ent* ent = get_ent(eid);
 									if (ent == NULL) continue;
 									if (ent->type != ENT_HUMAIN) continue;
 									if (ent->human.faction != g_faction_currently_playing) continue;
 									ui_select_ent(eid);
-								}
+									break;
+									i = (i + 1) % sel_tile->ent_count;
+								} while (i != start_index);
 							}
 						break;
 					}
