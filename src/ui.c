@@ -12,8 +12,8 @@ static void next_faction_to_play(void) {
 	/* Reset the "already moved this turn" flags on entities. */
 	for (int y = 0; y < g_map_h; y++) for (int x = 0; x < g_map_w; x++) {
 		Tile* tile = get_tile((TileCoords){x, y});
-		for (int i = 0; i < tile->ent_count; i++) {
-			Ent* ent = get_ent(tile->ents[i]);
+		for (int i = 0; i < tile->ents.len; i++) {
+			Ent* ent = get_ent(tile->ents.arr[i]);
 			if (ent == NULL) continue;
 			if (ent->type == ENT_HUMAIN) {
 				ent->human.already_moved_this_turn = false;
@@ -39,8 +39,8 @@ static void random_ai_play(void) {
 	for (int y = 0; y < g_map_h; y++) for (int x = 0; x < g_map_w; x++) {
 		TileCoords tc = (TileCoords){x, y};
 		Tile* tile = get_tile((TileCoords){x, y});
-		for (int i = 0; i < tile->ent_count; i++) {
-			EntId eid = tile->ents[i];
+		for (int i = 0; i < tile->ents.len; i++) {
+			EntId eid = tile->ents.arr[i];
 			Ent* ent = get_ent(eid);
 			if (ent == NULL) continue;
 			if (ent->type == ENT_HUMAIN) {
@@ -132,8 +132,8 @@ void ui_select_tile(TileCoords tc) {
 	wg_multopleft_add_sub(wg_terrain_info, 
 		new_wg_text_line((char*)name, RGB(0, 0, 0))
 	);
-	for (int i = 0; i < tile->ent_count; i++) {
-		EntId eid = tile->ents[i];
+	for (int i = 0; i < tile->ents.len; i++) {
+		EntId eid = tile->ents.arr[i];
 		Ent* ent = get_ent(eid);
 		if (ent == NULL) continue;
 		Wg* wg_ent = NULL;

@@ -68,8 +68,8 @@ void render_tile_building(Building * building, SDL_Rect dst_rect) {
 void setFlow(Tile * tile, bool powered, CardinalType entry) {
 	assert(tile != NULL);
 	Flow * flow;
-	for (int i=0; i<tile->flow_count; i++){
-		flow = tile->flows[i];
+	for (int i=0; i<tile->flows.len; i++){
+		flow = tile->flows.arr[i];
 		if (flow->connections[0] == entry || flow->connections[1] == entry){
 			flow->powered = powered;
 		}
@@ -208,8 +208,8 @@ int main(int argc, char const** argv) {
 							/* Test moving entities from selected tile to adjacent tiles. */
 							if (g_sel_tile_exists) {
 								Tile* sel_tile = get_tile(g_sel_tile_coords);
-								for (int i = 0; i < sel_tile->ent_count; i++) {
-									ent_move(sel_tile->ents[i],
+								for (int i = 0; i < sel_tile->ents.len; i++) {
+									ent_move(sel_tile->ents.arr[i],
 										(TileCoords){
 											g_sel_tile_coords.x + rand() % 3 - 1,
 											g_sel_tile_coords.y + rand() % 3 - 1});
@@ -221,8 +221,8 @@ int main(int argc, char const** argv) {
 							/* Test deleting entities on selected tile. */
 							if (g_sel_tile_exists) {
 								Tile* sel_tile = get_tile(g_sel_tile_coords);
-								for (int i = 0; i < sel_tile->ent_count; i++) {
-									ent_delete(sel_tile->ents[i]);
+								for (int i = 0; i < sel_tile->ents.len; i++) {
+									ent_delete(sel_tile->ents.arr[i]);
 								}
 								refresh_selected_tile_ui();
 							}
@@ -298,8 +298,8 @@ int main(int argc, char const** argv) {
 			render_tile_ground(tile->type, dst_rect);
 
 			
-			for (int flow_i = 0; flow_i < tile->flow_count; flow_i++){
-				Flow* flow = tile->flows[flow_i];
+			for (int flow_i = 0; flow_i < tile->flows.len; flow_i++){
+				Flow* flow = tile->flows.arr[flow_i];
 				assert(flow != NULL);
 				render_tile_flow(flow, dst_rect);
 				if(flow->powered){
@@ -354,15 +354,15 @@ int main(int argc, char const** argv) {
 			}
 
 			int true_ent_count = 0;
-			for (int ent_i = 0; ent_i < tile->ent_count; ent_i++) {
-				if (get_ent(tile->ents[ent_i]) != NULL) {
+			for (int ent_i = 0; ent_i < tile->ents.len; ent_i++) {
+				if (get_ent(tile->ents.arr[ent_i]) != NULL) {
 					true_ent_count++;
 				}
 			}
 
 			int true_ent_i = -1;
-			for (int ent_i = 0; ent_i < tile->ent_count; ent_i++) {
-				EntId eid = (tile->ents[ent_i]);
+			for (int ent_i = 0; ent_i < tile->ents.len; ent_i++) {
+				EntId eid = (tile->ents.arr[ent_i]);
 				Ent* ent = get_ent(eid);
 				if (ent == NULL) continue;
 				true_ent_i++;
@@ -377,9 +377,9 @@ int main(int argc, char const** argv) {
 						int ew = 0.3f * tile_render_size;
 						int eh = 0.4f * tile_render_size;
 						/* Draw human sprite. */
-						int ex = (float)(ent_i+1) / (float)(tile->ent_count+1)
+						int ex = (float)(ent_i+1) / (float)(tile->ents.len+1)
 							* tile_render_size;
-						int ey = (1.0f - (float)(ent_i+1) / (float)(tile->ent_count+1))
+						int ey = (1.0f - (float)(ent_i+1) / (float)(tile->ents.len+1))
 							* tile_render_size;
 						SDL_Rect rect = {
 							dst_rect.x + ex - ew / 2.0f, dst_rect.y + ey - eh / 2.0f, ew, eh};
