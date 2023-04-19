@@ -364,7 +364,7 @@ int main(int argc, char const** argv) {
 		SDL_SetRenderDrawColor(g_renderer, 255, 255, 255, 255);
 		SDL_RenderClear(g_renderer);
 
-		/* Draw tiles. */
+		/* Draw tile terrain. */
 		float tile_render_size = TILE_SIZE * g_camera.zoom;
 		for (int i = 0; i < N_TILES; ++i) {
 			TileCoords tc = {.x = i % g_map_w, .y = i / g_map_w};
@@ -377,15 +377,36 @@ int main(int argc, char const** argv) {
 				.h = ceilf(tile_render_size)};
 			render_tile_ground(tile->type, dst_rect);
 
-			if (g_sel_tile_exists && tile_coords_eq(g_sel_tile_coords, tc)) {
-				/* Draw selection rect around the selected tile. */
-				SDL_Rect rect = dst_rect;
-				SDL_SetRenderDrawColor(g_renderer, 255, 255, 0, 255);
-				for (int i = 0; i < 2; i++) {
-					SDL_RenderDrawRect(g_renderer, &rect);
-					rect.x += 1; rect.y += 1; rect.w -= 2; rect.h -= 2;
-				}
+		}
+
+		/* Draw selection rect around the selected tile (if any).
+		 * We do this after all the tile terrains so that terrain drawn after the
+		 * selection rectangle won't cover a part of it. */
+		if (g_sel_tile_exists) {
+			SDL_Rect rect = {
+				.x = g_sel_tile_coords.x * tile_render_size - g_camera.pos.x,
+				.y = g_sel_tile_coords.y * tile_render_size - g_camera.pos.y,
+				.w = ceilf(tile_render_size),
+				.h = ceilf(tile_render_size)};
+			SDL_SetRenderDrawColor(g_renderer, 255, 255, 0, 255);
+			for (int i = 0; i < 2; i++) {
+				SDL_RenderDrawRect(g_renderer, &rect);
+				rect.x += 1; rect.y += 1; rect.w -= 2; rect.h -= 2;
 			}
+		}
+
+		/* Draw entities, buildings and flows.
+		 * We do this after the tile backgrounds so that these can cover a part
+		 * of neighboring tiles. */
+		for (int i = 0; i < N_TILES; ++i) {
+			TileCoords tc = {.x = i % g_map_w, .y = i / g_map_w};
+			Tile const* tile = get_tile(tc);
+
+			SDL_Rect dst_rect = {
+				.x = tc.x * tile_render_size - g_camera.pos.x,
+				.y = tc.y * tile_render_size - g_camera.pos.y,
+				.w = ceilf(tile_render_size),
+				.h = ceilf(tile_render_size)};
 			
 			for (int flow_i = 0; flow_i < tile->flow_count; flow_i++){
 				Flow* flow = tile->flows[flow_i];
