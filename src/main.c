@@ -105,7 +105,70 @@ void render_tile_flow(Flow * flow, SDL_Rect dst_rect) {
 	}
 }
 
+void end_turn(void);
 void move_human(EntId eid, TileCoords dst_pos);
+
+void click(WinCoords wc) {
+	/* The user clicked on the pixel at `wc`.
+	 * First we forward this click to the UI in case it lands on a widget. */
+	bool some_wg_got_the_click = wg_click(g_wg_root, 0, 0, wc.x, wc.y);
+	if (some_wg_got_the_click) {
+		return;
+	}
+	/* The UI said the click was not for them, so it lands on the map. */
+	TileCoords tc = window_pixel_to_tile_coords(wc);
+	if (tile_is_available(tc)) {
+		/* A movable human is selected and the click landed on a tile to which
+		 * the human can move. */
+		move_human(g_sel_ent_id, tc);
+	} else if (g_sel_tile_exists && tile_coords_eq(g_sel_tile_coords, tc)) {
+		/* The click landed on the selected tile. */
+		ui_unselect_tile();
+	} else if (tile_coords_are_valid(tc)) {
+		ui_select_tile(tc);
+	} else {
+		ui_unselect_tile();
+	}
+}
+
+bool ent_is_playing(EntId eid) {
+	Ent* ent = get_ent(eid);
+	return
+		ent != NULL &&
+		ent->type == ENT_HUMAIN &&
+		ent->human.faction == g_faction_currently_playing;
+}
+
+bool ent_can_move(EntId eid) {
+	Ent* ent = get_ent(eid);
+	return
+		ent_is_playing(eid) &&
+		(!ent->human.already_moved_this_turn);
+}
+
+bool keycode_is_arrow(SDL_Keycode keycode) {
+	return
+		keycode == SDLK_DOWN ||
+		keycode == SDLK_UP ||
+		keycode == SDLK_RIGHT ||
+		keycode == SDLK_LEFT;
+}
+
+typedef struct DxDy {int dx, dy;} DxDy;
+
+TileCoords tc_add_dxdy(TileCoords tc, DxDy dxdy) {
+	return (TileCoords){tc.x + dxdy.dx, tc.y + dxdy.dy};
+}
+
+DxDy arrow_keycode_to_dxdy(SDL_Keycode keycode) {
+	switch (keycode) {
+		case SDLK_DOWN:  return (DxDy){0, +1};
+		case SDLK_UP:    return (DxDy){0, -1};
+		case SDLK_RIGHT: return (DxDy){+1, 0};
+		case SDLK_LEFT:  return (DxDy){-1, 0};
+		default: assert(false); exit(EXIT_FAILURE);
+	}	
+}
 
 int main(int argc, char const** argv) {
 	for (int i = 1; i < argc; i++) {
@@ -154,35 +217,38 @@ int main(int argc, char const** argv) {
 					running = false;
 				break;
 				case SDL_KEYDOWN:
-					if (SDL_GetKeyboardState(NULL)[SDL_SCANCODE_LCTRL] && g_sel_ent_exists) {
-						EntId eid = g_sel_ent_id;
-						Ent* ent = get_ent(eid);
-						if (ent != NULL &&
-							ent->type == ENT_HUMAIN &&
-							ent->human.faction == g_faction_currently_playing &&
-							(!ent->human.already_moved_this_turn)
+					if (SDL_GetKeyboardState(NULL)[SDL_SCANCODE_LCTRL]) {
+						if (keycode_is_arrow(event.key.keysym.sym) &&
+							g_sel_ent_exists && ent_can_move(g_sel_ent_id)
 						) {
-							bool moving = false;
-							int dx = 0, dy = 0;
-							switch (event.key.keysym.sym) {
-								case SDLK_DOWN:  dy = +1; moving = true; break;
-								case SDLK_UP:    dy = -1; moving = true; break;
-								case SDLK_RIGHT: dx = +1; moving = true; break;
-								case SDLK_LEFT:  dx = -1; moving = true; break;
-							}
-							if (moving) {
-								TileCoords dst_pos = ent->pos;
-								dst_pos.x += dx;
-								dst_pos.y += dy;
+							EntId eid = g_sel_ent_id;
+							Ent* ent = get_ent(eid);
+							if (ent != NULL &&
+								ent->type == ENT_HUMAIN &&
+								ent->human.faction == g_faction_currently_playing &&
+								(!ent->human.already_moved_this_turn)
+							) {
+								DxDy dxdy = arrow_keycode_to_dxdy(event.key.keysym.sym);
+								TileCoords dst_pos = tc_add_dxdy(ent->pos, dxdy);
 								if (tile_coords_are_valid(dst_pos)) {
 									Tile const* dst_tile = get_tile(dst_pos);
 									if (tile_is_walkable(dst_tile)) {
 										move_human(eid, dst_pos);
+										ui_unselect_ent();
+										break;
 									}
 								}
 							}
+						} else if (keycode_is_arrow(event.key.keysym.sym) &&
+							(!g_sel_ent_exists) && g_sel_tile_exists
+						) {
+							DxDy dxdy = arrow_keycode_to_dxdy(event.key.keysym.sym);
+							TileCoords new_sel_tc = tc_add_dxdy(g_sel_tile_coords, dxdy);
+							if (tile_coords_are_valid(new_sel_tc)) {
+								ui_select_tile(new_sel_tc);
+								break;
+							}
 						}
-						break;
 					}
 					switch (event.key.keysym.sym) {
 						case SDLK_ESCAPE:
@@ -280,11 +346,7 @@ int main(int argc, char const** argv) {
 								EntId first_selectible_eid_after_sel_eid = EID_NULL;
 								for (int i = 0; i < sel_tile->ents.len; i++) {
 									EntId eid = sel_tile->ents.arr[i];
-									Ent* ent = get_ent(eid);
-									if (ent == NULL) continue;
-									if (ent->type != ENT_HUMAIN) continue;
-									if (ent->human.faction != g_faction_currently_playing) continue;
-									/* This entity is selectible. */
+									if (!ent_is_playing(eid)) continue;
 									if (eid_null(first_selectible_eid)) {
 										first_selectible_eid = eid;
 									}
@@ -307,12 +369,22 @@ int main(int argc, char const** argv) {
 								}
 							}
 						break;
+						case SDLK_SPACE:
+							if (g_sel_ent_exists) {
+								ui_unselect_ent();
+							} else if (g_sel_tile_exists) {
+								ui_unselect_tile();
+							}
+						break;
+						case SDLK_RETURN:
+							end_turn();
+						break;
 					}
 				break;
 				case SDL_KEYUP:
 					switch (event.key.keysym.sym) {
 						/* Stop moving the camera when a key that
-						* was moving the camera is released. */
+						 * was moving the camera is released. */
 						case SDLK_DOWN:  if (g_camera.speed.y > 0) {g_camera.speed.y = 0;}; break;
 						case SDLK_UP:    if (g_camera.speed.y < 0) {g_camera.speed.y = 0;}; break;
 						case SDLK_RIGHT: if (g_camera.speed.x > 0) {g_camera.speed.x = 0;}; break;
@@ -321,30 +393,8 @@ int main(int argc, char const** argv) {
 				break;
 				case SDL_MOUSEBUTTONDOWN:
 					switch (event.button.button) {
-						case SDL_BUTTON_LEFT:;
-							WinCoords wc = {event.button.x, event.button.y};
-							bool some_wg_got_the_click = wg_click(g_wg_root, 0, 0, wc.x, wc.y);
-							if (!some_wg_got_the_click) {
-								TileCoords tc = window_pixel_to_tile_coords(wc);
-								bool tile_is_available = false;
-								for (int i = 0; i < g_available_tcs.len; i++) {
-									if (tile_coords_eq(g_available_tcs.arr[i], tc)) {
-										tile_is_available = true;
-										break;
-									}
-								}
-								if (tile_is_available) {
-									move_human(g_sel_ent_id, tc);
-								} else {
-									bool sel_tile_is_alrady_tc =
-										g_sel_tile_exists && tile_coords_eq(g_sel_tile_coords, tc);
-									if (tile_coords_are_valid(tc) && !sel_tile_is_alrady_tc) {
-										ui_select_tile(tc);
-									} else {
-										ui_unselect_tile();
-									}
-								}
-							}
+						case SDL_BUTTON_LEFT:
+							click((WinCoords){event.button.x, event.button.y});
 						break;
 					}
 				break;

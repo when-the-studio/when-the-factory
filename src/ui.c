@@ -23,15 +23,16 @@ static void next_faction_to_play(void) {
 }
 
 void move_human(EntId eid, TileCoords dst_pos) {
+	Ent* ent = get_ent(eid);
+	assert(ent != NULL);
+	assert(ent->type == ENT_HUMAIN);
+
 	ent_move(eid, dst_pos);
 
 	/* Mark it as having already moved. */
-	Ent* ent = get_ent(eid);
-	assert(ent->type == ENT_HUMAIN);
 	ent->human.already_moved_this_turn = true;
-
+	
 	refresh_selected_tile_ui();
-
 	DA_EMPTY_LEAK(&g_available_tcs);
 }
 
@@ -65,14 +66,18 @@ static void random_ai_play(void) {
 	}
 }
 
-static void callback_end_turn(void* whatever) {
-	(void)whatever;
+void end_turn(void) {
 	while (next_faction_to_play(), !g_faction_spec_table[g_faction_currently_playing].is_player) {
 		random_ai_play();
 	}
 	if (g_sel_tile_exists) {
 		ui_select_tile(g_sel_tile_coords);
 	}
+}
+
+static void callback_end_turn(void* whatever) {
+	(void)whatever;
+	end_turn();
 }
 
 static Wg* s_wg_tile_info = NULL;
@@ -271,3 +276,12 @@ void ui_unselect_ent(void) {
 }
 
 DA_TileCoords g_available_tcs = {0};
+
+bool tile_is_available(TileCoords tc) {
+	for (int i = 0; i < g_available_tcs.len; i++) {
+		if (tile_coords_eq(g_available_tcs.arr[i], tc)) {
+			return true;
+		}
+	}
+	return false;
+}

@@ -31,4 +31,6 @@ void ui_unselect_ent(void);
 typedef DA(TileCoords) DA_TileCoords; 
 extern DA_TileCoords g_available_tcs;
 
+bool tile_is_available(TileCoords tc);
+
 #endif /* WHEN_THE_FACTORY_UI_ */
