@@ -8,6 +8,9 @@
 /* Initializes the widget tree. */
 void init_wg_tree(void);
 
+/* Renders the UI. */
+void render_wg_tree(void);
+
 /* Selected tile, if any.
  * These should be modified via `ui_select_tile` and `ui_unselect_tile` to ensure
  * that the UI is consistent with the tile that appears selected on the map. */
@@ -30,7 +33,6 @@ void ui_unselect_ent(void);
 
 typedef DA(TileCoords) DA_TileCoords; 
 extern DA_TileCoords g_available_tcs;
-
 bool tile_is_available(TileCoords tc);
 
 #endif /* WHEN_THE_FACTORY_UI_ */

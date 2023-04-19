@@ -99,6 +99,10 @@ void init_wg_tree(void) {
 	);
 }
 
+void render_wg_tree(void) {
+	wg_render(g_wg_root, 0, 0);
+}
+
 bool g_sel_tile_exists = false;
 TileCoords g_sel_tile_coords = {0, 0};
 

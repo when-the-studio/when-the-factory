@@ -170,7 +170,266 @@ DxDy arrow_keycode_to_dxdy(SDL_Keycode keycode) {
 	}	
 }
 
+void cycle_ent_sel_through_ents_in_tile(void) {
+	if (!g_sel_tile_exists) return;
+	Tile* sel_tile = get_tile(g_sel_tile_coords);
+
+	/* Here we only want to select entities that belong to the currently playing faction.
+	 * `first` is the first of such entities (if any).
+	 * `first_after_sel` is the first of such that follows the currently selected entity (if any). */
+	EntId first = EID_NULL;
+	bool sel_ent_is_in_sel_tile = false;
+	EntId first_after_sel = EID_NULL;
+	for (int i = 0; i < sel_tile->ents.len; i++) {
+		EntId eid = sel_tile->ents.arr[i];
+		if (!ent_is_playing(eid)) continue;
+		if (eid_null(first)) {
+			first = eid;
+		}
+		if (eid_eq(g_sel_ent_id, eid)) {
+			sel_ent_is_in_sel_tile = true;
+		} else if (sel_ent_is_in_sel_tile &&
+			eid_null(first_after_sel)
+		) {
+			first_after_sel = eid;
+		}
+	}
+
+	/* Now we just select the next of such entities if that makes sense,
+	 * else we just select the first (if any). */
+	if (sel_ent_is_in_sel_tile && eid_null(first_after_sel)) {
+		ui_select_ent(first);
+	} else if (sel_ent_is_in_sel_tile) {
+		ui_select_ent(first_after_sel);
+	} else if (!eid_null(first)) {
+		ui_select_ent(first);
+	} else {
+		ui_unselect_ent();
+	}
+}
+
+/* Is grid line display enabled? */
+bool g_render_lines = false;
+
+void render_map(void) {
+	/* Draw tile terrain. */
+	float tile_render_size = TILE_SIZE * g_camera.zoom;
+	for (int i = 0; i < N_TILES; ++i) {
+		TileCoords tc = {.x = i % g_map_w, .y = i / g_map_w};
+		Tile const* tile = get_tile(tc);
+
+		SDL_Rect dst_rect = {
+			.x = tc.x * tile_render_size - g_camera.pos.x,
+			.y = tc.y * tile_render_size - g_camera.pos.y,
+			.w = ceilf(tile_render_size),
+			.h = ceilf(tile_render_size)};
+		render_tile_ground(tile->type, dst_rect);
+
+	}
+
+	/* Draw selection rect around the selected tile (if any).
+	 * We do this after all the tile terrains so that terrain drawn after the
+	 * selection rectangle won't cover a part of it. */
+	if (g_sel_tile_exists) {
+		SDL_Rect rect = {
+			.x = g_sel_tile_coords.x * tile_render_size - g_camera.pos.x,
+			.y = g_sel_tile_coords.y * tile_render_size - g_camera.pos.y,
+			.w = ceilf(tile_render_size),
+			.h = ceilf(tile_render_size)};
+		SDL_SetRenderDrawColor(g_renderer, 255, 255, 0, 255);
+		for (int i = 0; i < 2; i++) {
+			SDL_RenderDrawRect(g_renderer, &rect);
+			rect.x += 1; rect.y += 1; rect.w -= 2; rect.h -= 2;
+		}
+	}
+
+	for (int i = 0; i < g_available_tcs.len; i++) {
+		SDL_Rect rect = {
+			.x = g_available_tcs.arr[i].x * tile_render_size - g_camera.pos.x,
+			.y = g_available_tcs.arr[i].y * tile_render_size - g_camera.pos.y,
+			.w = ceilf(tile_render_size),
+			.h = ceilf(tile_render_size)};
+		
+		SDL_Point mouse;
+		SDL_GetMouseState(&mouse.x, &mouse.y);
+		if (SDL_PointInRect(&mouse, &rect)) {
+			SDL_SetRenderDrawColor(g_renderer, 0, 255, 255, 255);
+		} else {
+			SDL_SetRenderDrawColor(g_renderer, 0, 0, 255, 255);
+		}
+		rect.x += 1; rect.y += 1; rect.w -= 2; rect.h -= 2;
+		for (int i = 0; i < 2; i++) {
+			SDL_RenderDrawRect(g_renderer, &rect);
+			rect.x += 1; rect.y += 1; rect.w -= 2; rect.h -= 2;
+		}
+	}
+
+	/* Draw entities, buildings and flows.
+	 * We do this after the tile backgrounds so that these can cover a part
+	 * of neighboring tiles. */
+	for (int i = 0; i < N_TILES; ++i) {
+		TileCoords tc = {.x = i % g_map_w, .y = i / g_map_w};
+		Tile const* tile = get_tile(tc);
+
+		SDL_Rect dst_rect = {
+			.x = tc.x * tile_render_size - g_camera.pos.x,
+			.y = tc.y * tile_render_size - g_camera.pos.y,
+			.w = ceilf(tile_render_size),
+			.h = ceilf(tile_render_size)};
+		
+		for (int flow_i = 0; flow_i < tile->flows.len; flow_i++){
+			Flow* flow = tile->flows.arr[flow_i];
+			assert(flow != NULL);
+			render_tile_flow(flow, dst_rect);
+			if(flow->powered){
+				
+				TileCoords neighPosFLow;
+				Tile * neighTile;
+				for (int connection_i=0; connection_i < 2; connection_i++){
+					neighPosFLow.x = tc.x;
+					neighPosFLow.y = tc.y;
+					switch (flow->connections[connection_i]){
+						case NORTH:
+							neighPosFLow.x += 0;
+							neighPosFLow.y += -1;
+
+						break;
+						case SOUTH:
+							neighPosFLow.x += 0;
+							neighPosFLow.y += 1;
+						break;
+						case EAST:
+							neighPosFLow.x += 1;
+							neighPosFLow.y += 0;
+						break;
+						case WEST:
+							neighPosFLow.x += -1;
+							neighPosFLow.y += 0;
+						break;
+						
+						default:
+						break;
+					}
+					neighTile = get_tile(neighPosFLow);
+					setFlow(neighTile, true, getOpposedDirection(flow->connections[connection_i]));
+				}
+			}
+		}
+
+		if (tile->building != NULL){
+			render_tile_building(tile->building, dst_rect);
+			if (tile->building->type == BUILDING_EMITTER){
+				int offsets[] = {1, 0, -1, 0, 1};
+				/* Uses the array 'offsets' to get the four adjacent tiles.
+					The order is EAST (1,0), NORTH (0,-1), WEST (-1, 0) and SOUTH (0, 1)
+				*/
+				for (int tile_i=0; tile_i<4; tile_i++){
+					TileCoords neighPos = {tc.x+offsets[tile_i], tc.y+offsets[tile_i+1]};							
+					Tile * neighTile = get_tile(neighPos);
+					setFlow(neighTile, true, (CardinalType)(tile_i));
+					
+				}
+			}
+		}
+
+		int true_ent_count = 0;
+		for (int ent_i = 0; ent_i < tile->ents.len; ent_i++) {
+			if (get_ent(tile->ents.arr[ent_i]) != NULL) {
+				true_ent_count++;
+			}
+		}
+
+		int true_ent_i = -1;
+		for (int ent_i = 0; ent_i < tile->ents.len; ent_i++) {
+			EntId eid = (tile->ents.arr[ent_i]);
+			Ent* ent = get_ent(eid);
+			if (ent == NULL) continue;
+			true_ent_i++;
+
+			int ex = (float)(true_ent_i+1) / (float)(true_ent_count+1)
+				* tile_render_size;
+			int ey = (1.0f - (float)(true_ent_i+1) / (float)(true_ent_count+1))
+				* tile_render_size;
+
+			switch (ent->type) {
+				case ENT_HUMAIN: {
+					int ew = 0.3f * tile_render_size;
+					int eh = 0.4f * tile_render_size;
+					/* Draw human sprite. */
+					int ex = (float)(ent_i+1) / (float)(tile->ents.len+1)
+						* tile_render_size;
+					int ey = (1.0f - (float)(ent_i+1) / (float)(tile->ents.len+1))
+						* tile_render_size;
+					SDL_Rect rect = {
+						dst_rect.x + ex - ew / 2.0f, dst_rect.y + ey - eh / 2.0f, ew, eh};
+					render_human(rect);
+					/* Draw faction color. */
+					switch (ent->human.faction) {
+						case FACTION_YELLOW:
+							SDL_SetRenderDrawColor(g_renderer, 255, 255, 0, 255);
+						break;
+						case FACTION_RED:
+							SDL_SetRenderDrawColor(g_renderer, 255,   0, 0, 255);
+						break;
+						default: assert(false);
+					}
+					#define FACTION_SIDE 8
+					SDL_Rect faction_rect = {
+						rect.x + rect.w/2 - FACTION_SIDE/2, rect.y - FACTION_SIDE/2 - FACTION_SIDE,
+						FACTION_SIDE, FACTION_SIDE};
+					if (g_sel_ent_exists && eid_eq(g_sel_ent_id, eid)) {
+						faction_rect.y -= 2;
+					}
+					SDL_RenderFillRect(g_renderer, &faction_rect);
+					if (g_sel_ent_exists && eid_eq(g_sel_ent_id, eid)) {
+						SDL_SetRenderDrawColor(g_renderer, 255, 255, 255, 255);
+						for (int i = 0; i < 2; i++) {
+							faction_rect.x-=1; faction_rect.y-=1; faction_rect.w+=2; faction_rect.h+=2;
+							SDL_RenderDrawRect(g_renderer, &faction_rect);
+						}
+						SDL_SetRenderDrawColor(g_renderer, 0, 0, 0, 255);
+						for (int i = 0; i < 2; i++) {
+							faction_rect.x-=1; faction_rect.y-=1; faction_rect.w+=2; faction_rect.h+=2;
+							SDL_RenderDrawRect(g_renderer, &faction_rect);
+						}
+					}
+				break; }
+
+				case ENT_TEST_BLOCK: {
+					int ew = 0.2f * tile_render_size;
+					int eh = 0.2f * tile_render_size;
+					SDL_Rect rect = {
+						dst_rect.x + ex - ew / 2.0f, dst_rect.y + ey - eh / 2.0f, ew, eh};
+					SDL_Color color = ent->test_block.color;
+					SDL_SetRenderDrawColor(g_renderer, color.r, color.g, color.b, 255);
+					SDL_RenderFillRect(g_renderer, &rect);
+				break; }
+
+				default: assert(false);
+			}
+		}
+	}
+
+	if (g_render_lines) {
+		/* Draw grid lines. */
+		SDL_SetRenderDrawColor(g_renderer, 0, 0, 0, 255);
+		for (int y = 0; y < g_map_w+1; ++y) {
+			WinCoords a = tile_coords_to_window_pixel((TileCoords){0, y});
+			WinCoords b = tile_coords_to_window_pixel((TileCoords){g_map_w, y});
+			SDL_RenderDrawLine(g_renderer, a.x, a.y,   b.x, b.y);
+			SDL_RenderDrawLine(g_renderer, a.x, a.y-1, b.x, b.y-1);
+		}
+		for (int x = 0; x < g_map_h+1; ++x) {
+			WinCoords a = tile_coords_to_window_pixel((TileCoords){x, 0});
+			WinCoords b = tile_coords_to_window_pixel((TileCoords){x, g_map_h});
+			SDL_RenderDrawLine(g_renderer, a.x,   a.y, b.x,   b.y);
+			SDL_RenderDrawLine(g_renderer, a.x-1, a.y, b.x-1, b.y);
+		}
+	}
+}
+
 int main(int argc, char const** argv) {
+	/* Parse command line arguments. */
 	for (int i = 1; i < argc; i++) {
 		if (strcmp(argv[i], "--map-size") == 0) {
 			i++;
@@ -187,9 +446,6 @@ int main(int argc, char const** argv) {
 	init_map();
 	init_wg_tree();
 
-	/* Is grid line display enabled? */
-	bool render_lines = false;
-
 	/* Game loop iteration time monitoring. */
 	Uint64 time = SDL_GetPerformanceCounter();
 	Uint64 last_time = 0;
@@ -203,6 +459,7 @@ int main(int argc, char const** argv) {
 		/* Delta time in ms. */
 		double dt = (time - last_time) * 1000 / (double)SDL_GetPerformanceFrequency();
 
+		/* Handle events. */
 		SDL_Event event;
 		while (SDL_PollEvent(&event)) {
 			if (event.type == SDL_KEYDOWN && event.key.repeat) {
@@ -254,23 +511,18 @@ int main(int argc, char const** argv) {
 						case SDLK_ESCAPE:
 							running = false;
 						break;
-						case SDLK_DOWN:  g_camera.speed.y = +1; break;
-						case SDLK_UP:    g_camera.speed.y = -1; break;
-						case SDLK_RIGHT: g_camera.speed.x = +1; break;
-						case SDLK_LEFT:  g_camera.speed.x = -1; break;
+						case SDLK_DOWN:  g_camera.speed.y = +1.0f; break;
+						case SDLK_UP:    g_camera.speed.y = -1.0f; break;
+						case SDLK_RIGHT: g_camera.speed.x = +1.0f; break;
+						case SDLK_LEFT:  g_camera.speed.x = -1.0f; break;
 						case SDLK_l:
-							render_lines = !render_lines;
+							g_render_lines = !g_render_lines;
 						break;
 						case SDLK_p:
 							/* Test spawing entity on selected tile. */
 							if (g_sel_tile_exists) {
-								if (rand() % 2 == 0) {
-									ent_new_human(g_sel_tile_coords,
-										rand() % 2 == 0 ? FACTION_YELLOW : FACTION_RED);
-								} else {
-									ent_new_test_block(g_sel_tile_coords,
-										(SDL_Color){rand(), rand(), rand(), 255});
-								}
+								ent_new_test_block(g_sel_tile_coords,
+									(SDL_Color){rand(), rand(), rand(), 255});
 								refresh_selected_tile_ui();
 							}
 						break;
@@ -307,10 +559,8 @@ int main(int argc, char const** argv) {
 							if (g_sel_tile_exists) {
 								Tile* sel_tile = get_tile(g_sel_tile_coords);
 								for (int i = 0; i < sel_tile->ents.len; i++) {
-									ent_move(sel_tile->ents.arr[i],
-										(TileCoords){
-											g_sel_tile_coords.x + rand() % 3 - 1,
-											g_sel_tile_coords.y + rand() % 3 - 1});
+									ent_move(sel_tile->ents.arr[i], tc_add_dxdy(g_sel_tile_coords,
+										(DxDy){rand() % 3 - 1, rand() % 3 - 1}));
 								}
 								refresh_selected_tile_ui();
 							}
@@ -338,36 +588,7 @@ int main(int argc, char const** argv) {
 							}
 						break;
 						case SDLK_TAB:
-							/* Select entity in selected tile or something. */
-							if (g_sel_tile_exists) {
-								Tile* sel_tile = get_tile(g_sel_tile_coords);
-								EntId first_selectible_eid = EID_NULL;
-								bool sel_eid_is_in_sel_tile = false;
-								EntId first_selectible_eid_after_sel_eid = EID_NULL;
-								for (int i = 0; i < sel_tile->ents.len; i++) {
-									EntId eid = sel_tile->ents.arr[i];
-									if (!ent_is_playing(eid)) continue;
-									if (eid_null(first_selectible_eid)) {
-										first_selectible_eid = eid;
-									}
-									if (eid_eq(g_sel_ent_id, eid)) {
-										sel_eid_is_in_sel_tile = true;
-									} else if (sel_eid_is_in_sel_tile &&
-										eid_null(first_selectible_eid_after_sel_eid)
-									) {
-										first_selectible_eid_after_sel_eid = eid;
-									}
-								}
-								if (sel_eid_is_in_sel_tile && eid_null(first_selectible_eid_after_sel_eid)) {
-									ui_select_ent(first_selectible_eid);
-								} else if (sel_eid_is_in_sel_tile) {
-									ui_select_ent(first_selectible_eid_after_sel_eid);
-								} else if (!eid_null(first_selectible_eid)) {
-									ui_select_ent(first_selectible_eid);
-								} else {
-									ui_unselect_ent();
-								}
-							}
+							cycle_ent_sel_through_ents_in_tile();
 						break;
 						case SDLK_SPACE:
 							if (g_sel_ent_exists) {
@@ -385,10 +606,10 @@ int main(int argc, char const** argv) {
 					switch (event.key.keysym.sym) {
 						/* Stop moving the camera when a key that
 						 * was moving the camera is released. */
-						case SDLK_DOWN:  if (g_camera.speed.y > 0) {g_camera.speed.y = 0;}; break;
-						case SDLK_UP:    if (g_camera.speed.y < 0) {g_camera.speed.y = 0;}; break;
-						case SDLK_RIGHT: if (g_camera.speed.x > 0) {g_camera.speed.x = 0;}; break;
-						case SDLK_LEFT:  if (g_camera.speed.x < 0) {g_camera.speed.x = 0;}; break;
+						case SDLK_DOWN:  if (g_camera.speed.y > 0) {g_camera.speed.y = 0.0f;}; break;
+						case SDLK_UP:    if (g_camera.speed.y < 0) {g_camera.speed.y = 0.0f;}; break;
+						case SDLK_RIGHT: if (g_camera.speed.x > 0) {g_camera.speed.x = 0.0f;}; break;
+						case SDLK_LEFT:  if (g_camera.speed.x < 0) {g_camera.speed.x = 0.0f;}; break;
 					}
 				break;
 				case SDL_MOUSEBUTTONDOWN:
@@ -401,8 +622,8 @@ int main(int argc, char const** argv) {
 				case SDL_MOUSEMOTION:
 					if (SDL_GetMouseState(NULL, NULL) & SDL_BUTTON_RMASK) {
 						/* The map is grabbed and the mouse is moving,
-						* so the map has to look like it follows the mouse
-						* (by moving the camera in the other direction). */
+						 * so the map has to look like it follows the mouse
+						 * (by moving the camera in the other direction). */
 						g_camera.target_pos.x -= event.motion.xrel;
 						g_camera.target_pos.y -= event.motion.yrel;
 						g_camera.pos.x -= event.motion.xrel;
@@ -411,9 +632,9 @@ int main(int argc, char const** argv) {
 				break;
 				case SDL_MOUSEWHEEL:
 					if (event.wheel.y > 0 && g_camera.target_zoom < ZOOM_MAX){
-						g_camera.target_zoom /= 0.8f;
+						g_camera.target_zoom /= WHEEL_ZOOM_FACTOR;
 					} else if (event.wheel.y < 0 && g_camera.target_zoom > ZOOM_MIN) {
-						g_camera.target_zoom *= 0.8f;
+						g_camera.target_zoom *= WHEEL_ZOOM_FACTOR;
 					}
 				break;
 			}
@@ -425,222 +646,8 @@ int main(int argc, char const** argv) {
 		SDL_SetRenderDrawColor(g_renderer, 255, 255, 255, 255);
 		SDL_RenderClear(g_renderer);
 
-		/* Draw tile terrain. */
-		float tile_render_size = TILE_SIZE * g_camera.zoom;
-		for (int i = 0; i < N_TILES; ++i) {
-			TileCoords tc = {.x = i % g_map_w, .y = i / g_map_w};
-			Tile const* tile = get_tile(tc);
-
-			SDL_Rect dst_rect = {
-				.x = tc.x * tile_render_size - g_camera.pos.x,
-				.y = tc.y * tile_render_size - g_camera.pos.y,
-				.w = ceilf(tile_render_size),
-				.h = ceilf(tile_render_size)};
-			render_tile_ground(tile->type, dst_rect);
-
-		}
-
-		/* Draw selection rect around the selected tile (if any).
-		 * We do this after all the tile terrains so that terrain drawn after the
-		 * selection rectangle won't cover a part of it. */
-		if (g_sel_tile_exists) {
-			SDL_Rect rect = {
-				.x = g_sel_tile_coords.x * tile_render_size - g_camera.pos.x,
-				.y = g_sel_tile_coords.y * tile_render_size - g_camera.pos.y,
-				.w = ceilf(tile_render_size),
-				.h = ceilf(tile_render_size)};
-			SDL_SetRenderDrawColor(g_renderer, 255, 255, 0, 255);
-			for (int i = 0; i < 2; i++) {
-				SDL_RenderDrawRect(g_renderer, &rect);
-				rect.x += 1; rect.y += 1; rect.w -= 2; rect.h -= 2;
-			}
-		}
-
-		for (int i = 0; i < g_available_tcs.len; i++) {
-			SDL_Rect rect = {
-				.x = g_available_tcs.arr[i].x * tile_render_size - g_camera.pos.x,
-				.y = g_available_tcs.arr[i].y * tile_render_size - g_camera.pos.y,
-				.w = ceilf(tile_render_size),
-				.h = ceilf(tile_render_size)};
-			
-			SDL_Point mouse;
-			SDL_GetMouseState(&mouse.x, &mouse.y);
-			if (SDL_PointInRect(&mouse, &rect)) {
-				SDL_SetRenderDrawColor(g_renderer, 0, 255, 255, 255);
-			} else {
-				SDL_SetRenderDrawColor(g_renderer, 0, 0, 255, 255);
-			}
-			rect.x += 1; rect.y += 1; rect.w -= 2; rect.h -= 2;
-			for (int i = 0; i < 2; i++) {
-				SDL_RenderDrawRect(g_renderer, &rect);
-				rect.x += 1; rect.y += 1; rect.w -= 2; rect.h -= 2;
-			}
-		}
-
-		/* Draw entities, buildings and flows.
-		 * We do this after the tile backgrounds so that these can cover a part
-		 * of neighboring tiles. */
-		for (int i = 0; i < N_TILES; ++i) {
-			TileCoords tc = {.x = i % g_map_w, .y = i / g_map_w};
-			Tile const* tile = get_tile(tc);
-
-			SDL_Rect dst_rect = {
-				.x = tc.x * tile_render_size - g_camera.pos.x,
-				.y = tc.y * tile_render_size - g_camera.pos.y,
-				.w = ceilf(tile_render_size),
-				.h = ceilf(tile_render_size)};
-			
-			for (int flow_i = 0; flow_i < tile->flows.len; flow_i++){
-				Flow* flow = tile->flows.arr[flow_i];
-				assert(flow != NULL);
-				render_tile_flow(flow, dst_rect);
-				if(flow->powered){
-					
-					TileCoords neighPosFLow;
-					Tile * neighTile;
-					for (int connection_i=0; connection_i < 2; connection_i++){
-						neighPosFLow.x = tc.x;
-						neighPosFLow.y = tc.y;
-						switch (flow->connections[connection_i]){
-							case NORTH:
-								neighPosFLow.x += 0;
-								neighPosFLow.y += -1;
-
-							break;
-							case SOUTH:
-								neighPosFLow.x += 0;
-								neighPosFLow.y += 1;
-							break;
-							case EAST:
-								neighPosFLow.x += 1;
-								neighPosFLow.y += 0;
-							break;
-							case WEST:
-								neighPosFLow.x += -1;
-								neighPosFLow.y += 0;
-							break;
-							
-							default:
-							break;
-						}
-						neighTile = get_tile(neighPosFLow);
-						setFlow(neighTile, true, getOpposedDirection(flow->connections[connection_i]));
-					}
-				}
-			}
-
-			if (tile->building != NULL){
-				render_tile_building(tile->building, dst_rect);
-				if (tile->building->type == BUILDING_EMITTER){
-					int offsets[] = {1, 0, -1, 0, 1};
-					/* Uses the array 'offsets' to get the four adjacent tiles.
-						The order is EAST (1,0), NORTH (0,-1), WEST (-1, 0) and SOUTH (0, 1)
-					*/
-					for (int tile_i=0; tile_i<4; tile_i++){
-						TileCoords neighPos = {tc.x+offsets[tile_i], tc.y+offsets[tile_i+1]};							
-						Tile * neighTile = get_tile(neighPos);
-						setFlow(neighTile, true, (CardinalType)(tile_i));
-						
-					}
-				}
-			}
-
-			int true_ent_count = 0;
-			for (int ent_i = 0; ent_i < tile->ents.len; ent_i++) {
-				if (get_ent(tile->ents.arr[ent_i]) != NULL) {
-					true_ent_count++;
-				}
-			}
-
-			int true_ent_i = -1;
-			for (int ent_i = 0; ent_i < tile->ents.len; ent_i++) {
-				EntId eid = (tile->ents.arr[ent_i]);
-				Ent* ent = get_ent(eid);
-				if (ent == NULL) continue;
-				true_ent_i++;
-
-				int ex = (float)(true_ent_i+1) / (float)(true_ent_count+1)
-					* tile_render_size;
-				int ey = (1.0f - (float)(true_ent_i+1) / (float)(true_ent_count+1))
-					* tile_render_size;
-
-				switch (ent->type) {
-					case ENT_HUMAIN: {
-						int ew = 0.3f * tile_render_size;
-						int eh = 0.4f * tile_render_size;
-						/* Draw human sprite. */
-						int ex = (float)(ent_i+1) / (float)(tile->ents.len+1)
-							* tile_render_size;
-						int ey = (1.0f - (float)(ent_i+1) / (float)(tile->ents.len+1))
-							* tile_render_size;
-						SDL_Rect rect = {
-							dst_rect.x + ex - ew / 2.0f, dst_rect.y + ey - eh / 2.0f, ew, eh};
-						render_human(rect);
-						/* Draw faction color. */
-						switch (ent->human.faction) {
-							case FACTION_YELLOW:
-								SDL_SetRenderDrawColor(g_renderer, 255, 255, 0, 255);
-							break;
-							case FACTION_RED:
-								SDL_SetRenderDrawColor(g_renderer, 255,   0, 0, 255);
-							break;
-							default: assert(false);
-						}
-						#define FACTION_SIDE 8
-						SDL_Rect faction_rect = {
-							rect.x + rect.w/2 - FACTION_SIDE/2, rect.y - FACTION_SIDE/2 - FACTION_SIDE,
-							FACTION_SIDE, FACTION_SIDE};
-						if (g_sel_ent_exists && eid_eq(g_sel_ent_id, eid)) {
-							faction_rect.y -= 2;
-						}
-						SDL_RenderFillRect(g_renderer, &faction_rect);
-						if (g_sel_ent_exists && eid_eq(g_sel_ent_id, eid)) {
-							SDL_SetRenderDrawColor(g_renderer, 255, 255, 255, 255);
-							for (int i = 0; i < 2; i++) {
-								faction_rect.x-=1; faction_rect.y-=1; faction_rect.w+=2; faction_rect.h+=2;
-								SDL_RenderDrawRect(g_renderer, &faction_rect);
-							}
-							SDL_SetRenderDrawColor(g_renderer, 0, 0, 0, 255);
-							for (int i = 0; i < 2; i++) {
-								faction_rect.x-=1; faction_rect.y-=1; faction_rect.w+=2; faction_rect.h+=2;
-								SDL_RenderDrawRect(g_renderer, &faction_rect);
-							}
-						}
-					break; }
-
-					case ENT_TEST_BLOCK: {
-						int ew = 0.2f * tile_render_size;
-						int eh = 0.2f * tile_render_size;
-						SDL_Rect rect = {
-							dst_rect.x + ex - ew / 2.0f, dst_rect.y + ey - eh / 2.0f, ew, eh};
-						SDL_Color color = ent->test_block.color;
-						SDL_SetRenderDrawColor(g_renderer, color.r, color.g, color.b, 255);
-						SDL_RenderFillRect(g_renderer, &rect);
-					break; }
-
-					default: assert(false);
-				}
-			}
-		}
-
-		if (render_lines) {
-			/* Draw grid lines. */
-			SDL_SetRenderDrawColor(g_renderer, 0, 0, 0, 255);
-			for (int y = 0; y < g_map_w+1; ++y) {
-				WinCoords a = tile_coords_to_window_pixel((TileCoords){0, y});
-				WinCoords b = tile_coords_to_window_pixel((TileCoords){g_map_w, y});
-				SDL_RenderDrawLine(g_renderer, a.x, a.y,   b.x, b.y);
-				SDL_RenderDrawLine(g_renderer, a.x, a.y-1, b.x, b.y-1);
-			}
-			for (int x = 0; x < g_map_h+1; ++x) {
-				WinCoords a = tile_coords_to_window_pixel((TileCoords){x, 0});
-				WinCoords b = tile_coords_to_window_pixel((TileCoords){x, g_map_h});
-				SDL_RenderDrawLine(g_renderer, a.x,   a.y, b.x,   b.y);
-				SDL_RenderDrawLine(g_renderer, a.x-1, a.y, b.x-1, b.y);
-			}
-		}
-
-		wg_render(g_wg_root, 0, 0);
+		render_map();
+		render_wg_tree();
 
 		SDL_RenderPresent(g_renderer);
 	}

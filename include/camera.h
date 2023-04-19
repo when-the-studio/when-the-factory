@@ -14,6 +14,7 @@ struct Camera {
 };
 typedef struct Camera Camera;
 
+#define WHEEL_ZOOM_FACTOR 0.8f
 #define SMOOTHNESS 50.0f
 #define BASE_SPEED 2.0f
 #define ZOOM_MAX 4.0f
