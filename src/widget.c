@@ -51,8 +51,7 @@ Wg* new_wg_multopleft(int spacing, int offset_x, int offset_y, Orientation orien
 	*wg = (Wg){
 		.type = WG_MULTIPLE_TOP_LEFT,
 		.multl = {
-			.sub_wgs = NULL,
-			.sub_wgs_count = 0,
+			.sub_wgs = {0},
 			.spacing = spacing,
 			.offset_x = offset_x,
 			.offset_y = offset_y,
@@ -64,33 +63,22 @@ Wg* new_wg_multopleft(int spacing, int offset_x, int offset_y, Orientation orien
 
 void wg_multopleft_add_sub(Wg* wg, Wg* sub) {
 	assert(wg->type == WG_MULTIPLE_TOP_LEFT);
-	if (wg->multl.sub_wgs_count == 0) {
-		assert(wg->multl.sub_wgs == NULL);
-		wg->multl.sub_wgs_count = 1;
-		wg->multl.sub_wgs = malloc(wg->multl.sub_wgs_count * sizeof(Wg*));
-	} else {
-		assert(wg->multl.sub_wgs != NULL);
-		wg->multl.sub_wgs_count++;
-		wg->multl.sub_wgs = realloc(wg->multl.sub_wgs, wg->multl.sub_wgs_count * sizeof(Wg*));
-	}
-	wg->multl.sub_wgs[wg->multl.sub_wgs_count-1] = sub;
+	DA_PUSH(&wg->multl.sub_wgs, sub);
 }
 
 void wg_multopleft_empty(Wg* wg) {
 	assert(wg->type == WG_MULTIPLE_TOP_LEFT);
-	for (int i = 0; i < wg->multl.sub_wgs_count; i++) {
-		wg_delete(wg->multl.sub_wgs[i]);
+	for (int i = 0; i < wg->multl.sub_wgs.len; i++) {
+		wg_delete(wg->multl.sub_wgs.arr[i]);
 	}
-	free(wg->multl.sub_wgs);
-	wg->multl.sub_wgs = NULL;
-	wg->multl.sub_wgs_count = 0;
+	DA_EMPTY_LEAK(&wg->multl.sub_wgs);
 }
 
 static Dims wg_multopleft_get_dims(Wg const* wg) {
 	assert(wg->type == WG_MULTIPLE_TOP_LEFT);
 	Dims dims = {0, 0};
-	for (int i = 0; i < wg->multl.sub_wgs_count; i++) {
-		Dims sub_dims = wg_get_dims(wg->multl.sub_wgs[i]);
+	for (int i = 0; i < wg->multl.sub_wgs.len; i++) {
+		Dims sub_dims = wg_get_dims(wg->multl.sub_wgs.arr[i]);
 		switch (wg->multl.orientation) {
 			case ORIENTATION_TOP_TO_BOTTOM:
 				if (i != 0) {
@@ -116,9 +104,9 @@ static void wg_multopleft_render(Wg const* wg, int x, int y) {
 	assert(wg->type == WG_MULTIPLE_TOP_LEFT);
 	x += wg->multl.offset_x;
 	y += wg->multl.offset_y;
-	for (int i = 0; i < wg->multl.sub_wgs_count; i++) {
-		wg_render(wg->multl.sub_wgs[i], x, y);
-		Dims sub_dims = wg_get_dims(wg->multl.sub_wgs[i]);
+	for (int i = 0; i < wg->multl.sub_wgs.len; i++) {
+		wg_render(wg->multl.sub_wgs.arr[i], x, y);
+		Dims sub_dims = wg_get_dims(wg->multl.sub_wgs.arr[i]);
 		switch (wg->multl.orientation) {
 			case ORIENTATION_TOP_TO_BOTTOM: y += sub_dims.h + wg->multl.spacing; break;
 			case ORIENTATION_LEFT_TO_RIGHT: x += sub_dims.w + wg->multl.spacing; break;
@@ -131,19 +119,19 @@ static bool wg_multopleft_click(Wg const* wg, int x, int y, int cx, int cy) {
 	assert(wg->type == WG_MULTIPLE_TOP_LEFT);
 	x += wg->multl.offset_x;
 	y += wg->multl.offset_y;
-	for (int i = 0; i < wg->multl.sub_wgs_count; i++) {
-		Dims sub_dims = wg_get_dims(wg->multl.sub_wgs[i]);
+	for (int i = 0; i < wg->multl.sub_wgs.len; i++) {
+		Dims sub_dims = wg_get_dims(wg->multl.sub_wgs.arr[i]);
 		#if 0
 		/* TODO: This does not work sometimes for the rightmost button of a left-to-right.
 		 * The reason for this bug seem non-obvious enough that it warrants investigation. */
 		SDL_Rect r = {x, y, sub_dims.w, sub_dims.h};
 		if (r.x <= cx && cx < r.x + r.w && r.y <= cy && cy < r.y + r.h) {
-			if (wg_click(wg->multl.sub_wgs[i], x, y, cx, cy)) {
+			if (wg_click(wg->multl.sub_wgs.arr[i], x, y, cx, cy)) {
 				return true;
 			}
 		}
 		#else
-		if (wg_click(wg->multl.sub_wgs[i], x, y, cx, cy)) {
+		if (wg_click(wg->multl.sub_wgs.arr[i], x, y, cx, cy)) {
 			return true;
 		}
 		#endif
