@@ -278,8 +278,8 @@ int main(int argc, char const** argv) {
 								EntId first_selectible_eid = EID_NULL;
 								bool sel_eid_is_in_sel_tile = false;
 								EntId first_selectible_eid_after_sel_eid = EID_NULL;
-								for (int i = 0; i < sel_tile->ent_count; i++) {
-									EntId eid = sel_tile->ents[i];
+								for (int i = 0; i < sel_tile->ents.len; i++) {
+									EntId eid = sel_tile->ents.arr[i];
 									Ent* ent = get_ent(eid);
 									if (ent == NULL) continue;
 									if (ent->type != ENT_HUMAIN) continue;
@@ -326,12 +326,23 @@ int main(int argc, char const** argv) {
 							bool some_wg_got_the_click = wg_click(g_wg_root, 0, 0, wc.x, wc.y);
 							if (!some_wg_got_the_click) {
 								TileCoords tc = window_pixel_to_tile_coords(wc);
-								bool sel_tile_is_alrady_tc =
-									g_sel_tile_exists && tile_coords_eq(g_sel_tile_coords, tc);
-								if (tile_coords_are_valid(tc) && !sel_tile_is_alrady_tc) {
-									ui_select_tile(tc);
+								bool tile_is_available = false;
+								for (int i = 0; i < g_available_tcs.len; i++) {
+									if (tile_coords_eq(g_available_tcs.arr[i], tc)) {
+										tile_is_available = true;
+										break;
+									}
+								}
+								if (tile_is_available) {
+									move_human(g_sel_ent_id, tc);
 								} else {
-									ui_unselect_tile();
+									bool sel_tile_is_alrady_tc =
+										g_sel_tile_exists && tile_coords_eq(g_sel_tile_coords, tc);
+									if (tile_coords_are_valid(tc) && !sel_tile_is_alrady_tc) {
+										ui_select_tile(tc);
+									} else {
+										ui_unselect_tile();
+									}
 								}
 							}
 						break;
@@ -389,6 +400,27 @@ int main(int argc, char const** argv) {
 				.w = ceilf(tile_render_size),
 				.h = ceilf(tile_render_size)};
 			SDL_SetRenderDrawColor(g_renderer, 255, 255, 0, 255);
+			for (int i = 0; i < 2; i++) {
+				SDL_RenderDrawRect(g_renderer, &rect);
+				rect.x += 1; rect.y += 1; rect.w -= 2; rect.h -= 2;
+			}
+		}
+
+		for (int i = 0; i < g_available_tcs.len; i++) {
+			SDL_Rect rect = {
+				.x = g_available_tcs.arr[i].x * tile_render_size - g_camera.pos.x,
+				.y = g_available_tcs.arr[i].y * tile_render_size - g_camera.pos.y,
+				.w = ceilf(tile_render_size),
+				.h = ceilf(tile_render_size)};
+			
+			SDL_Point mouse;
+			SDL_GetMouseState(&mouse.x, &mouse.y);
+			if (SDL_PointInRect(&mouse, &rect)) {
+				SDL_SetRenderDrawColor(g_renderer, 0, 255, 255, 255);
+			} else {
+				SDL_SetRenderDrawColor(g_renderer, 0, 0, 255, 255);
+			}
+			rect.x += 1; rect.y += 1; rect.w -= 2; rect.h -= 2;
 			for (int i = 0; i < 2; i++) {
 				SDL_RenderDrawRect(g_renderer, &rect);
 				rect.x += 1; rect.y += 1; rect.w -= 2; rect.h -= 2;

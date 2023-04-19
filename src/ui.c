@@ -31,6 +31,8 @@ void move_human(EntId eid, TileCoords dst_pos) {
 	ent->human.already_moved_this_turn = true;
 
 	refresh_selected_tile_ui();
+
+	DA_EMPTY_LEAK(&g_available_tcs);
 }
 
 static void random_ai_play(void) {
@@ -228,14 +230,44 @@ void refresh_selected_tile_ui(void) {
 
 bool g_sel_ent_exists = false;
 EntId g_sel_ent_id = EID_NULL;
+
 void ui_select_ent(EntId eid) {
 	g_sel_ent_exists = !eid_null(eid);
 	g_sel_ent_id = eid;
 	refresh_selected_tile_ui();
+
+	DA_EMPTY_LEAK(&g_available_tcs);
+
+	if (g_sel_ent_exists) {
+		EntId eid = g_sel_ent_id;
+		Ent* ent = get_ent(eid);
+		if (ent != NULL &&
+			ent->type == ENT_HUMAIN &&
+			ent->human.faction == g_faction_currently_playing &&
+			(!ent->human.already_moved_this_turn)
+		) {
+			struct {int dx, dy;} const dirs[4] = {{1, 0}, {0, 1}, {-1, 0}, {0, -1}};
+			for (int i = 0; i < 4; i++) {
+				TileCoords dst_pos = ent->pos;
+				dst_pos.x += dirs[i].dx;
+				dst_pos.y += dirs[i].dy;
+				if (tile_coords_are_valid(dst_pos)) {
+					Tile const* dst_tile = get_tile(dst_pos);
+					if (tile_is_walkable(dst_tile)) {
+						DA_PUSH(&g_available_tcs, dst_pos);
+					}
+				}
+			}
+		}
+	}
 }
 
 void ui_unselect_ent(void) {
 	g_sel_ent_exists = false;
 	g_sel_ent_id = EID_NULL;
 	refresh_selected_tile_ui();
+
+	DA_EMPTY_LEAK(&g_available_tcs);
 }
+
+DA_TileCoords g_available_tcs = {0};

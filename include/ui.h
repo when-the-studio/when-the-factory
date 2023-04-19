@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include "map.h"
+#include "utils.h"
 
 /* Initializes the widget tree. */
 void init_wg_tree(void);
@@ -26,5 +27,8 @@ extern bool g_sel_ent_exists;
 extern EntId g_sel_ent_id;
 void ui_select_ent(EntId eid);
 void ui_unselect_ent(void);
+
+typedef DA(TileCoords) DA_TileCoords; 
+extern DA_TileCoords g_available_tcs;
 
 #endif /* WHEN_THE_FACTORY_UI_ */
