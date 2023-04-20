@@ -122,8 +122,24 @@ void click(WinCoords wc) {
 	TileCoords tc = window_pixel_to_tile_coords(wc);
 	if (tile_is_available(tc)) {
 		/* A movable human is selected and the click landed on a tile to which
-		 * the human can move. */
-		move_human(g_sel_ent_id, tc);
+		 * the human can move or act. */
+		Action const* action = action_menu_selection();
+		switch (action->type) {
+			case ACTION_MOVE:
+				move_human(g_sel_ent_id, tc);
+			break;
+			case ACTION_BUILD: {
+				new_building(action->build.building_type, tc);
+				assert(g_sel_ent_exists);
+				Ent* ent = get_ent(g_sel_ent_id);
+				assert(ent != NULL && ent->type == ENT_HUMAIN);
+				ent->human.already_moved_this_turn = true;
+				refresh_selected_tile_ui();
+				DA_EMPTY_LEAK(&g_action_da_on_tcs);
+				action_menu_refresh();
+			break; }
+			default: assert(false);
+		}
 	} else if (g_sel_tile_exists && tile_coords_eq(g_sel_tile_coords, tc)) {
 		/* The click landed on the selected tile. */
 		Tile const* tile = get_tile(g_sel_tile_coords);

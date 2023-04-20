@@ -65,5 +65,6 @@ bool tile_is_available(TileCoords tc);
 
 void action_menu_refresh(void);
 void action_menu_scroll(int dy);
+Action const* action_menu_selection(void);
 
 #endif /* WHEN_THE_FACTORY_UI_ */

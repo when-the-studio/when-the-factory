@@ -430,3 +430,25 @@ void action_menu_scroll(int dy) {
 
 	action_menu_refresh();
 }
+
+Action const* action_menu_selection(void) {
+	if (g_action_da_on_tcs.len == 0) return NULL;
+
+	SDL_Point mouse;
+	SDL_GetMouseState(&mouse.x, &mouse.y);
+	TileCoords tc = window_pixel_to_tile_coords((WinCoords){mouse.x, mouse.y});
+
+	ActionDaOnTc const* action_da_on_tc = NULL;
+	for (int i = 0; i < g_action_da_on_tcs.len; i++) {
+		if (tile_coords_eq(g_action_da_on_tcs.arr[i].tc, tc)) {
+			action_da_on_tc = &g_action_da_on_tcs.arr[i];
+			break;
+		}
+	}
+	if (action_da_on_tc == NULL) {
+		return NULL;
+	}
+
+	assert(0 <= s_action_index && s_action_index < action_da_on_tc->actions.len);
+	return &action_da_on_tc->actions.arr[s_action_index];
+}
