@@ -113,8 +113,8 @@ void cycle_ent_sel_through_ents_in_tile(void);
 void click(WinCoords wc) {
 	/* The user clicked on the pixel at `wc`.
 	 * First we forward this click to the UI in case it lands on a widget. */
-	bool some_wg_got_the_click = wg_click(g_wg_root, 0, 0, wc.x, wc.y);
-	if (some_wg_got_the_click) {
+	bool ui_used_the_click = ui_click(wc);
+	if (ui_used_the_click) {
 		return;
 	}
 	
@@ -648,6 +648,15 @@ int main(int argc, char const** argv) {
 					}
 				break;
 				case SDL_MOUSEWHEEL:
+					if (g_sel_ent_exists) {
+						SDL_Point mouse;
+						SDL_GetMouseState(&mouse.x, &mouse.y);
+						TileCoords tc = window_pixel_to_tile_coords((WinCoords){mouse.x, mouse.y});
+						if (tile_coords_are_valid(tc) && tile_is_available(tc)) {
+							action_menu_scroll(-event.wheel.y);
+							break;
+						}
+					}
 					if (event.wheel.y > 0 && g_camera.target_zoom < ZOOM_MAX){
 						g_camera.target_zoom /= WHEEL_ZOOM_FACTOR;
 					} else if (event.wheel.y < 0 && g_camera.target_zoom > ZOOM_MIN) {

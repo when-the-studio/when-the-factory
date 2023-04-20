@@ -4,12 +4,17 @@
 #include <stdbool.h>
 #include "map.h"
 #include "utils.h"
+#include "renderer.h"
 
-/* Initializes the widget tree. */
+/* Initializes the UI widget tree. */
 void init_wg_tree(void);
 
-/* Renders the UI. */
+/* Renders the UI widget tree. */
 void render_wg_tree(void);
+
+/* Inform the UI that a click occured.
+ * Returns `true` iff the UI used a click (when it lands on a widget). */
+bool ui_click(WinCoords wc);
 
 /* Selected tile, if any.
  * These should be modified via `ui_select_tile` and `ui_unselect_tile` to ensure
@@ -34,5 +39,26 @@ void ui_unselect_ent(void);
 typedef DA(TileCoords) DA_TileCoords; 
 extern DA_TileCoords g_available_tcs;
 bool tile_is_available(TileCoords tc);
+
+enum ActionType {
+	ACTION_MOVE,
+	ACTION_BUILD,
+};
+typedef enum ActionType ActionType;
+struct Action {
+	ActionType type;
+	union {
+		struct ActionMove {
+			TileCoords dst_pos;
+		} move;
+		struct ActionBuild {
+			BuildingType building_type;
+			TileCoords dst_pos;
+		} build;
+	};
+};
+typedef struct Action Action;
+
+void action_menu_scroll(int dy);
 
 #endif /* WHEN_THE_FACTORY_UI_ */

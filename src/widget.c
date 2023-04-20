@@ -2,8 +2,6 @@
 #include "widget.h"
 #include "renderer.h"
 
-Wg* g_wg_root = NULL;
-
 /* *** Text Line widget section *** */
 
 Wg* new_wg_text_line(char* string, SDL_Color fg_color) {

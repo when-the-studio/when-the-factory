@@ -52,9 +52,6 @@ struct Wg {
 	};
 };
 
-/* The root of the whole widget tree. */
-extern Wg* g_wg_root;
-
 Dims wg_get_dims(Wg const* wg);
 void wg_render(Wg const* wg, int x, int y);
 bool wg_click(Wg const* wg, int x, int y, int cx, int cy);

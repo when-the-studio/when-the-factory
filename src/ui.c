@@ -48,6 +48,7 @@ void move_human(EntId eid, TileCoords dst_pos) {
 	
 	refresh_selected_tile_ui();
 	DA_EMPTY_LEAK(&g_available_tcs);
+	action_menu_refresh();
 }
 
 static void random_ai_play(void) {
@@ -94,14 +95,22 @@ static void callback_end_turn(void* whatever) {
 	end_turn();
 }
 
+static Wg* s_wg_action_menu = NULL;
+static DA(Action) s_actions = {0};
+static int s_action_index = 0;
+
+/* The root of the main widget tree. */
+static Wg* s_wg_root = NULL;
+
+/* Somewhere in `s_wg_root`, reserved for info on the selected tile (if any). */
 static Wg* s_wg_tile_info = NULL;
 
 void init_wg_tree(void) {
-	g_wg_root = new_wg_multopleft(10, 10, 10, ORIENTATION_TOP_TO_BOTTOM);
-	wg_multopleft_add_sub(g_wg_root,
+	s_wg_root = new_wg_multopleft(10, 10, 10, ORIENTATION_TOP_TO_BOTTOM);
+	wg_multopleft_add_sub(s_wg_root,
 		s_wg_tile_info = new_wg_multopleft(5, 0, 0, ORIENTATION_TOP_TO_BOTTOM)
 	);
-	wg_multopleft_add_sub(g_wg_root,
+	wg_multopleft_add_sub(s_wg_root,
 		new_wg_button(
 			new_wg_box(
 				new_wg_text_line("end turn", RGB(0, 0, 0)),
@@ -111,10 +120,29 @@ void init_wg_tree(void) {
 			(CallbackWithData){.func = callback_end_turn, .whatever = NULL}
 		)
 	);
+
+	s_wg_action_menu = new_wg_multopleft(2, 0, 0, ORIENTATION_TOP_TO_BOTTOM);
 }
 
+SDL_Rect tile_rect(TileCoords tc);
+TileCoords window_pixel_to_tile_coords(WinCoords wc);
+
 void render_wg_tree(void) {
-	wg_render(g_wg_root, 0, 0);
+	wg_render(s_wg_root, 0, 0);
+
+	if (g_sel_ent_exists) {
+		SDL_Point mouse;
+		SDL_GetMouseState(&mouse.x, &mouse.y);
+		TileCoords tc = window_pixel_to_tile_coords((WinCoords){mouse.x, mouse.y});
+		if (tile_coords_are_valid(tc) && tile_is_available(tc)) {
+			SDL_Rect rect = tile_rect(tc);
+			wg_render(s_wg_action_menu, rect.x + rect.w, rect.y);
+		}
+	}
+}
+
+bool ui_click(WinCoords wc) {
+	return wg_click(s_wg_root, 0, 0, wc.x, wc.y);
 }
 
 bool g_sel_tile_exists = false;
@@ -281,6 +309,7 @@ void ui_select_ent(EntId eid) {
 					}
 				}
 			}
+			action_menu_refresh();
 		}
 	}
 }
@@ -302,4 +331,79 @@ bool tile_is_available(TileCoords tc) {
 		}
 	}
 	return false;
+}
+
+bool ent_can_move(EntId eid);
+
+void action_menu_refresh(void) {
+	wg_multopleft_empty(s_wg_action_menu);
+	DA_EMPTY_LEAK(&s_actions);
+
+	if (g_sel_ent_exists && ent_can_move(g_sel_ent_id)) {
+		SDL_Point mouse;
+		SDL_GetMouseState(&mouse.x, &mouse.y);
+		TileCoords tc = window_pixel_to_tile_coords((WinCoords){mouse.x, mouse.y});
+
+		/* Move. */
+		if (tile_coords_are_valid(tc) && tile_is_available(tc)) {
+			Action action = {
+				.type = ACTION_MOVE,
+				.move = {
+					.dst_pos = tc,
+				}
+			};
+			DA_PUSH(&s_actions, action);
+			wg_multopleft_add_sub(s_wg_action_menu,
+				new_wg_box(
+					new_wg_text_line("move", RGB(0, 0, 0)),
+					10, 10, 3,
+					RGB(0, 0, 0), RGB(200, 200, 200)
+				)
+			);
+		}
+
+		/* Build. */
+		for (int i = 0; i < BUILDING_TYPE_NUM; i++) {
+			Action action = {
+				.type = ACTION_BUILD,
+				.build = {
+					.dst_pos = tc,
+					.building_type = i,
+				}
+			};
+			DA_PUSH(&s_actions, action);
+			wg_multopleft_add_sub(s_wg_action_menu,
+				new_wg_box(
+					new_wg_sprite(
+						g_building_type_spec_table[i].rect_in_spritesheet,
+						24, 24
+					),
+					10, 10, 3,
+					RGB(0, 0, 0), RGB(200, 200, 200)
+				)
+			);
+		}
+
+		/* Hilight of the selected action. */
+		assert(0 <= s_action_index && s_action_index < s_wg_action_menu->multl.sub_wgs.len);
+		Wg* wg_action = s_wg_action_menu->multl.sub_wgs.arr[s_action_index];
+		assert(wg_action->type == WG_BOX);
+		wg_action->box.line_color = RGB(255, 0, 0);
+	} else {
+		s_action_index = 0;
+	}
+}
+
+void action_menu_scroll(int dy) {
+	int len = s_wg_action_menu->multl.sub_wgs.len;
+	if (len == 0) return;
+
+	s_action_index += dy;
+	if (s_action_index < 0) {
+		s_action_index = len - 1;
+	} else if (len <= s_action_index) {
+		s_action_index = 0;
+	}
+
+	action_menu_refresh();
 }
