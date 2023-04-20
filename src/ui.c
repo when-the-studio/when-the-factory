@@ -3,6 +3,7 @@
 #include "widget.h"
 #include "map.h"
 #include "entity.h"
+#include "objects/building.h"
 
 #define RGB(r_, g_, b_) ((SDL_Color){(r_), (g_), (b_), 255})
 
@@ -47,7 +48,7 @@ void move_human(EntId eid, TileCoords dst_pos) {
 	ent->human.already_moved_this_turn = true;
 	
 	refresh_selected_tile_ui();
-	DA_EMPTY_LEAK(&g_available_tcs);
+	DA_EMPTY_LEAK(&g_action_da_on_tcs);
 	action_menu_refresh();
 }
 
@@ -96,7 +97,6 @@ static void callback_end_turn(void* whatever) {
 }
 
 static Wg* s_wg_action_menu = NULL;
-static DA(Action) s_actions = {0};
 static int s_action_index = 0;
 
 /* The root of the main widget tree. */
@@ -287,7 +287,7 @@ void ui_select_ent(EntId eid) {
 	g_sel_ent_id = eid;
 	refresh_selected_tile_ui();
 
-	DA_EMPTY_LEAK(&g_available_tcs);
+	DA_EMPTY_LEAK(&g_action_da_on_tcs);
 
 	if (g_sel_ent_exists) {
 		EntId eid = g_sel_ent_id;
@@ -305,7 +305,29 @@ void ui_select_ent(EntId eid) {
 				if (tile_coords_are_valid(dst_pos)) {
 					Tile const* dst_tile = get_tile(dst_pos);
 					if (tile_is_walkable(dst_tile)) {
-						DA_PUSH(&g_available_tcs, dst_pos);
+						ActionDaOnTc action_da_on_tc = {
+							.tc = dst_pos,
+							.actions = {0}
+						};
+						/* Move. */
+						{
+							Action action = {
+								.type = ACTION_MOVE,
+								.move = {0},
+							};
+							DA_PUSH(&action_da_on_tc.actions, action);
+						}
+						/* Build. */
+						for (int i = 0; i < BUILDING_TYPE_NUM; i++) {
+							Action action = {
+								.type = ACTION_BUILD,
+								.build = {
+									.building_type = i,
+								}
+							};
+							DA_PUSH(&action_da_on_tc.actions, action);
+						}
+						DA_PUSH(&g_action_da_on_tcs, action_da_on_tc);
 					}
 				}
 			}
@@ -319,14 +341,14 @@ void ui_unselect_ent(void) {
 	g_sel_ent_id = EID_NULL;
 	refresh_selected_tile_ui();
 
-	DA_EMPTY_LEAK(&g_available_tcs);
+	DA_EMPTY_LEAK(&g_action_da_on_tcs);
 }
 
-DA_TileCoords g_available_tcs = {0};
+DA_ActionDaOnTc g_action_da_on_tcs = {0};
 
 bool tile_is_available(TileCoords tc) {
-	for (int i = 0; i < g_available_tcs.len; i++) {
-		if (tile_coords_eq(g_available_tcs.arr[i], tc)) {
+	for (int i = 0; i < g_action_da_on_tcs.len; i++) {
+		if (tile_coords_eq(g_action_da_on_tcs.arr[i].tc, tc)) {
 			return true;
 		}
 	}
@@ -337,61 +359,62 @@ bool ent_can_move(EntId eid);
 
 void action_menu_refresh(void) {
 	wg_multopleft_empty(s_wg_action_menu);
-	DA_EMPTY_LEAK(&s_actions);
+	if (g_action_da_on_tcs.len == 0) return;
 
-	if (g_sel_ent_exists && ent_can_move(g_sel_ent_id)) {
-		SDL_Point mouse;
-		SDL_GetMouseState(&mouse.x, &mouse.y);
-		TileCoords tc = window_pixel_to_tile_coords((WinCoords){mouse.x, mouse.y});
+	SDL_Point mouse;
+	SDL_GetMouseState(&mouse.x, &mouse.y);
+	TileCoords tc = window_pixel_to_tile_coords((WinCoords){mouse.x, mouse.y});
 
-		/* Move. */
-		if (tile_coords_are_valid(tc) && tile_is_available(tc)) {
-			Action action = {
-				.type = ACTION_MOVE,
-				.move = {
-					.dst_pos = tc,
-				}
-			};
-			DA_PUSH(&s_actions, action);
-			wg_multopleft_add_sub(s_wg_action_menu,
-				new_wg_box(
-					new_wg_text_line("move", RGB(0, 0, 0)),
-					10, 10, 3,
-					RGB(0, 0, 0), RGB(200, 200, 200)
-				)
-			);
+	ActionDaOnTc const* action_da_on_tc = NULL;
+	for (int i = 0; i < g_action_da_on_tcs.len; i++) {
+		if (tile_coords_eq(g_action_da_on_tcs.arr[i].tc, tc)) {
+			action_da_on_tc = &g_action_da_on_tcs.arr[i];
+			break;
 		}
-
-		/* Build. */
-		for (int i = 0; i < BUILDING_TYPE_NUM; i++) {
-			Action action = {
-				.type = ACTION_BUILD,
-				.build = {
-					.dst_pos = tc,
-					.building_type = i,
-				}
-			};
-			DA_PUSH(&s_actions, action);
-			wg_multopleft_add_sub(s_wg_action_menu,
-				new_wg_box(
-					new_wg_sprite(
-						g_building_type_spec_table[i].rect_in_spritesheet,
-						24, 24
-					),
-					10, 10, 3,
-					RGB(0, 0, 0), RGB(200, 200, 200)
-				)
-			);
-		}
-
-		/* Hilight of the selected action. */
-		assert(0 <= s_action_index && s_action_index < s_wg_action_menu->multl.sub_wgs.len);
-		Wg* wg_action = s_wg_action_menu->multl.sub_wgs.arr[s_action_index];
-		assert(wg_action->type == WG_BOX);
-		wg_action->box.line_color = RGB(255, 0, 0);
-	} else {
-		s_action_index = 0;
 	}
+	if (action_da_on_tc == NULL) {
+		s_action_index = 0;
+		return;
+	}
+
+	for (int i = 0; i < action_da_on_tc->actions.len; i++) {
+		Action const* action = &action_da_on_tc->actions.arr[i];
+		switch (action->type) {
+			case ACTION_MOVE:
+				wg_multopleft_add_sub(s_wg_action_menu,
+					new_wg_box(
+						new_wg_text_line("move", RGB(0, 0, 0)),
+						10, 10, 3,
+						RGB(0, 0, 0), RGB(200, 200, 200)
+					)
+				);
+			break;
+			case ACTION_BUILD: {
+				BuildingTextureType building_texture_index = 
+					(BuildingTextureType[]){
+						[BUILDING_EMITTER] = BUILDING_TX_EMITTER,
+						[BUILDING_RECEIVER] = BUILDING_TX_RECEIVER_OFF,
+					}[action->build.building_type];
+				wg_multopleft_add_sub(s_wg_action_menu,
+					new_wg_box(
+						new_wg_sprite(
+							g_building_type_spec_table[building_texture_index].rect_in_spritesheet,
+							24, 24
+						),
+						10, 10, 3,
+						RGB(0, 0, 0), RGB(200, 200, 200)
+					)
+				);
+			break; }
+			default: assert(false);
+		}
+	}
+
+	/* Hilight of the selected action. */
+	assert(0 <= s_action_index && s_action_index < s_wg_action_menu->multl.sub_wgs.len);
+	Wg* wg_action = s_wg_action_menu->multl.sub_wgs.arr[s_action_index];
+	assert(wg_action->type == WG_BOX);
+	wg_action->box.line_color = RGB(255, 0, 0);
 }
 
 void action_menu_scroll(int dy) {

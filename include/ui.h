@@ -36,10 +36,6 @@ extern EntId g_sel_ent_id;
 void ui_select_ent(EntId eid);
 void ui_unselect_ent(void);
 
-typedef DA(TileCoords) DA_TileCoords; 
-extern DA_TileCoords g_available_tcs;
-bool tile_is_available(TileCoords tc);
-
 enum ActionType {
 	ACTION_MOVE,
 	ACTION_BUILD,
@@ -49,16 +45,25 @@ struct Action {
 	ActionType type;
 	union {
 		struct ActionMove {
-			TileCoords dst_pos;
+			;
 		} move;
 		struct ActionBuild {
 			BuildingType building_type;
-			TileCoords dst_pos;
 		} build;
 	};
 };
 typedef struct Action Action;
+struct ActionDaOnTc {
+	TileCoords tc;
+	DA(Action) actions;
+};
+typedef struct ActionDaOnTc ActionDaOnTc;
 
+typedef DA(ActionDaOnTc) DA_ActionDaOnTc; 
+extern DA_ActionDaOnTc g_action_da_on_tcs;
+bool tile_is_available(TileCoords tc);
+
+void action_menu_refresh(void);
 void action_menu_scroll(int dy);
 
 #endif /* WHEN_THE_FACTORY_UI_ */

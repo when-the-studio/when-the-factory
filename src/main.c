@@ -293,8 +293,8 @@ void render_map(void) {
 		}
 	}
 
-	for (int i = 0; i < g_available_tcs.len; i++) {
-		SDL_Rect rect = tile_rect(g_available_tcs.arr[i]);
+	for (int i = 0; i < g_action_da_on_tcs.len; i++) {
+		SDL_Rect rect = tile_rect(g_action_da_on_tcs.arr[i].tc);
 		SDL_Point mouse;
 		SDL_GetMouseState(&mouse.x, &mouse.y);
 		if (SDL_PointInRect(&mouse, &rect)) {
@@ -637,6 +637,7 @@ int main(int argc, char const** argv) {
 					}
 				break;
 				case SDL_MOUSEMOTION:
+					action_menu_refresh();
 					if (SDL_GetMouseState(NULL, NULL) & SDL_BUTTON_RMASK) {
 						/* The map is grabbed and the mouse is moving,
 						 * so the map has to look like it follows the mouse
