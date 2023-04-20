@@ -82,6 +82,7 @@ EntId ent_new(TileCoords pos) {
 	*entry->ent = (Ent){
 		.type = ENT_UNTYPED,
 		.pos = pos,
+		.anim = NULL,
 	};
 	EntId eid = {.index = index, .gen = entry->gen};
 	Tile* tile = get_tile(pos);

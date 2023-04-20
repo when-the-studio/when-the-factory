@@ -22,12 +22,26 @@ static void next_faction_to_play(void) {
 	}
 }
 
+extern Uint64 g_time_ms;
+
 void move_human(EntId eid, TileCoords dst_pos) {
 	Ent* ent = get_ent(eid);
 	assert(ent != NULL);
 	assert(ent->type == ENT_HUMAIN);
 
+	TileCoords src_pos = ent->pos;
 	ent_move(eid, dst_pos);
+	
+	if (ent->anim != NULL) {
+		free(ent->anim);
+	}
+	ent->anim = malloc(sizeof(Anim));
+	*ent->anim = (Anim){
+		.time_beginning = g_time_ms,
+		.time_end = g_time_ms + 80,
+		.offset_beginning_x = dst_pos.x - src_pos.x,
+		.offset_beginning_y = dst_pos.y - src_pos.y,
+	};
 
 	/* Mark it as having already moved. */
 	ent->human.already_moved_this_turn = true;

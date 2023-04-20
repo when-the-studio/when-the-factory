@@ -35,12 +35,21 @@ typedef struct FactionSpec FactionSpec;
 extern FactionSpec g_faction_spec_table[FACTION_IDENT_NUM];
 extern FactionIdent g_faction_currently_playing;
 
+/* Animation for an entity. */
+struct Anim {
+	int time_beginning; // ms
+	int time_end; // ms
+	float offset_beginning_x, offset_beginning_y;
+};
+typedef struct Anim Anim;
+
 /* Entity, something that is not a tile terrain but rather ON a tile. */
 struct Ent {
 	EntType type;
 	/* TODO: Add support for an entity being "inside" an other entity
 	 * instead of directly on a tile. */
 	TileCoords pos;
+	Anim* anim;
 	union {
 		struct EntDataHuman {
 			FactionIdent faction;

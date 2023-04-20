@@ -249,6 +249,8 @@ int get_tile_real_ent_count(Tile const* tile) {
 /* Is grid line display enabled? */
 bool g_render_lines = false;
 
+Uint64 g_time_ms = 0;
+
 void render_map(void) {
 	float tile_render_size = TILE_SIZE * g_camera.zoom;
 
@@ -358,10 +360,24 @@ void render_map(void) {
 			if (ent == NULL) continue;
 			real_ent_i++;
 
+			/* Entity position on screen. */
 			int ex = (float)(real_ent_i+1) / (float)(real_ent_count+1)
 				* tile_render_size;
 			int ey = (1.0f - (float)(real_ent_i+1) / (float)(real_ent_count+1))
 				* tile_render_size;
+
+			/* Account for an ongoing animation (if any). */
+			if (ent->anim != NULL &&
+				ent->anim->time_beginning <= g_time_ms && g_time_ms < ent->anim->time_end
+			) {
+				float interpolation =
+					(float)(g_time_ms - ent->anim->time_beginning) /
+					(float)(ent->anim->time_end - ent->anim->time_beginning);
+				/* The offset is maximal at the beginning of the animation (when `interpolation`
+				 * is zero) and tends toward zero as `interpolation` tends toward one. */
+				ex -= ent->anim->offset_beginning_x * tile_render_size * (1.0f - interpolation);
+				ey -= ent->anim->offset_beginning_y * tile_render_size * (1.0f - interpolation);
+			}
 
 			switch (ent->type) {
 				case ENT_HUMAIN: {
@@ -454,11 +470,17 @@ int main(int argc, char const** argv) {
 		time = SDL_GetPerformanceCounter();
 		/* Delta time in ms. */
 		double dt = (time - last_time) * 1000 / (double)SDL_GetPerformanceFrequency();
+		g_time_ms = (double)time * 1000.0 / (double)SDL_GetPerformanceFrequency();
 
 		/* Handle events. */
 		SDL_Event event;
 		while (SDL_PollEvent(&event)) {
 			if (event.type == SDL_KEYDOWN && event.key.repeat) {
+				if (event.key.keysym.sym == SDLK_KP_DIVIDE) {
+					/* Allow skipping tunrs fast to see the AI play fast. */
+					end_turn();
+				}
+
 				/* SDL will spam KEYDOWN events when a key is just pressed for long enough,
 				 * which will confuse whatever relies on matching KEYDOWN and KEYUP events.
 				 * So we just filter out these 'fake' KEYDOWN events. */
