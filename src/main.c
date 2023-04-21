@@ -110,6 +110,35 @@ void move_human(EntId eid, TileCoords dst_pos);
 
 void cycle_ent_sel_through_ents_in_tile(void);
 
+/* The human (given by its entity ID `eid`) will build a building (of the given type)
+ * on the tile at the given coords. */
+void have_human_to_build(EntId eid, BuildingType building_type, TileCoords tc) {
+	new_building(building_type, tc);
+	Ent* ent = get_ent(eid);
+	assert(ent != NULL && ent->type == ENT_HUMAIN);
+	ent->human.already_moved_this_turn = true;
+	refresh_selected_tile_ui();
+	DA_EMPTY_LEAK(&g_action_da_on_tcs);
+	action_menu_refresh();
+}
+
+/* The human (given by its entity ID `eid`) will perform the given action
+ * on the tile at the given coords. */
+void have_human_to_act(EntId eid, Action const* action, TileCoords tc) {
+	Ent* ent = get_ent(eid);
+	assert(ent != NULL && ent->type == ENT_HUMAIN);
+	assert(action != NULL);
+	switch (action->type) {
+		case ACTION_MOVE:
+			move_human(g_sel_ent_id, tc);
+		break;
+		case ACTION_BUILD: {
+			have_human_to_build(g_sel_ent_id, action->build.building_type, tc);
+		break; }
+		default: assert(false);
+	}
+}
+
 void click(WinCoords wc) {
 	/* The user clicked on the pixel at `wc`.
 	 * First we forward this click to the UI in case it lands on a widget. */
@@ -123,23 +152,9 @@ void click(WinCoords wc) {
 	if (tile_is_available(tc)) {
 		/* A movable human is selected and the click landed on a tile to which
 		 * the human can move or act. */
+		assert(g_sel_ent_exists);
 		Action const* action = action_menu_selection();
-		switch (action->type) {
-			case ACTION_MOVE:
-				move_human(g_sel_ent_id, tc);
-			break;
-			case ACTION_BUILD: {
-				new_building(action->build.building_type, tc);
-				assert(g_sel_ent_exists);
-				Ent* ent = get_ent(g_sel_ent_id);
-				assert(ent != NULL && ent->type == ENT_HUMAIN);
-				ent->human.already_moved_this_turn = true;
-				refresh_selected_tile_ui();
-				DA_EMPTY_LEAK(&g_action_da_on_tcs);
-				action_menu_refresh();
-			break; }
-			default: assert(false);
-		}
+		have_human_to_act(g_sel_ent_id, action, tc);
 	} else if (g_sel_tile_exists && tile_coords_eq(g_sel_tile_coords, tc)) {
 		/* The click landed on the selected tile. */
 		Tile const* tile = get_tile(g_sel_tile_coords);
