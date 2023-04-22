@@ -191,7 +191,7 @@ void ui_select_tile(TileCoords tc) {
 	int ui_building_sprite_side = 5 * 3 * 3;
 	if (tile->building != NULL) {
 		Wg* wg_building_info = new_wg_multopleft(6, 0, 0, ORIENTATION_LEFT_TO_RIGHT);
-		BuildingType b_type = tile->building->type + (1-tile->building->powered);
+		BuildingType b_type = tile->building->type + tile->building->powered;
 		char const* b_name = g_building_type_spec_table[b_type].name;
 		SDL_Rect const b_rect = g_building_type_spec_table[b_type].rect_in_spritesheet;
 

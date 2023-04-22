@@ -59,7 +59,7 @@ struct ActionDaOnTc {
 };
 typedef struct ActionDaOnTc ActionDaOnTc;
 
-typedef DA(ActionDaOnTc) DA_ActionDaOnTc; 
+typedef DA(ActionDaOnTc) DA_ActionDaOnTc;
 extern DA_ActionDaOnTc g_action_da_on_tcs;
 bool tile_is_available(TileCoords tc);
 
