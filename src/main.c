@@ -146,7 +146,7 @@ void click(WinCoords wc) {
 	if (ui_used_the_click) {
 		return;
 	}
-	
+
 	/* The UI said the click was not for them, so it lands on the map. */
 	TileCoords tc = window_pixel_to_tile_coords(wc);
 	if (tile_is_available(tc)) {
@@ -207,7 +207,7 @@ DxDy arrow_keycode_to_dxdy(SDL_Keycode keycode) {
 		case SDLK_RIGHT: return (DxDy){+1, 0};
 		case SDLK_LEFT:  return (DxDy){-1, 0};
 		default: assert(false); exit(EXIT_FAILURE);
-	}	
+	}
 }
 
 DxDy cardinal_to_dxdy(CardinalType card) {
@@ -217,7 +217,7 @@ DxDy cardinal_to_dxdy(CardinalType card) {
 		case WEST:  return (DxDy){+1, 0};
 		case EAST:  return (DxDy){-1, 0};
 		default: assert(false); exit(EXIT_FAILURE);
-	}	
+	}
 }
 
 void cycle_ent_sel_through_ents_in_tile(void) {
@@ -346,7 +346,7 @@ void render_map(void) {
 		TileCoords tc = {.x = i % g_map_w, .y = i / g_map_w};
 		Tile const* tile = get_tile(tc);
 		SDL_Rect rect = tile_rect(tc);
-		
+
 		/* Draw flows. */
 		for (int flow_i = 0; flow_i < tile->flows.len; flow_i++){
 			Flow* flow = tile->flows.arr[flow_i];
@@ -372,10 +372,10 @@ void render_map(void) {
 					The order is EAST (1,0), NORTH (0,-1), WEST (-1, 0) and SOUTH (0, 1)
 				*/
 				for (int tile_i=0; tile_i<4; tile_i++){
-					TileCoords neighPos = {tc.x+offsets[tile_i], tc.y+offsets[tile_i+1]};							
+					TileCoords neighPos = {tc.x+offsets[tile_i], tc.y+offsets[tile_i+1]};
 					Tile * neighTile = get_tile(neighPos);
 					setFlow(neighTile, true, (CardinalType)(tile_i));
-					
+
 				}
 			}
 		}
@@ -431,7 +431,7 @@ void render_map(void) {
 					SDL_SetRenderDrawColor(g_renderer, color.r, color.g, color.b, 255);
 					#define FACTION_SIDE 8
 					SDL_Rect faction_rect = {
-						ent_rect.x + ent_rect.w/2 - FACTION_SIDE/2, 
+						ent_rect.x + ent_rect.w/2 - FACTION_SIDE/2,
 						ent_rect.y - FACTION_SIDE/2 - FACTION_SIDE,
 						FACTION_SIDE, FACTION_SIDE};
 					#undef FACTION_SIDE
@@ -517,7 +517,7 @@ int main(int argc, char const** argv) {
 				 * So we just filter out these 'fake' KEYDOWN events. */
 				continue;
 			}
-			
+
 			switch (event.type) {
 				case SDL_QUIT:
 					running = false;
@@ -578,12 +578,14 @@ int main(int argc, char const** argv) {
 							/* Test spawing building on selected tile. */
 							if (g_sel_tile_exists) {
 								new_building(BUILDING_EMITTER, g_sel_tile_coords);
+								refresh_selected_tile_ui();
 							}
 						break;
 						case SDLK_b:
 							/* Test spawing building on selected tile. */
 							if (g_sel_tile_exists) {
 								new_building(BUILDING_RECEIVER, g_sel_tile_coords);
+								refresh_selected_tile_ui();
 							}
 						break;
 						case SDLK_g:
@@ -699,7 +701,7 @@ int main(int argc, char const** argv) {
 		}
 
 		camera_update(dt);
-		
+
 		/* Background. */
 		SDL_SetRenderDrawColor(g_renderer, 255, 255, 255, 255);
 		SDL_RenderClear(g_renderer);

@@ -32,7 +32,7 @@ void move_human(EntId eid, TileCoords dst_pos) {
 
 	TileCoords src_pos = ent->pos;
 	ent_move(eid, dst_pos);
-	
+
 	if (ent->anim != NULL) {
 		free(ent->anim);
 	}
@@ -46,7 +46,7 @@ void move_human(EntId eid, TileCoords dst_pos) {
 
 	/* Mark it as having already moved. */
 	ent->human.already_moved_this_turn = true;
-	
+
 	refresh_selected_tile_ui();
 	DA_EMPTY_LEAK(&g_action_da_on_tcs);
 	action_menu_refresh();
@@ -168,7 +168,7 @@ void ui_select_tile(TileCoords tc) {
 	Tile* tile = get_tile(tc);
 	char const* name = g_tile_type_spec_table[tile->type].name;
 	Wg* wg_terrain_info = new_wg_multopleft(6, 0, 0, ORIENTATION_LEFT_TO_RIGHT);
-	wg_multopleft_add_sub(s_wg_tile_info, 
+	wg_multopleft_add_sub(s_wg_tile_info,
 		new_wg_box(
 			wg_terrain_info,
 			7, 7, 3,
@@ -176,15 +176,46 @@ void ui_select_tile(TileCoords tc) {
 		)
 	);
 	int ui_terrain_sprite_side = 5 * 3 * 3;
-	wg_multopleft_add_sub(wg_terrain_info, 
+	wg_multopleft_add_sub(wg_terrain_info,
 		new_wg_sprite(
 			g_tile_type_spec_table[tile->type].rect_in_spritesheet,
 			ui_terrain_sprite_side, ui_terrain_sprite_side
 		)
 	);
-	wg_multopleft_add_sub(wg_terrain_info, 
+	wg_multopleft_add_sub(wg_terrain_info,
 		new_wg_text_line((char*)name, RGB(0, 0, 0))
 	);
+
+	// Building widget
+	// Supposes that there one building at most on a tile
+	int ui_building_sprite_side = 5 * 3 * 3;
+	if (tile->building != NULL) {
+		Wg* wg_building_info = new_wg_multopleft(6, 0, 0, ORIENTATION_LEFT_TO_RIGHT);
+		BuildingType b_type = tile->building->type + (1-tile->building->powered);
+		char const* b_name = g_building_type_spec_table[b_type].name;
+		SDL_Rect const b_rect = g_building_type_spec_table[b_type].rect_in_spritesheet;
+
+		Wg* wg_building_sprite = new_wg_sprite(
+			b_rect,
+			ui_building_sprite_side, ui_building_sprite_side
+		);
+		wg_multopleft_add_sub(wg_building_info, wg_building_sprite);
+
+		Wg* wg_building_text = new_wg_text_line(
+			(char*) b_name,
+			RGB(0, 0, 0)
+		);
+		wg_multopleft_add_sub(wg_building_info, wg_building_text);
+
+		wg_multopleft_add_sub(s_wg_tile_info,
+			new_wg_box(
+				wg_building_info,
+				7, 7, 3,
+				RGB(0, 0, 0), RGB(200, 200, 255)
+			)
+		);
+	}
+
 	for (int i = 0; i < tile->ents.len; i++) {
 		EntId eid = tile->ents.arr[i];
 		Ent* ent = get_ent(eid);
@@ -390,7 +421,7 @@ void action_menu_refresh(void) {
 				);
 			break;
 			case ACTION_BUILD: {
-				BuildingTextureType building_texture_index = 
+				BuildingTextureType building_texture_index =
 					(BuildingTextureType[]){
 						[BUILDING_EMITTER] = BUILDING_TX_EMITTER,
 						[BUILDING_RECEIVER] = BUILDING_TX_RECEIVER_OFF,
