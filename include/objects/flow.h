@@ -71,7 +71,7 @@ struct Conveyor {
 typedef struct Conveyor Conveyor;
 
 CardinalType getOpposedDirection(CardinalType direction);
-void updateCableNetwork(TileCoords tc);
-void updateSurroundings(TileCoords tc);
+void update_cable_network(TileCoords tc);
+void update_surroundings(TileCoords tc);
 
 #endif

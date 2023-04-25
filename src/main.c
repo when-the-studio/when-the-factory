@@ -164,28 +164,28 @@ int main(int argc, char const** argv) {
 							/* Test spawing building on selected tile. */
 							if (g_sel_tile_exists) {
 								new_building(BUILDING_EMITTER, g_sel_tile_coords);
-								updateSurroundings(g_sel_tile_coords);
+								update_surroundings(g_sel_tile_coords);
 							}
 						break;
 						case SDLK_b:
 							/* Test spawing building on selected tile. */
 							if (g_sel_tile_exists) {
 								new_building(BUILDING_RECEIVER, g_sel_tile_coords);
-								updateSurroundings(g_sel_tile_coords);
+								update_surroundings(g_sel_tile_coords);
 							}
 						break;
 						case SDLK_g:
 							/* Test spawing cable on selected tile. */
 							if (g_sel_tile_exists) {
 								new_flow(g_sel_tile_coords, cable_orientation, (cable_orientation+2)%4);
-								updateSurroundings(g_sel_tile_coords);
+								update_surroundings(g_sel_tile_coords);
 							}
 						break;
 						case SDLK_h:
 							/* Test spawing cable on selected tile. */
 							if (g_sel_tile_exists) {
 								new_flow(g_sel_tile_coords, cable_orientation, (cable_orientation+1)%4);
-								updateSurroundings(g_sel_tile_coords);
+								update_surroundings(g_sel_tile_coords);
 							}
 						break;
 						case SDLK_j:
@@ -290,55 +290,10 @@ int main(int argc, char const** argv) {
 				Cable* flow = tile->flows[flow_i];
 				assert(flow != NULL);
 				render_tile_flow(flow, dst_rect);
-				if(flow->powered){
-					
-					TileCoords neighPosFLow;
-					Tile * neighTile;
-					for (int connection_i=0; connection_i < 2; connection_i++){
-						neighPosFLow.x = tc.x;
-						neighPosFLow.y = tc.y;
-						switch (flow->connections[connection_i]){
-							case NORTH:
-								neighPosFLow.x += 0;
-								neighPosFLow.y += -1;
-
-							break;
-							case SOUTH:
-								neighPosFLow.x += 0;
-								neighPosFLow.y += 1;
-							break;
-							case EAST:
-								neighPosFLow.x += 1;
-								neighPosFLow.y += 0;
-							break;
-							case WEST:
-								neighPosFLow.x += -1;
-								neighPosFLow.y += 0;
-							break;
-							
-							default:
-							break;
-						}
-						neighTile = get_tile(neighPosFLow);
-						//updateCableNetwork(neighPosFLow, true, getOpposedDirection(flow->connections[connection_i]));
-					}
-				}
 			}
 
 			if (tile->building != NULL){
 				render_tile_building(tile->building, dst_rect);
-				if (tile->building->type == BUILDING_EMITTER){
-					int offsets[] = {1, 0, -1, 0, 1};
-					/* Uses the array 'offsets' to get the four adjacent tiles.
-						The order is EAST (1,0), NORTH (0,-1), WEST (-1, 0) and SOUTH (0, 1)
-					*/
-					for (int tile_i=0; tile_i<4; tile_i++){
-						TileCoords neighPos = {tc.x+offsets[tile_i], tc.y+offsets[tile_i+1]};							
-						Tile * neighTile = get_tile(neighPos);
-						//updateCableNetwork(neighPos, true, (CardinalType)(tile_i));
-						
-					}
-				}
 			}
 
 			int true_ent_count = 0;
