@@ -65,25 +65,25 @@ void render_tile_building(Building * building, SDL_Rect dst_rect) {
 	}
 }
 
-void render_tile_flow(Cable * flow, SDL_Rect dst_rect) {
-	if (flow != NULL){
+void render_tile_cable(Cable * cable, SDL_Rect dst_rect) {
+	if (cable != NULL){
 		SDL_Rect rect_in_spritesheet;
 		int angle = 0;
-		bool straight = flow->connections[1] - flow->connections[0] == 2;
+		bool straight = cable->connections[1] - cable->connections[0] == 2;
 			// Cringe af but is just to test. The true way of storing and evaluating directions must be discussed.
 			if (straight){
 				rect_in_spritesheet = g_cable_type_spec_table[ELECTRICITY_STRAIGHT].rect_in_spritesheet;
-				if (flow->powered){
+				if (cable->powered){
 					rect_in_spritesheet = g_cable_type_spec_table[ELECTRICITY_STRAIGHT_ON].rect_in_spritesheet;
 				}
 				
-				angle = 90 * (flow->connections[0] == SOUTH);
+				angle = 90 * (cable->connections[0] == SOUTH);
 			} else {
 				rect_in_spritesheet = g_cable_type_spec_table[ELECTRICITY_TURN].rect_in_spritesheet;
-				if (flow->powered){
+				if (cable->powered){
 					rect_in_spritesheet = g_cable_type_spec_table[ELECTRICITY_TURN_ON].rect_in_spritesheet;
 				}
-				angle = 90 * (4-flow->connections[1]) * !(flow->connections[0] == WEST && flow->connections[1] == NORTH);
+				angle = 90 * (4-cable->connections[1]) * !(cable->connections[0] == WEST && cable->connections[1] == NORTH);
 			}
 			SDL_RenderCopyEx(g_renderer, g_spritesheet, &rect_in_spritesheet, &dst_rect, angle, NULL, SDL_FLIP_NONE);
 	}
@@ -177,14 +177,14 @@ int main(int argc, char const** argv) {
 						case SDLK_g:
 							/* Test spawing cable on selected tile. */
 							if (g_sel_tile_exists) {
-								new_flow(g_sel_tile_coords, cable_orientation, (cable_orientation+2)%4);
+								new_cable(g_sel_tile_coords, cable_orientation, (cable_orientation+2)%4);
 								update_surroundings(g_sel_tile_coords);
 							}
 						break;
 						case SDLK_h:
 							/* Test spawing cable on selected tile. */
 							if (g_sel_tile_exists) {
-								new_flow(g_sel_tile_coords, cable_orientation, (cable_orientation+1)%4);
+								new_cable(g_sel_tile_coords, cable_orientation, (cable_orientation+1)%4);
 								update_surroundings(g_sel_tile_coords);
 							}
 						break;
@@ -286,10 +286,10 @@ int main(int argc, char const** argv) {
 			render_tile_ground(tile->type, dst_rect);
 
 			
-			for (int flow_i = 0; flow_i < tile->flow_count; flow_i++){
-				Cable* flow = tile->flows[flow_i];
-				assert(flow != NULL);
-				render_tile_flow(flow, dst_rect);
+			for (int cable_i = 0; cable_i < tile->cable_count; cable_i++){
+				Cable* cable = tile->cables[cable_i];
+				assert(cable != NULL);
+				render_tile_cable(cable, dst_rect);
 			}
 
 			if (tile->building != NULL){

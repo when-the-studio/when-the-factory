@@ -43,7 +43,7 @@ typedef struct CableTypeSpec CableTypeSpec;
 
 extern CableTypeSpec g_cable_type_spec_table[CABLE_TX_NUM];
 
-/* An actual flow */
+/* An actual cable */
 struct Cable {
 	TileCoords pos;
 	CardinalType connections[2];
@@ -70,7 +70,7 @@ struct Conveyor {
 };
 typedef struct Conveyor Conveyor;
 
-CardinalType getOpposedDirection(CardinalType direction);
+CardinalType get_opposed_direction(CardinalType direction);
 void update_cable_network(TileCoords tc);
 void update_surroundings(TileCoords tc);
 

@@ -101,47 +101,47 @@ void remove_eid_from_tile_list(EntId eid, Tile* tile) {
 }
 
 static void remove_building_from_tile(Tile* tile) {
-	tile->building = NULL;
+	free(tile->building);
 }
 
-static void add_flow_to_tile_list(Cable* flow, Tile* tile) {
-	tile->flow_count++;
-	tile->flows = realloc(tile->flows, tile->flow_count * sizeof(Cable*));
-	tile->flows[tile->flow_count-1] = flow;
+static void add_cable_to_tile_list(Cable* cable, Tile* tile) {
+	tile->cable_count++;
+	tile->cables = realloc(tile->cables, tile->cable_count * sizeof(Cable*));
+	tile->cables[tile->cable_count-1] = cable;
 }
 
-static void remove_flow_from_tile_list(Cable* flow, Tile* tile) {
-	int flow_index_in_tile = -1;
-	for (int i = 0; i < tile->flow_count; i++) {
-		if (tile->flows[i] == flow) {
-			flow_index_in_tile = i;
+static void remove_cable_from_tile_list(Cable* cable, Tile* tile) {
+	int cable_index_in_tile = -1;
+	for (int i = 0; i < tile->cable_count; i++) {
+		if (tile->cables[i] == cable) {
+			cable_index_in_tile = i;
 			break;
 		}
 	}
-	assert(flow_index_in_tile != -1);
-	for (int i = flow_index_in_tile; i < tile->flow_count - 1; i++) {
-		tile->flows[i] = tile->flows[i+1];
+	assert(cable_index_in_tile != -1);
+	for (int i = cable_index_in_tile; i < tile->cable_count - 1; i++) {
+		tile->cables[i] = tile->cables[i+1];
 	}
-	tile->flow_count--;
-	tile->flows = realloc(tile->flows, tile->flow_count * sizeof(Cable*));
+	tile->cable_count--;
+	tile->cables = realloc(tile->cables, tile->cable_count * sizeof(Cable*));
 }
 
-Cable* new_flow(TileCoords pos, CardinalType entry, CardinalType exit) {
-	Cable* flow = malloc(sizeof(Cable));
-	*flow = (Cable){
+Cable* new_cable(TileCoords pos, CardinalType entry, CardinalType exit) {
+	Cable* cable = malloc(sizeof(Cable));
+	*cable = (Cable){
 		.pos = pos,
 		.connections = {entry, exit},
 		.capacity = 10,
 		.powered = false,
 	};
 	if (entry > exit){
-		flow->connections[0] = exit;
-		flow->connections[1] = entry;
+		cable->connections[0] = exit;
+		cable->connections[1] = entry;
 	}
 	Tile* tile = get_tile(pos);
-	add_flow_to_tile_list(flow, tile);
+	add_cable_to_tile_list(cable, tile);
 	
-	return flow;
+	return cable;
 }
 
 Tile* g_grid = NULL;
@@ -238,8 +238,8 @@ void init_map(void) {
 			.ents = NULL,
 			.ent_count = 0,
 			.building = NULL,
-			.flows = NULL,
-			.flow_count = 0,
+			.cables = NULL,
+			.cable_count = 0,
 		};
 	}
 

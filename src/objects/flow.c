@@ -1,7 +1,7 @@
 #include "flow.h"
 #include "map.h"
 
-CardinalType getOpposedDirection(CardinalType direction){
+CardinalType get_opposed_direction(CardinalType direction){
 	/* We could also do 
 		return (CardinalType)((direction+2)%4)
 		(performance ?)
@@ -117,16 +117,15 @@ void update_cable_network(TileCoords tc){
 	Tile ** new_tiles = malloc(size_new_tiles * sizeof(*new_tiles));
 	Tile * t;
 	bool power = false;
-	Cable * flow;
 	bool scan_network = true;
 
-	for (int i=0; i<tile->flow_count; i++){
+	for (int i=0; i<tile->cable_count; i++){
 		ind_scanned++;
 		if (ind_scanned == size_scanned){
 			size_scanned += 10;
 			scanned = realloc(scanned, size_scanned);
 		}
-		scanned[ind_scanned] = tile->flows[i];
+		scanned[ind_scanned] = tile->cables[i];
 	}
 	while (scan_network){
 		scan_network = false;
@@ -167,14 +166,14 @@ void update_cable_network(TileCoords tc){
 				buildings[ind_buildings] = t->building;
 			}
 
-			for (int flow_i=0; flow_i<t->flow_count; flow_i++){
-				if (!is_cable_in(t->flows[flow_i], scanned, ind_scanned) && !is_cable_in(t->flows[flow_i], network, ind_network)){
+			for (int cable_i=0; cable_i<t->cable_count; cable_i++){
+				if (!is_cable_in(t->cables[cable_i], scanned, ind_scanned) && !is_cable_in(t->cables[cable_i], network, ind_network)){
 					ind_scanned++;
 					if (ind_scanned == size_scanned){
 						size_scanned += 10;
 						scanned = realloc(scanned, size_scanned);
 					}
-					scanned[ind_scanned] = t->flows[flow_i];
+					scanned[ind_scanned] = t->cables[cable_i];
 					scan_network = true;
 				}
 			}
@@ -196,8 +195,8 @@ void update_cable_network(TileCoords tc){
 		bool build_powered = false;
 		Tile ** build_tiles = get_adjacent_tiles(buildings[build_i]->pos);
 		for (int tile_adj_i=0; tile_adj_i<4; tile_adj_i++){
-			for (int flow_adj_i=0; flow_adj_i<build_tiles[tile_adj_i]->flow_count; flow_adj_i++){
-				if (build_tiles[tile_adj_i]->flows[flow_adj_i]->powered){
+			for (int cable_adj_i=0; cable_adj_i<build_tiles[tile_adj_i]->cable_count; cable_adj_i++){
+				if (build_tiles[tile_adj_i]->cables[cable_adj_i]->powered){
 					build_powered = true;
 				}
 			}
