@@ -123,7 +123,7 @@ void update_cable_network(TileCoords tc){
 		ind_scanned++;
 		if (ind_scanned == size_scanned){
 			size_scanned += 10;
-			scanned = realloc(scanned, size_scanned);
+			scanned = realloc(scanned, size_scanned*sizeof(Cable*));
 		}
 		scanned[ind_scanned] = tile->cables[i];
 	}
@@ -138,7 +138,7 @@ void update_cable_network(TileCoords tc){
 					ind_new_tiles++;
 					if (ind_new_tiles == size_new_tiles){
 						size_new_tiles += 10;
-						new_tiles = realloc(new_tiles, size_new_tiles);
+						new_tiles = realloc(new_tiles, size_new_tiles*sizeof(Tile*));
 					}
 					new_tiles[ind_new_tiles] = (tiles)[i];
 				}				
@@ -147,7 +147,7 @@ void update_cable_network(TileCoords tc){
 			ind_network++;
 			if (ind_network == size_network){
 				size_network += 10;
-				network = realloc(network, size_network);
+				network = realloc(network, size_network*sizeof(Cable*));
 			}
 			network[ind_network] = scanned[scan_i];
 			free(tiles);
@@ -161,7 +161,7 @@ void update_cable_network(TileCoords tc){
 				ind_buildings++;
 				if (ind_buildings == size_buildings){
 					size_buildings += 10;
-					buildings = realloc(buildings, size_buildings);
+					buildings = realloc(buildings, size_buildings*sizeof(Building*));
 				}
 				buildings[ind_buildings] = t->building;
 			}
@@ -171,7 +171,7 @@ void update_cable_network(TileCoords tc){
 					ind_scanned++;
 					if (ind_scanned == size_scanned){
 						size_scanned += 10;
-						scanned = realloc(scanned, size_scanned);
+						scanned = realloc(scanned, size_scanned*sizeof(Cable*));
 					}
 					scanned[ind_scanned] = t->cables[cable_i];
 					scan_network = true;
