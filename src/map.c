@@ -9,19 +9,19 @@
 
 CableTypeSpec g_cable_type_spec_table[CABLE_TX_NUM] = {
 	[ELECTRICITY_STRAIGHT] = {
-		.rect_in_spritesheet = {16, 16, 8, 8},
+		.rect_in_spritesheet = {32, 0, 8, 8},
 		.name = "Electric cable (straight)",
 	},
 	[ELECTRICITY_TURN] = {
-		.rect_in_spritesheet = {24, 16, 8, 8},
+		.rect_in_spritesheet = {44, 0, 8, 8},
 		.name = "Electric cable (turn)",
 	},
 	[ELECTRICITY_STRAIGHT_ON] = {
-		.rect_in_spritesheet = {16, 8, 8, 8},
+		.rect_in_spritesheet = {32, 8, 8, 8},
 		.name = "Electric cable (straight)",
 	},
 	[ELECTRICITY_TURN_ON] = {
-		.rect_in_spritesheet = {24, 8, 8, 8},
+		.rect_in_spritesheet = {44, 8, 8, 8},
 		.name = "Electric cable (turn)",
 	},
 };
@@ -51,15 +51,15 @@ TileTypeSpec g_tile_type_spec_table[TILE_TYPE_NUM] = {
 
 BuildingTypeSpec g_building_type_spec_table[BUILDING_TX_NUM] = {
 	[BUILDING_TX_EMITTER] = {
-		.rect_in_spritesheet = {0, 24, 8, 8},
+		.rect_in_spritesheet = {0, 0, 8, 8},
 		.name = "Power Plant",
 	},
 	[BUILDING_TX_RECEIVER_OFF] = {
-		.rect_in_spritesheet = {8, 24, 8, 8},
+		.rect_in_spritesheet = {8, 0, 8, 8},
 		.name = "Shield off",
 	},
 	[BUILDING_TX_RECEIVER_ON] = {
-		.rect_in_spritesheet = {16, 24, 8, 8},
+		.rect_in_spritesheet = {16, 0, 8, 8},
 		.name = "Shield on",
 	},
 };

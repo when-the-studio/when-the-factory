@@ -59,7 +59,7 @@ void render_tile_building(Building * building, SDL_Rect dst_rect) {
 		default:
 			break;
 		}
-		SDL_RenderCopy(g_renderer, g_spritesheet, &rect_in_spritesheet, &dst_rect);
+		SDL_RenderCopy(g_renderer, g_spritesheet_buildings, &rect_in_spritesheet, &dst_rect);
 	} else {
 		printf("[ERROR] Missing building !");
 	}
@@ -85,7 +85,7 @@ void render_tile_cable(Cable * cable, SDL_Rect dst_rect) {
 				}
 				angle = 90 * (4-cable->connections[1]) * !(cable->connections[0] == WEST && cable->connections[1] == NORTH);
 			}
-			SDL_RenderCopyEx(g_renderer, g_spritesheet, &rect_in_spritesheet, &dst_rect, angle, NULL, SDL_FLIP_NONE);
+			SDL_RenderCopyEx(g_renderer, g_spritesheet_buildings, &rect_in_spritesheet, &dst_rect, angle, NULL, SDL_FLIP_NONE);
 	}
 }
 
