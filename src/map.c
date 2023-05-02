@@ -13,7 +13,7 @@ CableTypeSpec g_cable_type_spec_table[CABLE_TX_NUM] = {
 		.name = "Electric cable (straight)",
 	},
 	[ELECTRICITY_TURN] = {
-		.rect_in_spritesheet = {44, 0, 8, 8},
+		.rect_in_spritesheet = {40, 0, 8, 8},
 		.name = "Electric cable (turn)",
 	},
 	[ELECTRICITY_STRAIGHT_ON] = {
@@ -21,7 +21,7 @@ CableTypeSpec g_cable_type_spec_table[CABLE_TX_NUM] = {
 		.name = "Electric cable (straight)",
 	},
 	[ELECTRICITY_TURN_ON] = {
-		.rect_in_spritesheet = {44, 8, 8, 8},
+		.rect_in_spritesheet = {40, 8, 8, 8},
 		.name = "Electric cable (turn)",
 	},
 };

@@ -63,6 +63,24 @@ bool is_cable_in(Cable * cable, Cable ** cables, int size){
 	return false;
 }
 
+bool is_building_in_da(Building * building, DA(Building*) * buildings){
+	for (int i=0; i<buildings->len; i++){
+		if (building == buildings->arr[i]){
+			return true;
+		}
+	}
+	return false;
+}
+
+bool is_cable_in_da(Cable * cable, DA(Cable*) * cables){
+	for (int i=0; i<cables->len; i++){
+		if (cable == cables->arr[i]){
+			return true;
+		}
+	}
+	return false;
+}
+
 Tile ** get_adjacent_tiles(TileCoords tc){
 	Tile ** tiles = malloc(4*sizeof(*tiles));
 	TileCoords tc_neigh;
@@ -99,101 +117,59 @@ Tile ** get_tiles_from_cable(Cable * cable){
 void update_cable_network(TileCoords tc){
 	Tile * tile = get_tile(tc);
 
-	int size_buildings = 10;
-	int size_network = 10;
-	int size_scanned = 10;
-	int size_new_tiles = 10;
-
-	int ind_buildings = -1;
-	int ind_network = -1;
-	int ind_scanned = -1;
-	int ind_new_tiles = -1;
-
-	Building ** buildings = malloc(size_buildings * sizeof(*buildings));
-	Cable ** network = malloc(size_network * sizeof(*network));
-	Cable ** scanned = malloc(size_scanned * sizeof(*scanned));
+	DA(Building*) buildings = {0};
+	DA(Cable*) network = {0};
+	DA(Cable*) scanned = {0};
+	DA(Cable*) new_cables = {0};
 	
 	Tile ** tiles;
-	Tile ** new_tiles = malloc(size_new_tiles * sizeof(*new_tiles));
 	Tile * t;
 	bool power = false;
 	bool scan_network = true;
 
 	for (int i=0; i<tile->cable_count; i++){
-		ind_scanned++;
-		if (ind_scanned == size_scanned){
-			size_scanned += 10;
-			scanned = realloc(scanned, size_scanned*sizeof(Cable*));
-		}
-		scanned[ind_scanned] = tile->cables[i];
+		DA_PUSH(&scanned, tile->cables[i]);
 	}
 	while (scan_network){
 		scan_network = false;
-		ind_new_tiles = -1;
-		for (int scan_i=0; scan_i < ind_scanned+1; scan_i++){
-			tiles = get_tiles_from_cable(scanned[scan_i]);
+		for (int scan_i=0; scan_i < scanned.len; scan_i++){
+			tiles = get_tiles_from_cable(scanned.arr[scan_i]);
 			for (int i=0; i<2; i++){
-
-				if (!is_tile_in((tiles)[i], new_tiles, ind_new_tiles)){
-					ind_new_tiles++;
-					if (ind_new_tiles == size_new_tiles){
-						size_new_tiles += 10;
-						new_tiles = realloc(new_tiles, size_new_tiles*sizeof(Tile*));
+				Tile * t = tiles[i];
+				for (int j=0; j<t->cable_count; j++){
+					if (!is_cable_in_da(t->cables[j], &new_cables)){
+						DA_PUSH(&new_cables, t->cables[j]);
 					}
-					new_tiles[ind_new_tiles] = (tiles)[i];
-				}				
+				}		
+				if ((tiles)[i]->building != NULL && !is_building_in_da((tiles)[i]->building, &buildings)){
+					DA_PUSH(&buildings, (tiles)[i]->building);
+				}
 			}
-
-			ind_network++;
-			if (ind_network == size_network){
-				size_network += 10;
-				network = realloc(network, size_network*sizeof(Cable*));
-			}
-			network[ind_network] = scanned[scan_i];
+			DA_PUSH(&network, scanned.arr[scan_i]);
 			free(tiles);
 		}
-
-		ind_scanned = -1;
-
-		for (int new_i = 0; new_i<ind_new_tiles+1; new_i++){
-			t = (new_tiles)[new_i];
-			if (t->building != NULL && !is_building_in(t->building, buildings, ind_buildings)){
-				ind_buildings++;
-				if (ind_buildings == size_buildings){
-					size_buildings += 10;
-					buildings = realloc(buildings, size_buildings*sizeof(Building*));
-				}
-				buildings[ind_buildings] = t->building;
-			}
-
-			for (int cable_i=0; cable_i<t->cable_count; cable_i++){
-				if (!is_cable_in(t->cables[cable_i], scanned, ind_scanned) && !is_cable_in(t->cables[cable_i], network, ind_network)){
-					ind_scanned++;
-					if (ind_scanned == size_scanned){
-						size_scanned += 10;
-						scanned = realloc(scanned, size_scanned*sizeof(Cable*));
-					}
-					scanned[ind_scanned] = t->cables[cable_i];
-					scan_network = true;
-				}
+		for (int cable_i=0; cable_i<new_cables.len; cable_i++){
+			if (!is_cable_in_da(new_cables.arr[cable_i], &scanned) && !is_cable_in_da(new_cables.arr[cable_i], &network)){
+				DA_PUSH(&scanned, new_cables.arr[cable_i]);
+				scan_network = true;
 			}
 		}
 	}
 
-	for (int build_i=0; build_i < ind_buildings+1; build_i++){
-		if (buildings[build_i]->type == BUILDING_EMITTER){
+	for (int build_i=0; build_i < buildings.len; build_i++){
+		if (buildings.arr[build_i]->type == BUILDING_EMITTER){
 			power = true;
 		}
 	}
 
-	for (int net_i=0; net_i<ind_network+1; net_i++){
-		network[net_i]->powered = power;
+	for (int net_i=0; net_i<network.len; net_i++){
+		network.arr[net_i]->powered = power;
 	}
 
-	for (int build_i=0; build_i < ind_buildings+1; build_i++){
+	for (int build_i=0; build_i < buildings.len; build_i++){
 		// TODO implement direction of cable
 		bool build_powered = false;
-		Tile ** build_tiles = get_adjacent_tiles(buildings[build_i]->pos);
+		Tile ** build_tiles = get_adjacent_tiles(buildings.arr[build_i]->pos);
 		for (int tile_adj_i=0; tile_adj_i<4; tile_adj_i++){
 			for (int cable_adj_i=0; cable_adj_i<build_tiles[tile_adj_i]->cable_count; cable_adj_i++){
 				if (build_tiles[tile_adj_i]->cables[cable_adj_i]->powered){
@@ -201,14 +177,14 @@ void update_cable_network(TileCoords tc){
 				}
 			}
 		}
-		buildings[build_i]->powered = build_powered;
+		buildings.arr[build_i]->powered = build_powered;
 		free(build_tiles);
 	}
 
-	free(buildings);
-	free(new_tiles);
-	free(scanned);
-	free(network);	
+	free(buildings.arr);
+	free(new_cables.arr);
+	free(scanned.arr);
+	free(network.arr);	
 }
 
 void update_surroundings(TileCoords tc){
