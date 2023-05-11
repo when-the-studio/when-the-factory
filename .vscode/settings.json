@@ -18,5 +18,8 @@
 	"editor.insertSpaces": false,
 	"editor.detectIndentation": false,
 	"editor.tabSize": 3,
-	"C_Cpp.errorSquiggles": "disabled"
+	"C_Cpp.errorSquiggles": "disabled",
+	"files.trimTrailingWhitespace": true,
+	"files.insertFinalNewline": true,
+	"files.trimFinalNewlines": true
 }

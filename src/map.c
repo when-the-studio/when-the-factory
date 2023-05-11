@@ -140,7 +140,7 @@ Cable* new_cable(TileCoords pos, CardinalType entry, CardinalType exit) {
 	}
 	Tile* tile = get_tile(pos);
 	add_cable_to_tile_list(cable, tile);
-	
+
 	return cable;
 }
 

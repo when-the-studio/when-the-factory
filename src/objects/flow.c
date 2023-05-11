@@ -2,42 +2,37 @@
 #include "map.h"
 
 CardinalType get_opposed_direction(CardinalType direction){
-	/* We could also do 
+	/* We could also do
 		return (CardinalType)((direction+2)%4)
 		(performance ?)
 	 */
-	switch (direction){
+	switch (direction) {
 		case NORTH: return SOUTH;
 		case SOUTH: return NORTH;
 		case WEST:	return EAST;
 		case EAST:	return WEST;
-		default:		return NORTH;
+		default:
+			assert(false);
+			exit(EXIT_FAILURE);
 	}
 }
 
 TileCoords get_offset_from_cardinal(CardinalType direction){
-	TileCoords tc = {0,0};
-	switch (direction){
-		case NORTH:
-			tc.y = -1;
-		break;
-		case SOUTH:
-			tc.y = 1;
-		break;
-		case EAST:
-			tc.x = 1;
-		break;
-		case WEST:
-			tc.x = -1;
-		break;
+	TileCoords tc ={ 0,0 };
+	switch (direction) {
+		case NORTH: tc.y = -1; break;
+		case SOUTH: tc.y = 1;  break;
+		case EAST:  tc.x = 1;  break;
+		case WEST:  tc.x = -1; break;
 		default:
-		break;
+			assert(false);
+			exit(EXIT_FAILURE);
 	}
 	return tc;
 }
 
 
-bool is_building_in_da(Building * building, DA(Building*) * buildings){
+bool is_building_in_da(Building* building, DA(Building*)* buildings){
 	for (int i=0; i<buildings->len; i++){
 		if (building == buildings->arr[i]){
 			return true;
@@ -46,7 +41,7 @@ bool is_building_in_da(Building * building, DA(Building*) * buildings){
 	return false;
 }
 
-bool is_cable_in_da(Cable * cable, DA(Cable*) * cables){
+bool is_cable_in_da(Cable* cable, DA(Cable*)* cables){
 	for (int i=0; i<cables->len; i++){
 		if (cable == cables->arr[i]){
 			return true;
@@ -60,10 +55,11 @@ bool is_cable_in_da(Cable * cable, DA(Cable*) * cables){
  * The order of the tiles is :
  * WEST, SOUTH, EAST, NORTH
 */
-Tile ** get_adjacent_tiles(TileCoords tc){
-	Tile ** tiles = malloc(4*sizeof(*tiles));
+Tile** get_adjacent_tiles(TileCoords tc){
+	assert(tile_coords_are_valid(tc));
+	Tile** tiles = malloc(4 * sizeof *tiles);
 	TileCoords tc_neigh;
-	Tile * neigh;
+	Tile* neigh;
 	for (int i=0; i<4; i++){
 		tc_neigh = get_offset_from_cardinal(WEST+i);
 		tc_neigh.x += tc.x;
@@ -74,25 +70,27 @@ Tile ** get_adjacent_tiles(TileCoords tc){
 	return tiles;
 }
 
-bool are_cables_facing(Cable * c1, Cable * c2){
-	for (int i=0; i<2; i++){
-		for (int j=0; j<2; j++){
-			if (abs((int)c1->connections[i]-(int)c2->connections[j])==2){
-				return true;
-			}
-		}
+bool is_cable_facing_pos(Cable* c, TileCoords pos) {
+	for (int i=0; i<2; i++) {
+		TileCoords offset = get_offset_from_cardinal(c->connections[i]);
+		TileCoords c_plus_offset = {c->pos.x + offset.x, c->pos.y + offset.y};
+		if (tile_coords_eq(c_plus_offset, pos)) return true;
 	}
 	return false;
+}
+
+bool are_cables_facing(Cable* c1, Cable* c2) {
+	return is_cable_facing_pos(c1, c2->pos) && is_cable_facing_pos(c2, c1->pos);
 }
 
 /**
  * Return the tiles that are adjacent to the ends of the cable.
  * @param cable
 */
-Tile ** get_tiles_from_cable(Cable * cable){
+Tile** get_tiles_from_cable(Cable* cable){
 	TileCoords tc = cable->pos;
-	Tile * neigh;
-	Tile ** tiles = malloc(2 * sizeof(Tile));
+	Tile* neigh;
+	Tile** tiles = malloc(2 * sizeof(Tile*));
 	TileCoords tc_neigh;
 	for (int i=0; i<2; i++){
 		tc_neigh = get_offset_from_cardinal(cable->connections[i]);
@@ -108,14 +106,14 @@ Tile ** get_tiles_from_cable(Cable * cable){
  * Update the power state of a dynamic array of buildings.
  * @param buildings
 */
-void update_buildings_da(DA(Building*) * buildings){
+void update_buildings_da(DA(Building*)* buildings){
 	for (int build_i=0; build_i < buildings->len; build_i++){
 		bool build_powered = false;
-		Tile ** build_tiles = get_adjacent_tiles(buildings->arr[build_i]->pos);
+		Tile** build_tiles = get_adjacent_tiles(buildings->arr[build_i]->pos);
 		for (int tile_adj_i=0; tile_adj_i<4; tile_adj_i++){
-			Tile * build_tile = build_tiles[tile_adj_i];
+			Tile* build_tile = build_tiles[tile_adj_i];
 			for (int cable_adj_i=0; cable_adj_i<build_tile->cable_count; cable_adj_i++){
-				Cable * cable_adj = build_tile->cables[cable_adj_i];
+				Cable* cable_adj = build_tile->cables[cable_adj_i];
 				bool cable_powered = cable_adj->powered;
 				bool facing = false;
 				for (int cable_card_i=0; cable_card_i<2; cable_card_i++){
@@ -138,9 +136,9 @@ void update_buildings_da(DA(Building*) * buildings){
  * @param tc Coordinates of the tile to update
 */
 void update_cable_network(TileCoords tc){
-	Tile * tile = get_tile(tc);
-	/* 
-	Each individual cable of the root tile causes an update. 
+	Tile* tile = get_tile(tc);
+	/*
+	Each individual cable of the root tile causes an update.
 	This is mainly to allow an intersection of two networks to be updated correctly.
 	*/
 	for (int i=0; i<tile->cable_count; i++){
@@ -156,9 +154,8 @@ void update_cable_network(TileCoords tc){
 
 		/* Temporary array used during an iteration */
 		DA(Cable*) new_cables = {0};
-		
-		Tile ** tiles;
-		Tile * t;
+
+		Tile** tiles;
 		bool power = false;
 		bool scan_network = true;
 
@@ -171,12 +168,12 @@ void update_cable_network(TileCoords tc){
 			for (int scan_i=0; scan_i < scanned.len; scan_i++){
 				tiles = get_tiles_from_cable(scanned.arr[scan_i]);
 				for (int i=0; i<2; i++){
-					Tile * t = tiles[i];
+					Tile* t = tiles[i];
 					for (int j=0; j<t->cable_count; j++){
 						if (!is_cable_in_da(t->cables[j], &new_cables) && are_cables_facing(scanned.arr[scan_i], t->cables[j])){
 							DA_PUSH(&new_cables, t->cables[j]);
 						}
-					}		
+					}
 					if ((tiles)[i]->building != NULL && !is_building_in_da((tiles)[i]->building, &buildings)){
 						DA_PUSH(&buildings, (tiles)[i]->building);
 					}
@@ -215,7 +212,7 @@ void update_cable_network(TileCoords tc){
 		free(buildings.arr);
 		free(new_cables.arr);
 		free(scanned.arr);
-		free(network.arr);	
+		free(network.arr);
 	}
 }
 

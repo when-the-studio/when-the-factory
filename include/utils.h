@@ -11,19 +11,8 @@ struct TileCoords {
 };
 typedef struct TileCoords TileCoords;
 
-/*  */
-struct Array {
-	int size;
-	void * arr;
-};
-typedef struct Array Array;
-
-/* Function used by qsort */
-int cmpInt (const void * a, const void * b);
-
 /* Dynamic array of some generic type `T_`. */
 #define DA(T_) struct { T_* arr; int len, cap; }
-
 
 /* Internal stuff used by macros and functions dealing with `DA(T_)`. */
 struct DaVoid { void* arr; int len, cap; };
