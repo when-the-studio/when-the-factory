@@ -263,11 +263,12 @@ static void wg_box_delete(Wg* wg) {
 
 /* *** Sprite widget section *** */
 
-Wg* new_wg_sprite(SDL_Rect rect_in_spritesheet, int w, int h) {
+Wg* new_wg_sprite(SDL_Texture* spritesheet, SDL_Rect rect_in_spritesheet, int w, int h) {
 	Wg* wg = malloc(sizeof(Wg));
 	*wg = (Wg){
 		.type = WG_SPRITE,
 		.sprite = {
+			.spritesheet = spritesheet,
 			.rect_in_spritesheet = rect_in_spritesheet,
 			.w = w,
 			.h = h,
@@ -285,7 +286,7 @@ static void wg_sprite_render(Wg const* wg, int x, int y) {
 	assert(wg->type == WG_SPRITE);
 	Dims dims = wg_sprite_get_dims(wg);
 	SDL_Rect dst_rect = {x, y, dims.w, dims.h};
-	SDL_RenderCopy(g_renderer, g_spritesheet, &wg->sprite.rect_in_spritesheet, &dst_rect);
+	SDL_RenderCopy(g_renderer, wg->sprite.spritesheet, &wg->sprite.rect_in_spritesheet, &dst_rect);
 }
 
 static bool wg_sprite_click(Wg const* wg, int x, int y, int cx, int cy) {

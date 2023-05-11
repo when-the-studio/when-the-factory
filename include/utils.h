@@ -1,14 +1,15 @@
 #ifndef WHEN_THE_FACTORY_UTILS_
 #define WHEN_THE_FACTORY_UTILS_
 
+
+#include <stdlib.h>
+#include <assert.h>
+
 /* Coords of a tile on the map. */
 struct TileCoords {
 	int x, y;
 };
 typedef struct TileCoords TileCoords;
-
-/* Function used by qsort */
-int cmpInt (const void * a, const void * b);
 
 struct Dims {
 	int w, h;
@@ -26,12 +27,8 @@ void call_callback(CallbackWithData cb);
 
 int max(int a, int b);
 
-#include <stdlib.h>
-#include <assert.h>
-
 /* Dynamic array of some generic type `T_`. */
 #define DA(T_) struct { T_* arr; int len, cap; }
-
 
 /* Internal stuff used by macros and functions dealing with `DA(T_)`. */
 struct DaVoid { void* arr; int len, cap; };

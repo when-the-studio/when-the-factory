@@ -178,6 +178,7 @@ void ui_select_tile(TileCoords tc) {
 	int ui_terrain_sprite_side = 5 * 3 * 3;
 	wg_multopleft_add_sub(wg_terrain_info,
 		new_wg_sprite(
+			g_spritesheet,
 			g_tile_type_spec_table[tile->type].rect_in_spritesheet,
 			ui_terrain_sprite_side, ui_terrain_sprite_side
 		)
@@ -196,6 +197,7 @@ void ui_select_tile(TileCoords tc) {
 		SDL_Rect const b_rect = g_building_type_spec_table[b_type].rect_in_spritesheet;
 
 		Wg* wg_building_sprite = new_wg_sprite(
+			g_spritesheet_buildings,
 			b_rect,
 			ui_building_sprite_side, ui_building_sprite_side
 		);
@@ -429,6 +431,7 @@ void action_menu_refresh(void) {
 				wg_multopleft_add_sub(s_wg_action_menu,
 					new_wg_box(
 						new_wg_sprite(
+							g_spritesheet_buildings,
 							g_building_type_spec_table[building_texture_index].rect_in_spritesheet,
 							24, 24
 						),

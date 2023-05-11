@@ -7,13 +7,21 @@
 #include "utils.h"
 
 
-FlowTypeSpec g_flow_type_spec_table[FLOW_TX_NUM] = {
+CableTypeSpec g_cable_type_spec_table[CABLE_TX_NUM] = {
 	[ELECTRICITY_STRAIGHT] = {
-		.rect_in_spritesheet = {16, 16, 8, 8},
+		.rect_in_spritesheet = {32, 0, 8, 8},
 		.name = "Electric cable (straight)",
 	},
 	[ELECTRICITY_TURN] = {
-		.rect_in_spritesheet = {24, 16, 8, 8},
+		.rect_in_spritesheet = {40, 0, 8, 8},
+		.name = "Electric cable (turn)",
+	},
+	[ELECTRICITY_STRAIGHT_ON] = {
+		.rect_in_spritesheet = {32, 8, 8, 8},
+		.name = "Electric cable (straight)",
+	},
+	[ELECTRICITY_TURN_ON] = {
+		.rect_in_spritesheet = {40, 8, 8, 8},
 		.name = "Electric cable (turn)",
 	},
 };
@@ -43,15 +51,15 @@ TileTypeSpec g_tile_type_spec_table[TILE_TYPE_NUM] = {
 
 BuildingTypeSpec g_building_type_spec_table[BUILDING_TX_NUM] = {
 	[BUILDING_TX_EMITTER] = {
-		.rect_in_spritesheet = {0, 24, 8, 8},
+		.rect_in_spritesheet = {0, 0, 8, 8},
 		.name = "Power Plant",
 	},
 	[BUILDING_TX_RECEIVER_OFF] = {
-		.rect_in_spritesheet = {8, 24, 8, 8},
+		.rect_in_spritesheet = {8, 0, 8, 8},
 		.name = "Shield off",
 	},
 	[BUILDING_TX_RECEIVER_ON] = {
-		.rect_in_spritesheet = {16, 24, 8, 8},
+		.rect_in_spritesheet = {16, 0, 8, 8},
 		.name = "Shield on",
 	},
 };
@@ -92,44 +100,48 @@ void remove_eid_from_tile_list(EntId eid, Tile* tile) {
 }
 
 static void remove_building_from_tile(Tile* tile) {
-	// TODO: Free?
+	free(tile->building);
 	tile->building = NULL;
 }
 
-static void add_flow_to_tile_list(Flow* flow, Tile* tile) {
-	DA_PUSH(&tile->flows, flow);
+static void add_cable_to_tile_list(Cable* cable, Tile* tile) {
+	tile->cable_count++;
+	tile->cables = realloc(tile->cables, tile->cable_count * sizeof(Cable*));
+	tile->cables[tile->cable_count-1] = cable;
 }
 
-static void remove_flow_from_tile_list(Flow* flow, Tile* tile) {
-	int flow_index_in_tile = -1;
-	for (int i = 0; i < tile->flows.len; i++) {
-		if (tile->flows.arr[i] == flow) {
-			flow_index_in_tile = i;
+static void remove_cable_from_tile_list(Cable* cable, Tile* tile) {
+	int cable_index_in_tile = -1;
+	for (int i = 0; i < tile->cable_count; i++) {
+		if (tile->cables[i] == cable) {
+			cable_index_in_tile = i;
 			break;
 		}
 	}
-	assert(flow_index_in_tile != -1);
-	for (int i = flow_index_in_tile; i < tile->flows.len - 1; i++) {
-		tile->flows.arr[i] = tile->flows.arr[i+1];
+	assert(cable_index_in_tile != -1);
+	for (int i = cable_index_in_tile; i < tile->cable_count - 1; i++) {
+		tile->cables[i] = tile->cables[i+1];
 	}
-	tile->flows.len--;
-	//tile->flows.arr = realloc(tile->flows.arr, tile->flows.len * sizeof(Flow*));
+	tile->cable_count--;
+	tile->cables = realloc(tile->cables, tile->cable_count * sizeof(Cable*));
 }
 
-Flow* new_flow(FlowType type, TileCoords pos, CardinalType entry, CardinalType exit) {
-	Flow* flow = malloc(sizeof(Flow));
-	*flow = (Flow){
-		.type = type,
+Cable* new_cable(TileCoords pos, CardinalType entry, CardinalType exit) {
+	Cable* cable = malloc(sizeof(Cable));
+	*cable = (Cable){
 		.pos = pos,
 		.connections = {entry, exit},
 		.capacity = 10,
 		.powered = false,
 	};
-	qsort(flow->connections, 2, sizeof(int), cmpInt);
+	if (entry > exit){
+		cable->connections[0] = exit;
+		cable->connections[1] = entry;
+	}
 	Tile* tile = get_tile(pos);
-	add_flow_to_tile_list(flow, tile);
-	
-	return flow;
+	add_cable_to_tile_list(cable, tile);
+
+	return cable;
 }
 
 Tile* g_grid = NULL;
@@ -226,7 +238,8 @@ void init_map(void) {
 			.type = tt_grid_src[y * g_map_w + x],
 			.ents = {0},
 			.building = NULL,
-			.flows = {0},
+			.cables = NULL,
+			.cable_count = 0,
 		};
 	}
 

@@ -8,6 +8,7 @@
 SDL_Window*   g_window      = NULL;
 SDL_Renderer* g_renderer    = NULL;
 SDL_Texture*  g_spritesheet = NULL;
+SDL_Texture*  g_spritesheet_buildings = NULL;
 
 static TTF_Font* s_font = NULL;
 static SDL_Texture* s_spritesheet_font = NULL;
@@ -37,6 +38,12 @@ void renderer_init(void) {
 	g_spritesheet = SDL_CreateTextureFromSurface(g_renderer, surface);
 	SDL_FreeSurface(surface);
 	assert(g_spritesheet != NULL);
+
+	surface = IMG_Load("../assets/images/spritesheet-buildings-01.png");
+	assert(surface != NULL);
+	g_spritesheet_buildings = SDL_CreateTextureFromSurface(g_renderer, surface);
+	SDL_FreeSurface(surface);
+	assert(g_spritesheet_buildings != NULL);
 
 	/* Load the spritesheet for glyphs of the font.
 	 * The image uses opaque black on a fully transparent background

@@ -3,7 +3,8 @@
 		"*.h": "c",
 		"ctime": "c",
 		"condition_variable": "c",
-		"shared_mutex": "c"
+		"shared_mutex": "c",
+		"random": "c"
 	},
 	"files.exclude": {
 		"**/.git/objects/**": true,
@@ -17,6 +18,8 @@
 	"editor.insertSpaces": false,
 	"editor.detectIndentation": false,
 	"editor.tabSize": 3,
-	"C_Cpp.errorSquiggles": "disabled",
-	"C_Cpp.formatting": "disabled"
+	"C_Cpp.formatting": "disabled",
+	"files.trimTrailingWhitespace": true,
+	"files.insertFinalNewline": true,
+	"files.trimFinalNewlines": true
 }

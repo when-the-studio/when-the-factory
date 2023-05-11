@@ -45,7 +45,8 @@ struct Tile {
 	TileType type;
 	DA(EntId) ents;
 	Building* building;
-	DA(Flow*) flows;
+	Cable** cables;
+	int cable_count;
 };
 typedef struct Tile Tile;
 
@@ -53,7 +54,7 @@ typedef struct Tile Tile;
 extern Tile* g_grid;
 
 
-Flow* new_flow(FlowType type, TileCoords pos, CardinalType entry, CardinalType exit);
+Cable* new_cable(TileCoords pos, CardinalType entry, CardinalType exit);
 
 /* Initilises the grid with random tiles. */
 void init_map(void);
