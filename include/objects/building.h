@@ -1,6 +1,7 @@
 #ifndef WHEN_THE_FACTORY_BLUIDING_
 #define WHEN_THE_FACTORY_BLUIDING_
-#include <stdbool.h> 
+
+#include <stdbool.h>
 #include <SDL2/SDL.h>
 #include "utils.h"
 
@@ -16,8 +17,8 @@ typedef enum BuildingType BuildingType;
 /* Building textures types. */
 enum BuildingTextureType {
 	BUILDING_TX_EMITTER,
-	BUILDING_TX_RECEIVER_ON,
 	BUILDING_TX_RECEIVER_OFF,
+	BUILDING_TX_RECEIVER_ON,
 
 	BUILDING_TX_NUM
 };
@@ -41,6 +42,5 @@ typedef struct BuildingTypeSpec BuildingTypeSpec;
 extern BuildingTypeSpec g_building_type_spec_table[BUILDING_TX_NUM];
 
 Building* new_building(BuildingType type, TileCoords pos);
-
 
 #endif

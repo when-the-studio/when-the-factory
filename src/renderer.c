@@ -26,6 +26,7 @@ void renderer_init(void) {
 	g_renderer = SDL_CreateRenderer(g_window, -1,
 		SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_TARGETTEXTURE);
 	assert(g_renderer != NULL);
+	SDL_SetRenderDrawBlendMode(g_renderer, SDL_BLENDMODE_BLEND);
 
 	if (IMG_Init(IMG_INIT_PNG) == 0) {
 		assert(false);

@@ -11,6 +11,22 @@ struct TileCoords {
 };
 typedef struct TileCoords TileCoords;
 
+struct Dims {
+	int w, h;
+};
+typedef struct Dims Dims;
+
+/* Just a callback function returning `void` bundled with optional generic data. */
+struct CallbackWithData {
+	void (*func)(void* whatever);
+	void* whatever;
+};
+typedef struct CallbackWithData CallbackWithData;
+
+void call_callback(CallbackWithData cb);
+
+int max(int a, int b);
+
 /* Dynamic array of some generic type `T_`. */
 #define DA(T_) struct { T_* arr; int len, cap; }
 
@@ -31,6 +47,5 @@ void da_void_empty_leak(struct DaVoid* da);
  * If it conrtained resources that should be freed, then
  * this should be done manually just before emptying the dynamic array. */
 #define DA_EMPTY_LEAK(da_ptr_) da_void_empty_leak((struct DaVoid*)(da_ptr_))
-
 
 #endif

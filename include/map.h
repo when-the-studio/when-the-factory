@@ -4,6 +4,8 @@
 #include <stdbool.h>
 
 #include <SDL2/SDL.h>
+
+#include "utils.h"
 #include "flow.h"
 #include "building.h"
 
@@ -41,8 +43,7 @@ typedef struct EntId EntId;
 /* The representation of a map tile. */
 struct Tile {
 	TileType type;
-	EntId* ents;
-	int ent_count;
+	DA(EntId) ents;
 	Building* building;
 	Cable** cables;
 	int cable_count;

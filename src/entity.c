@@ -82,6 +82,7 @@ EntId ent_new(TileCoords pos) {
 	*entry->ent = (Ent){
 		.type = ENT_UNTYPED,
 		.pos = pos,
+		.anim = NULL,
 	};
 	EntId eid = {.index = index, .gen = entry->gen};
 	Tile* tile = get_tile(pos);
@@ -127,10 +128,9 @@ EntId ent_new_human(TileCoords pos, FactionIdent faction) {
 	EntId eid = ent_new(pos);
 	Ent* ent = get_ent(eid);
 	ent->type = ENT_HUMAIN;
-	ent->data = malloc(sizeof(EntDataHuman));
-	EntDataHuman* data_human = ent->data;
-	*data_human = (EntDataHuman){
+	ent->human = (struct EntDataHuman){
 		.faction = faction,
+		.already_moved_this_turn = false,
 	};
 	return eid;
 }
@@ -139,9 +139,7 @@ EntId ent_new_test_block(TileCoords pos, SDL_Color color) {
 	EntId eid = ent_new(pos);
 	Ent* ent = get_ent(eid);
 	ent->type = ENT_TEST_BLOCK;
-	ent->data = malloc(sizeof(EntDataTestBlock));
-	EntDataTestBlock* data_test_block = ent->data;
-	*data_test_block = (EntDataTestBlock){
+	ent->test_block = (struct EntDataTestBlock){
 		.color = color,
 	};
 	return eid;

@@ -35,13 +35,30 @@ typedef struct FactionSpec FactionSpec;
 extern FactionSpec g_faction_spec_table[FACTION_IDENT_NUM];
 extern FactionIdent g_faction_currently_playing;
 
+/* Animation for an entity. */
+struct Anim {
+	int time_beginning; // ms
+	int time_end; // ms
+	float offset_beginning_x, offset_beginning_y;
+};
+typedef struct Anim Anim;
+
 /* Entity, something that is not a tile terrain but rather ON a tile. */
 struct Ent {
 	EntType type;
 	/* TODO: Add support for an entity being "inside" an other entity
 	 * instead of directly on a tile. */
 	TileCoords pos;
-	void* data;
+	Anim* anim;
+	union {
+		struct EntDataHuman {
+			FactionIdent faction;
+			bool already_moved_this_turn;
+		} human;
+		struct EntDataTestBlock {
+			SDL_Color color;
+		} test_block;
+	};
 };
 typedef struct Ent Ent;
 
@@ -67,17 +84,8 @@ EntId ent_new(TileCoords pos);
 void ent_delete(EntId eid);
 void ent_move(EntId eid, TileCoords new_pos);
 
-struct EntDataHuman {
-	FactionIdent faction;
-	bool already_moved_this_turn;
-};
-typedef struct EntDataHuman EntDataHuman;
 EntId ent_new_human(TileCoords pos, FactionIdent faction);
 
-struct EntDataTestBlock {
-	SDL_Color color;
-};
-typedef struct EntDataTestBlock EntDataTestBlock;
 EntId ent_new_test_block(TileCoords pos, SDL_Color color);
 
 #endif // WHEN_THE_FACTORY_ENTITY_

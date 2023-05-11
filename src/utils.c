@@ -1,5 +1,13 @@
 #include "utils.h"
 
+void call_callback(CallbackWithData cb) {
+	cb.func(cb.whatever);
+}
+
+int max(int a, int b) {
+	return a < b ? b : a;
+}
+
 void da_void_reserve_at_least_one(struct DaVoid* da, int elem_size) {
 	assert(da != NULL);
 	assert(elem_size >= 1);
