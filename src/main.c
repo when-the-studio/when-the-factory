@@ -99,7 +99,7 @@ void cycle_ent_sel_through_ents_in_tile(void);
 void have_human_to_build(EntId eid, BuildingType building_type, TileCoords tc) {
 	new_building(building_type, tc);
 	Ent* ent = get_ent(eid);
-	assert(ent != NULL && ent->type == ENT_HUMAIN);
+	assert(ent != NULL && ent->type == ENT_HUMAN);
 	ent->human.already_moved_this_turn = true;
 	refresh_selected_tile_ui();
 	DA_EMPTY_LEAK(&g_action_da_on_tcs);
@@ -110,7 +110,7 @@ void have_human_to_build(EntId eid, BuildingType building_type, TileCoords tc) {
  * on the tile at the given coords. */
 void have_human_to_act(EntId eid, Action const* action, TileCoords tc) {
 	Ent* ent = get_ent(eid);
-	assert(ent != NULL && ent->type == ENT_HUMAIN);
+	assert(ent != NULL && ent->type == ENT_HUMAN);
 	assert(action != NULL);
 	switch (action->type) {
 		case ACTION_MOVE:
@@ -159,7 +159,7 @@ bool ent_is_playing(EntId eid) {
 	Ent* ent = get_ent(eid);
 	return
 		ent != NULL &&
-		ent->type == ENT_HUMAIN &&
+		ent->type == ENT_HUMAN &&
 		ent->human.faction == g_faction_currently_playing;
 }
 
@@ -375,7 +375,7 @@ void render_map(void) {
 			}
 
 			switch (ent->type) {
-				case ENT_HUMAIN: {
+				case ENT_HUMAN: {
 					int ew = 0.3f * tile_render_size;
 					int eh = 0.4f * tile_render_size;
 
@@ -494,7 +494,7 @@ int main(int argc, char const** argv) {
 							EntId eid = g_sel_ent_id;
 							Ent* ent = get_ent(eid);
 							if (ent != NULL &&
-								ent->type == ENT_HUMAIN &&
+								ent->type == ENT_HUMAN &&
 								ent_can_move(eid)
 							) {
 								DxDy dxdy = arrow_keycode_to_dxdy(event.key.keysym.sym);

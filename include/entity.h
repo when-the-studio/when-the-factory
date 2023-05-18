@@ -9,7 +9,7 @@
 /* Entity types. */
 enum EntType {
 	ENT_UNTYPED = 0,
-	ENT_HUMAIN,
+	ENT_HUMAN,
 	ENT_TEST_BLOCK,
 	ENT_BUILDING,
 
