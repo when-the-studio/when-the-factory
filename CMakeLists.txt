@@ -12,7 +12,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
 	"${CMAKE_SOURCE_DIR}/cmake/"
 )
 
-file(GLOB_RECURSE SRC_FILES src/*.c)
+file(GLOB_RECURSE SRC_FILES "src/*.c" "src/objects/*.c")
 add_compile_options(
 	-Wall
 	-Wextra
@@ -26,7 +26,8 @@ add_executable(wtf
 
 target_include_directories(wtf
 	PRIVATE
-	${PROJECT_SOURCE_DIR}/include
+	"${PROJECT_SOURCE_DIR}/include"
+	"${PROJECT_SOURCE_DIR}/include/objects"
 )
 
 find_package(SDL2 REQUIRED)
@@ -41,6 +42,7 @@ target_link_libraries(wtf
 	${SDL2_LIBRARIES}
 	${SDL2_IMAGE_LIBRARIES}
 	${SDL2_TTF_LIBRARIES}
+	m
 )
 
 set_target_properties(wtf

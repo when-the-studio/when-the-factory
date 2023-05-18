@@ -5,11 +5,15 @@
 
 #include <SDL2/SDL.h>
 
+#include "utils.h"
+#include "flow.h"
+#include "building.h"
+
 #define TILE_SIZE 100
 
-#define N_TILES_H 50
-#define N_TILES_W 50
-#define N_TILES (N_TILES_H * N_TILES_W)
+extern int g_map_w;
+extern int g_map_h;
+#define N_TILES (g_map_w * g_map_h)
 
 /* Type of terrain for each tile of the map. */
 enum TileType {
@@ -31,59 +35,31 @@ typedef struct TileTypeSpec TileTypeSpec;
 
 extern TileTypeSpec g_tile_type_spec_table[TILE_TYPE_NUM];
 
-/* Coords of a tile on the map. */
-struct TileCoords {
-	int x, y;
-};
-typedef struct TileCoords TileCoords;
-
 bool tile_coords_are_valid(TileCoords coords);
 bool tile_coords_eq(TileCoords a, TileCoords b);
 
-/* Entity types. */
-enum EntityType {
-	ENTITY_HUMAIN,
-	ENTITY_BUILDING,
-
-	ENTITY_TYPE_NUM,
-};
-typedef enum EntityType EntityType;
-
-/* Entity, something that is not a tile terrain but rather ON a tile. */
-enum FactionIdent {
-	FACTION_YELLOW,
-	FACTION_RED,
-
-	FACTION_IDENT_NUM
-};
-typedef enum FactionIdent FactionIdent;
-
-/* An actual entity on the grid */
-struct Entity {
-	EntityType type;
-	TileCoords pos;
-	FactionIdent faction;
-};
-typedef struct Entity Entity;
-
-Entity* new_entity(EntityType type, TileCoords pos);
-void entity_delete(Entity* entity);
-void entity_move(Entity* entity, TileCoords new_pos);
+typedef struct EntId EntId;
 
 /* The representation of a map tile. */
 struct Tile {
 	TileType type;
-	Entity** entities;
-	int entity_count;
+	DA(EntId) ents;
+	Building* building;
+	Cable** cables;
+	int cable_count;
 };
 typedef struct Tile Tile;
 
 /* This is the map, which is a grid of tiles. */
 extern Tile* g_grid;
 
+
+Cable* new_cable(TileCoords pos, CardinalType entry, CardinalType exit);
+
 /* Initilises the grid with random tiles. */
 void init_map(void);
 
 Tile* get_tile(TileCoords coords);
+bool tile_is_walkable(Tile const* tile);
 
 #endif // WHEN_THE_FACTORY_MAP_
