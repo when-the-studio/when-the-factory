@@ -127,7 +127,7 @@ void ent_move(EntId eid, TileCoords new_pos) {
 EntId ent_new_human(TileCoords pos, FactionIdent faction) {
 	EntId eid = ent_new(pos);
 	Ent* ent = get_ent(eid);
-	ent->type = ENT_HUMAIN;
+	ent->type = ENT_HUMAN;
 	ent->human = (struct EntDataHuman){
 		.faction = faction,
 		.already_moved_this_turn = false,

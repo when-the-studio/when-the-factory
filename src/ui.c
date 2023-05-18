@@ -16,7 +16,7 @@ static void next_faction_to_play(void) {
 		for (int i = 0; i < tile->ents.len; i++) {
 			Ent* ent = get_ent(tile->ents.arr[i]);
 			if (ent == NULL) continue;
-			if (ent->type == ENT_HUMAIN) {
+			if (ent->type == ENT_HUMAN) {
 				ent->human.already_moved_this_turn = false;
 			}
 		}
@@ -28,7 +28,7 @@ extern Uint64 g_time_ms;
 void move_human(EntId eid, TileCoords dst_pos) {
 	Ent* ent = get_ent(eid);
 	assert(ent != NULL);
-	assert(ent->type == ENT_HUMAIN);
+	assert(ent->type == ENT_HUMAN);
 
 	TileCoords src_pos = ent->pos;
 	ent_move(eid, dst_pos);
@@ -62,7 +62,7 @@ static void random_ai_play(void) {
 			EntId eid = tile->ents.arr[i];
 			Ent* ent = get_ent(eid);
 			if (ent == NULL) continue;
-			if (ent->type == ENT_HUMAIN) {
+			if (ent->type == ENT_HUMAN) {
 				if (ent->human.faction == g_faction_currently_playing
 					&& !ent->human.already_moved_this_turn
 				) {
@@ -224,7 +224,7 @@ void ui_select_tile(TileCoords tc) {
 		if (ent == NULL) continue;
 		Wg* wg_ent = NULL;
 		switch (ent->type) {
-			case ENT_HUMAIN:;
+			case ENT_HUMAN:;
 				wg_ent = new_wg_multopleft(6, 0, 0, ORIENTATION_TOP_TO_BOTTOM);
 				Wg* wg_ent_info = new_wg_multopleft(6, 0, 0, ORIENTATION_LEFT_TO_RIGHT);
 				wg_multopleft_add_sub(wg_ent, wg_ent_info);
@@ -326,7 +326,7 @@ void ui_select_ent(EntId eid) {
 		EntId eid = g_sel_ent_id;
 		Ent* ent = get_ent(eid);
 		if (ent != NULL &&
-			ent->type == ENT_HUMAIN &&
+			ent->type == ENT_HUMAN &&
 			ent->human.faction == g_faction_currently_playing &&
 			(!ent->human.already_moved_this_turn)
 		) {
