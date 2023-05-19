@@ -19,7 +19,7 @@ extern int g_map_h;
 enum TileType {
 	TILE_PLAIN,
 	TILE_MOUTAIN,
-	TILE_RIVER,
+	TILE_WATER,
 	TILE_FOREST,
 
 	TILE_TYPE_NUM,
