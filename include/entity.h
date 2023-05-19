@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 #include "map.h"
+#include "items.h"
 
 /* Entity types. */
 enum EntType {
@@ -54,6 +55,7 @@ struct Ent {
 		struct EntDataHuman {
 			FactionIdent faction;
 			bool already_moved_this_turn;
+			Inventory inventory;
 		} human;
 		struct EntDataTestBlock {
 			SDL_Color color;

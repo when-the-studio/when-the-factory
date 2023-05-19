@@ -237,6 +237,22 @@ void ui_select_tile(TileCoords tc) {
 					new_wg_text_line(faction_name, faction_color)
 				);
 				if (ent->human.faction == g_faction_currently_playing) {
+					Wg* wg_ent_inventory = new_wg_multopleft(4, 0, 0, ORIENTATION_LEFT_TO_RIGHT);
+					wg_multopleft_add_sub(wg_ent, wg_ent_inventory);
+					for (int i_stack = 0; i_stack < ent->human.inventory.stacks.len; i_stack++) {
+						ItemStack const* stack = &ent->human.inventory.stacks.arr[i_stack];
+						wg_multopleft_add_sub(wg_ent_inventory,
+							new_wg_box(
+								new_wg_sprite(
+									g_spritesheet,
+									g_item_spec_table[stack->item.type].rect_in_spritesheet,
+									24, 24
+								),
+								6, 6, 3,
+								RGB(0, 0, 0), RGB(255, 255, 255)
+							)
+						);
+					}
 					Wg* wg_ent_buttons = new_wg_multopleft(4, 0, 0, ORIENTATION_LEFT_TO_RIGHT);
 					wg_multopleft_add_sub(wg_ent, wg_ent_buttons);
 					if (ent->human.already_moved_this_turn) {

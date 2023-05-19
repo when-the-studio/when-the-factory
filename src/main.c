@@ -595,7 +595,12 @@ int main(int argc, char const** argv) {
 						break;
 						case SDLK_i:
 							if (g_sel_tile_exists) {
-								ent_new_human(g_sel_tile_coords, FACTION_YELLOW);
+								EntId eid = ent_new_human(g_sel_tile_coords, FACTION_YELLOW);
+								/* TEST: For now, humans spawn with wood in their inventory
+								 * so that we can see that the inventory works. */
+								ItemStack test_wood_stack =
+									(ItemStack){.item = {.type = ITEM_WOOD_LOG}, .count = 1};
+								DA_PUSH(&get_ent(eid)->human.inventory.stacks, test_wood_stack);
 								refresh_selected_tile_ui();
 							}
 						break;
