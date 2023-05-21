@@ -9,7 +9,7 @@
 #include "flow.h"
 #include "building.h"
 
-#define TILE_SIZE 100
+
 
 extern int g_map_w;
 extern int g_map_h;

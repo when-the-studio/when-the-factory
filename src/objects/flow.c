@@ -1,6 +1,16 @@
 #include "flow.h"
 #include "map.h"
 
+DxDy cardinal_to_dxdy(CardinalType card) {
+	switch (card) {
+		case SOUTH: return (DxDy){0, +1};
+		case NORTH: return (DxDy){0, -1};
+		case WEST:  return (DxDy){+1, 0};
+		case EAST:  return (DxDy){-1, 0};
+		default: assert(false); exit(EXIT_FAILURE);
+	}
+}
+
 CardinalType get_opposed_direction(CardinalType direction){
 	/* We could also do
 		return (CardinalType)((direction+2)%4)

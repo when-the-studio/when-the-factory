@@ -12,7 +12,7 @@ extern SDL_Renderer* g_renderer;
 extern SDL_Texture* g_spritesheet;
 extern SDL_Texture* g_spritesheet_buildings;
 
-
+extern bool g_render_lines;
 /* Initialises the rendering.
  * TODO: Discuss ?*/
 void renderer_init(void);

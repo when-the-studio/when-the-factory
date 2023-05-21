@@ -2,6 +2,7 @@
 	"files.associations": {
 		"*.h": "c",
 	},
+	/* Files to be excluded in the explorer on the left */
 	"files.exclude": {
 		"**/.git/objects/**": true,
 		"**/.git/subtree-cache/**": true,
@@ -13,9 +14,15 @@
 	},
 	"editor.insertSpaces": false,
 	"editor.detectIndentation": false,
+	/* Tab size that is set to 3 for the project */
 	"editor.tabSize": 3,
+	/* Change? */
 	"C_Cpp.formatting": "disabled",
+	////
+	/* Removes whitespaces at the end of some lines */
 	"files.trimTrailingWhitespace": true,
+	/* If no newline at the end of a file, adds one */
 	"files.insertFinalNewline": true,
+	/* If more than one newline, removes the extra ones */
 	"files.trimFinalNewlines": true
 }

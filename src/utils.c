@@ -1,3 +1,6 @@
+#include <assert.h>
+#include <stdlib.h>
+#include <stdbool.h>
 #include "utils.h"
 
 void call_callback(CallbackWithData cb) {
@@ -31,4 +34,26 @@ void da_void_empty_leak(struct DaVoid* da) {
 	assert((da->cap == 0 && da->arr == NULL) || (da->cap > 0 && da->arr != NULL));
 	free(da->arr);
 	*da = (struct DaVoid){0};
+}
+
+TileCoords tc_add_dxdy(TileCoords tc, DxDy dxdy) {
+	return (TileCoords){tc.x + dxdy.dx, tc.y + dxdy.dy};
+}
+
+DxDy arrow_keycode_to_dxdy(SDL_Keycode keycode) {
+	switch (keycode) {
+		case SDLK_DOWN:  return (DxDy){0, +1};
+		case SDLK_UP:    return (DxDy){0, -1};
+		case SDLK_RIGHT: return (DxDy){+1, 0};
+		case SDLK_LEFT:  return (DxDy){-1, 0};
+		default: assert(false); exit(EXIT_FAILURE);
+	}
+}
+
+bool keycode_is_arrow(SDL_Keycode keycode) {
+	return
+		keycode == SDLK_DOWN ||
+		keycode == SDLK_UP ||
+		keycode == SDLK_RIGHT ||
+		keycode == SDLK_LEFT;
 }

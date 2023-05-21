@@ -1,9 +1,11 @@
 #ifndef WHEN_THE_FACTORY_UTILS_
 #define WHEN_THE_FACTORY_UTILS_
 
-
-#include <stdlib.h>
 #include <assert.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <SDL2/SDL.h>
+#include "utils.h"
 
 /* Coords of a tile on the map. */
 struct TileCoords {
@@ -48,4 +50,11 @@ void da_void_empty_leak(struct DaVoid* da);
  * this should be done manually just before emptying the dynamic array. */
 #define DA_EMPTY_LEAK(da_ptr_) da_void_empty_leak((struct DaVoid*)(da_ptr_))
 
+typedef struct DxDy {int dx, dy;} DxDy;
+
+TileCoords tc_add_dxdy(TileCoords tc, DxDy dxdy);
+
+DxDy arrow_keycode_to_dxdy(SDL_Keycode keycode);
+
+bool keycode_is_arrow(SDL_Keycode keycode);
 #endif
