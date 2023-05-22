@@ -16,26 +16,6 @@
 #include "ui.h"
 #include "gameplay.h"
 
-void end_turn(void);
-void move_human(EntId eid, TileCoords dst_pos);
-
-void cycle_ent_sel_through_ents_in_tile(void);
-
-
-
-
-
-
-int get_tile_real_ent_count(Tile const* tile) {
-	int true_ent_count = 0;
-	for (int ent_i = 0; ent_i < tile->ents.len; ent_i++) {
-		if (get_ent(tile->ents.arr[ent_i]) != NULL) {
-			true_ent_count++;
-		}
-	}
-	return true_ent_count;
-}
-
 
 int main(int argc, char const** argv) {
 	/* Parse command line arguments. */

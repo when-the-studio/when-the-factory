@@ -10,6 +10,8 @@ bool ent_is_playing(EntId eid);
 
 bool ent_can_move(EntId eid);
 
+void move_human(EntId eid, TileCoords dst_pos);
+
 /* The human (given by its entity ID `eid`) will build a building (of the given type)
  * on the tile at the given coords. */
 void have_human_to_build(EntId eid, BuildingType building_type, TileCoords tc);

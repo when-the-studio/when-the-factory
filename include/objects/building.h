@@ -32,6 +32,8 @@ struct Building {
 };
 typedef struct Building Building;
 
+typedef DA(Building*) DA_Building_ptr;
+
 /* Describes a type of tile. */
 struct BuildingTypeSpec {
 	SDL_Rect rect_in_spritesheet;

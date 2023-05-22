@@ -38,8 +38,8 @@ extern FactionIdent g_faction_currently_playing;
 
 /* Animation for an entity. */
 struct Anim {
-	int time_beginning; // ms
-	int time_end; // ms
+	Uint64 time_beginning; // ms
+	Uint64 time_end; // ms
 	float offset_beginning_x, offset_beginning_y;
 };
 typedef struct Anim Anim;
@@ -74,6 +74,7 @@ typedef struct EntId EntId;
 
 /* Magic `EntId` value that references no entity. */
 #define EID_NULL ((EntId){.index = UINT32_MAX, .gen = UINT32_MAX})
+#define EID_NULL_INIT {.index = UINT32_MAX, .gen = UINT32_MAX}
 
 bool eid_null(EntId eid);
 bool eid_eq(EntId a, EntId b);

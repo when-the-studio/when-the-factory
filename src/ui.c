@@ -143,33 +143,6 @@ void end_turn(void) {
 
 Uint64 g_time_ms;
 
-void move_human(EntId eid, TileCoords dst_pos) {
-	Ent* ent = get_ent(eid);
-	assert(ent != NULL);
-	assert(ent->type == ENT_HUMAN);
-
-	TileCoords src_pos = ent->pos;
-	ent_move(eid, dst_pos);
-
-	if (ent->anim != NULL) {
-		free(ent->anim);
-	}
-	ent->anim = malloc(sizeof(Anim));
-	*ent->anim = (Anim){
-		.time_beginning = g_time_ms,
-		.time_end = g_time_ms + 80,
-		.offset_beginning_x = dst_pos.x - src_pos.x,
-		.offset_beginning_y = dst_pos.y - src_pos.y,
-	};
-
-	/* Mark it as having already moved. */
-	ent->human.already_moved_this_turn = true;
-
-	refresh_selected_tile_ui();
-	DA_EMPTY_LEAK(&g_action_da_on_tcs);
-	action_menu_refresh();
-}
-
 void test_callback_move_entity(void* whatever) {
 	/* Move the entity. */
 	CallbackMoveEntityData* data = whatever;
@@ -345,7 +318,7 @@ void refresh_selected_tile_ui(void) {
 }
 
 bool g_sel_ent_exists = false;
-EntId g_sel_ent_id = EID_NULL;
+EntId g_sel_ent_id = EID_NULL_INIT;
 
 void ui_select_ent(EntId eid) {
 	g_sel_ent_exists = !eid_null(eid);

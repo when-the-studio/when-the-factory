@@ -218,17 +218,17 @@ SDL_Rect tile_rect(TileCoords tc) {
 		.h = ceilf(tile_render_size)};
 }
 
-void render_tile_ground(TileType tile_type, SDL_Rect dst_rect) {
+static void render_tile_ground(TileType tile_type, SDL_Rect dst_rect) {
 	SDL_Rect rect_in_spritesheet = g_tile_type_spec_table[tile_type].rect_in_spritesheet;
 	SDL_RenderCopy(g_renderer, g_spritesheet, &rect_in_spritesheet, &dst_rect);
 }
 
-void render_human(SDL_Rect dst_rect) {
+static void render_human(SDL_Rect dst_rect) {
 	SDL_Rect rect_in_spritesheet = {0, 16, 3, 4};
 	SDL_RenderCopy(g_renderer, g_spritesheet, &rect_in_spritesheet, &dst_rect);
 }
 
-void render_tile_building(Building* building, SDL_Rect dst_rect) {
+static void render_tile_building(Building* building, SDL_Rect dst_rect) {
 	if (building != NULL){
 		SDL_Rect rect_in_spritesheet;
 		switch (building->type)
@@ -252,7 +252,7 @@ void render_tile_building(Building* building, SDL_Rect dst_rect) {
 	}
 }
 
-void render_tile_cable(Cable* cable, SDL_Rect dst_rect) {
+static void render_tile_cable(Cable* cable, SDL_Rect dst_rect) {
 	if (cable != NULL){
 		SDL_Rect rect_in_spritesheet;
 		int angle = 0;
@@ -276,7 +276,7 @@ void render_tile_cable(Cable* cable, SDL_Rect dst_rect) {
 	}
 }
 
-/* Is grid line display enabled? */
+
 bool g_render_lines = false;
 
 void render_map(void) {

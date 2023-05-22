@@ -3,16 +3,16 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
+#include "utils.h"
 
 #define WINDOW_W 1400
 #define WINDOW_H 800
 
 extern SDL_Window*   g_window;
 extern SDL_Renderer* g_renderer;
-extern SDL_Texture* g_spritesheet;
-extern SDL_Texture* g_spritesheet_buildings;
+extern SDL_Texture*  g_spritesheet;
+extern SDL_Texture*  g_spritesheet_buildings;
 
-extern bool g_render_lines;
 /* Initialises the rendering.
  * TODO: Discuss ?*/
 void renderer_init(void);
@@ -49,5 +49,12 @@ void render_string_pixel(char const* string, WinCoords wc, PinPoint pp, SDL_Colo
 
 /* Same as `render_string` but using a non-pixel font. */
 void render_string_ttf(char const* string, WinCoords wc, PinPoint pp, SDL_Color color);
+
+/* Is grid line display enabled? */
+extern bool g_render_lines;
+
+SDL_Rect tile_rect(TileCoords tc);
+
+void render_map(void);
 
 #endif /* WHEN_THE_FACTORY_RENDERER_ */

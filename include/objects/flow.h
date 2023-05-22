@@ -55,6 +55,8 @@ struct Cable {
 };
 typedef struct Cable Cable;
 
+typedef DA(Cable*) DA_Cable_ptr;
+
 struct Fluid {
 	TileCoords pos;
 	CardinalType connections[2];

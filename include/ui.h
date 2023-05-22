@@ -17,9 +17,6 @@ void init_wg_tree(void);
 /* Renders the UI widget tree. */
 void render_wg_tree(void);
 
-SDL_Rect tile_rect(TileCoords tc);
-
-
 TileCoords window_pixel_to_tile_coords(WinCoords wc);
 WinCoords tile_coords_to_window_pixel(TileCoords tc);
 
@@ -56,7 +53,7 @@ struct Action {
 	ActionType type;
 	union {
 		struct ActionMove {
-			;
+			char _;
 		} move;
 		struct ActionBuild {
 			BuildingType building_type;

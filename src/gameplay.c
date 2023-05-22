@@ -1,5 +1,5 @@
 #include "gameplay.h"
-
+#include "map.h"
 
 
 bool ent_is_playing(EntId eid) {
@@ -15,6 +15,33 @@ bool ent_can_move(EntId eid) {
 	return
 		ent_is_playing(eid) &&
 		(!ent->human.already_moved_this_turn);
+}
+
+void move_human(EntId eid, TileCoords dst_pos) {
+	Ent* ent = get_ent(eid);
+	assert(ent != NULL);
+	assert(ent->type == ENT_HUMAN);
+
+	TileCoords src_pos = ent->pos;
+	ent_move(eid, dst_pos);
+
+	if (ent->anim != NULL) {
+		free(ent->anim);
+	}
+	ent->anim = malloc(sizeof(Anim));
+	*ent->anim = (Anim){
+		.time_beginning = g_time_ms,
+		.time_end = g_time_ms + 80,
+		.offset_beginning_x = dst_pos.x - src_pos.x,
+		.offset_beginning_y = dst_pos.y - src_pos.y,
+	};
+
+	/* Mark it as having already moved. */
+	ent->human.already_moved_this_turn = true;
+
+	refresh_selected_tile_ui();
+	DA_EMPTY_LEAK(&g_action_da_on_tcs);
+	action_menu_refresh();
 }
 
 /* The human (given by its entity ID `eid`) will build a building (of the given type)
