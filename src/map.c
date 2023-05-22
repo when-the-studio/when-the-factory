@@ -39,9 +39,9 @@ TileTypeSpec g_tile_type_spec_table[TILE_TYPE_NUM] = {
 		.rect_in_spritesheet = {16, 0, 8, 8},
 		.name = "Mountain",
 	},
-	[TILE_RIVER] = {
+	[TILE_WATER] = {
 		.rect_in_spritesheet = {8, 0, 8, 8},
-		.name = "River",
+		.name = "Water",
 	},
 	[TILE_FOREST] = {
 		.rect_in_spritesheet = {24, 0, 8, 8},
@@ -160,7 +160,7 @@ void init_map(void) {
 		/* Put some water at the edges. */
 		#define MARGIN 2
 		if (x < MARGIN || x >= g_map_w-MARGIN || y < MARGIN || y >= g_map_h-MARGIN) {
-			*tt = TILE_RIVER;
+			*tt = TILE_WATER;
 		}
 	}
 
@@ -192,10 +192,10 @@ void init_map(void) {
 			/* Modify the terrain. */
 			switch (tt_src) {
 				case TILE_FOREST:
-					if (neighbors_8[TILE_FOREST] <= 1 || neighbors_8[TILE_RIVER] <= 1) {
+					if (neighbors_8[TILE_FOREST] <= 1 || neighbors_8[TILE_WATER] <= 1) {
 						*tt_dst = TILE_PLAIN;
 					}
-					if (neighbors_8[TILE_FOREST] >= 4 && neighbors_8[TILE_RIVER] <= 3) {
+					if (neighbors_8[TILE_FOREST] >= 4 && neighbors_8[TILE_WATER] <= 3) {
 						*tt_dst = TILE_PLAIN;
 					}
 				break;
@@ -204,20 +204,20 @@ void init_map(void) {
 						*tt_dst = TILE_PLAIN;
 					}
 				break;
-				case TILE_RIVER:
-					if (neighbors_8[TILE_RIVER] <= 1 || neighbors_8[TILE_RIVER] >= 6) {
+				case TILE_WATER:
+					if (neighbors_8[TILE_WATER] <= 1 || neighbors_8[TILE_WATER] >= 6) {
 						*tt_dst = TILE_PLAIN;
 					}
 				break;
 				case TILE_PLAIN:
-					if (neighbors_8[TILE_RIVER] >= 2) {
+					if (neighbors_8[TILE_WATER] >= 2) {
 						*tt_dst = TILE_FOREST;
 					}
 					if (neighbors_8[TILE_MOUTAIN] >= 7) {
 						*tt_dst = TILE_MOUTAIN;
 					}
 					if (neighbors_8[TILE_PLAIN] >= 8) {
-						*tt_dst = (rand() % 4) ? TILE_FOREST : TILE_RIVER;
+						*tt_dst = (rand() % 4) ? TILE_FOREST : TILE_WATER;
 					}
 				break;
 				default: break;
@@ -253,7 +253,7 @@ Tile* get_tile(TileCoords coords) {
 }
 
 bool tile_is_walkable(Tile const* tile) {
-	if (tile->type == TILE_MOUTAIN || tile->type == TILE_RIVER) {
+	if (tile->type == TILE_MOUTAIN || tile->type == TILE_WATER) {
 		return false;
 	}
 	if (tile->building != NULL) {
