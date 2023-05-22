@@ -247,7 +247,8 @@ static bool wg_box_click(Wg const* wg, int x, int y, int cx, int cy) {
 	Dims dims = wg_box_get_dims(wg);
 	SDL_Rect r = {x, y, dims.w, dims.h};
 	if (sr.x <= cx && cx < sr.x + sr.w && sr.y <= cy && cy < sr.y + sr.h) {
-		return wg_click(wg->box.sub_wg, x + wg->box.margin_x, y + wg->box.margin_y, cx, cy);
+		wg_click(wg->box.sub_wg, x + wg->box.margin_x, y + wg->box.margin_y, cx, cy);
+		return true;
 	} else if (r.x <= cx && cx < r.x + r.w && r.y <= cy && cy < r.y + r.h) {
 		return true;
 	} else {

@@ -1,6 +1,16 @@
 #include "flow.h"
 #include "map.h"
 
+DxDy cardinal_to_dxdy(CardinalType card) {
+	switch (card) {
+		case SOUTH: return (DxDy){0, +1};
+		case NORTH: return (DxDy){0, -1};
+		case WEST:  return (DxDy){+1, 0};
+		case EAST:  return (DxDy){-1, 0};
+		default: assert(false); exit(EXIT_FAILURE);
+	}
+}
+
 CardinalType get_opposed_direction(CardinalType direction){
 	/* We could also do
 		return (CardinalType)((direction+2)%4)
@@ -31,8 +41,7 @@ TileCoords get_offset_from_cardinal(CardinalType direction){
 	return tc;
 }
 
-
-bool is_building_in_da(Building* building, DA(Building*)* buildings){
+bool is_building_in_da(Building* building, DA_Building_ptr* buildings){
 	for (int i=0; i<buildings->len; i++){
 		if (building == buildings->arr[i]){
 			return true;
@@ -41,7 +50,7 @@ bool is_building_in_da(Building* building, DA(Building*)* buildings){
 	return false;
 }
 
-bool is_cable_in_da(Cable* cable, DA(Cable*)* cables){
+bool is_cable_in_da(Cable* cable, DA_Cable_ptr* cables){
 	for (int i=0; i<cables->len; i++){
 		if (cable == cables->arr[i]){
 			return true;
@@ -106,7 +115,7 @@ Tile** get_tiles_from_cable(Cable* cable){
  * Update the power state of a dynamic array of buildings.
  * @param buildings
 */
-void update_buildings_da(DA(Building*)* buildings){
+void update_buildings_da(DA_Building_ptr* buildings){
 	for (int build_i=0; build_i < buildings->len; build_i++){
 		bool build_powered = false;
 		Tile** build_tiles = get_adjacent_tiles(buildings->arr[build_i]->pos);
@@ -144,16 +153,16 @@ void update_cable_network(TileCoords tc){
 	for (int i=0; i<tile->cable_count; i++){
 
 		/* Array of buildings that will be updated at the end */
-		DA(Building*) buildings = {0};
+		DA_Building_ptr buildings = {0};
 
 		/* Represent the whole network that have already been processed completely */
-		DA(Cable*) network = {0};
+		DA_Cable_ptr network = {0};
 
 		/* The cables scanned during the last iteration */
-		DA(Cable*) scanned = {0};
+		DA_Cable_ptr scanned = {0};
 
 		/* Temporary array used during an iteration */
-		DA(Cable*) new_cables = {0};
+		DA_Cable_ptr new_cables = {0};
 
 		Tile** tiles;
 		bool power = false;

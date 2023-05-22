@@ -15,6 +15,8 @@ enum CardinalType {
 };
 typedef enum CardinalType CardinalType;
 
+DxDy cardinal_to_dxdy(CardinalType card);
+
 enum FlowType {
 	ELECTRIC_CABLE,
 	FLUID,
@@ -48,10 +50,12 @@ struct Cable {
 	TileCoords pos;
 	CardinalType connections[2];
 	int maxFlow;
-	int capacity;	
+	int capacity;
 	bool powered;
 };
 typedef struct Cable Cable;
+
+typedef DA(Cable*) DA_Cable_ptr;
 
 struct Fluid {
 	TileCoords pos;

@@ -1,6 +1,8 @@
 #include <assert.h>
+#include "camera.h"
 #include "ui.h"
 #include "widget.h"
+#include "gameplay.h"
 #include "map.h"
 #include "entity.h"
 #include "objects/building.h"
@@ -21,35 +23,6 @@ static void next_faction_to_play(void) {
 			}
 		}
 	}
-}
-
-extern Uint64 g_time_ms;
-
-void move_human(EntId eid, TileCoords dst_pos) {
-	Ent* ent = get_ent(eid);
-	assert(ent != NULL);
-	assert(ent->type == ENT_HUMAN);
-
-	TileCoords src_pos = ent->pos;
-	ent_move(eid, dst_pos);
-
-	if (ent->anim != NULL) {
-		free(ent->anim);
-	}
-	ent->anim = malloc(sizeof(Anim));
-	*ent->anim = (Anim){
-		.time_beginning = g_time_ms,
-		.time_end = g_time_ms + 80,
-		.offset_beginning_x = dst_pos.x - src_pos.x,
-		.offset_beginning_y = dst_pos.y - src_pos.y,
-	};
-
-	/* Mark it as having already moved. */
-	ent->human.already_moved_this_turn = true;
-
-	refresh_selected_tile_ui();
-	DA_EMPTY_LEAK(&g_action_da_on_tcs);
-	action_menu_refresh();
 }
 
 static void random_ai_play(void) {
@@ -79,15 +52,6 @@ static void random_ai_play(void) {
 				}
 			}
 		}
-	}
-}
-
-void end_turn(void) {
-	while (next_faction_to_play(), !g_faction_spec_table[g_faction_currently_playing].is_player) {
-		random_ai_play();
-	}
-	if (g_sel_tile_exists) {
-		ui_select_tile(g_sel_tile_coords);
 	}
 }
 
@@ -125,7 +89,21 @@ void init_wg_tree(void) {
 }
 
 SDL_Rect tile_rect(TileCoords tc);
-TileCoords window_pixel_to_tile_coords(WinCoords wc);
+TileCoords window_pixel_to_tile_coords(WinCoords wc) {
+	float tile_render_size = TILE_SIZE * g_camera.zoom;
+	return (TileCoords){
+		.x = floorf(((float)wc.x + g_camera.pos.x) / tile_render_size),
+		.y = floorf(((float)wc.y + g_camera.pos.y) / tile_render_size),
+	};
+}
+
+WinCoords tile_coords_to_window_pixel(TileCoords tc) {
+	float tile_render_size = TILE_SIZE * g_camera.zoom;
+	return (WinCoords){
+		.x = tc.x * tile_render_size - g_camera.pos.x,
+		.y = tc.y * tile_render_size - g_camera.pos.y,
+	};
+}
 
 void render_wg_tree(void) {
 	wg_render(s_wg_root, 0, 0);
@@ -153,6 +131,17 @@ struct CallbackMoveEntityData {
 	TileCoords dst_pos;
 };
 typedef struct CallbackMoveEntityData CallbackMoveEntityData;
+
+void end_turn(void) {
+	while (next_faction_to_play(), !g_faction_spec_table[g_faction_currently_playing].is_player) {
+		random_ai_play();
+	}
+	if (g_sel_tile_exists) {
+		ui_select_tile(g_sel_tile_coords);
+	}
+}
+
+Uint64 g_time_ms;
 
 void test_callback_move_entity(void* whatever) {
 	/* Move the entity. */
@@ -237,6 +226,22 @@ void ui_select_tile(TileCoords tc) {
 					new_wg_text_line(faction_name, faction_color)
 				);
 				if (ent->human.faction == g_faction_currently_playing) {
+					Wg* wg_ent_inventory = new_wg_multopleft(4, 0, 0, ORIENTATION_LEFT_TO_RIGHT);
+					wg_multopleft_add_sub(wg_ent, wg_ent_inventory);
+					for (int i_stack = 0; i_stack < ent->human.inventory.stacks.len; i_stack++) {
+						ItemStack const* stack = &ent->human.inventory.stacks.arr[i_stack];
+						wg_multopleft_add_sub(wg_ent_inventory,
+							new_wg_box(
+								new_wg_sprite(
+									g_spritesheet,
+									g_item_spec_table[stack->item.type].rect_in_spritesheet,
+									24, 24
+								),
+								6, 6, 3,
+								RGB(0, 0, 0), RGB(255, 255, 255)
+							)
+						);
+					}
 					Wg* wg_ent_buttons = new_wg_multopleft(4, 0, 0, ORIENTATION_LEFT_TO_RIGHT);
 					wg_multopleft_add_sub(wg_ent, wg_ent_buttons);
 					if (ent->human.already_moved_this_turn) {
@@ -313,7 +318,7 @@ void refresh_selected_tile_ui(void) {
 }
 
 bool g_sel_ent_exists = false;
-EntId g_sel_ent_id = EID_NULL;
+EntId g_sel_ent_id = EID_NULL_INIT;
 
 void ui_select_ent(EntId eid) {
 	g_sel_ent_exists = !eid_null(eid);
@@ -485,4 +490,42 @@ Action const* action_menu_selection(void) {
 
 	assert(0 <= s_action_index && s_action_index < action_da_on_tc->actions.len);
 	return &action_da_on_tc->actions.arr[s_action_index];
+}
+
+void cycle_ent_sel_through_ents_in_tile(void) {
+	if (!g_sel_tile_exists) return;
+	Tile* sel_tile = get_tile(g_sel_tile_coords);
+
+	/* Here we only want to select entities that belong to the currently playing faction.
+	 * `first` is the first of such entities (if any).
+	 * `first_after_sel` is the first of such that follows the currently selected entity (if any). */
+	EntId first = EID_NULL;
+	bool sel_ent_is_in_sel_tile = false;
+	EntId first_after_sel = EID_NULL;
+	for (int i = 0; i < sel_tile->ents.len; i++) {
+		EntId eid = sel_tile->ents.arr[i];
+		if (!ent_is_playing(eid)) continue;
+		if (eid_null(first)) {
+			first = eid;
+		}
+		if (eid_eq(g_sel_ent_id, eid)) {
+			sel_ent_is_in_sel_tile = true;
+		} else if (sel_ent_is_in_sel_tile &&
+			eid_null(first_after_sel)
+		) {
+			first_after_sel = eid;
+		}
+	}
+
+	/* Now we just select the next of such entities if that makes sense,
+	 * else we just select the first (if any). */
+	if (sel_ent_is_in_sel_tile && eid_null(first_after_sel)) {
+		ui_select_ent(first);
+	} else if (sel_ent_is_in_sel_tile) {
+		ui_select_ent(first_after_sel);
+	} else if (!eid_null(first)) {
+		ui_select_ent(first);
+	} else {
+		ui_unselect_ent();
+	}
 }

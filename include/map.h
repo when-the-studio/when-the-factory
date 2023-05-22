@@ -9,7 +9,7 @@
 #include "flow.h"
 #include "building.h"
 
-#define TILE_SIZE 100
+
 
 extern int g_map_w;
 extern int g_map_h;
@@ -50,16 +50,21 @@ struct Tile {
 };
 typedef struct Tile Tile;
 
-/* This is the map, which is a grid of tiles. */
-extern Tile* g_grid;
+void remove_building_from_tile(Tile* tile);
 
+void remove_cable_from_tile_list(Cable* cable, Tile* tile);
 
 Cable* new_cable(TileCoords pos, CardinalType entry, CardinalType exit);
+
+/* This is the map, which is a grid of tiles. */
+extern Tile* g_grid;
 
 /* Initilises the grid with random tiles. */
 void init_map(void);
 
 Tile* get_tile(TileCoords coords);
 bool tile_is_walkable(Tile const* tile);
+
+int get_tile_real_ent_count(Tile const* tile);
 
 #endif // WHEN_THE_FACTORY_MAP_

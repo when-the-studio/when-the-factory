@@ -6,11 +6,19 @@
 #include "utils.h"
 #include "renderer.h"
 
+#define TILE_SIZE 100
+
+void end_turn(void);
+
+extern Uint64 g_time_ms;
 /* Initializes the UI widget tree. */
 void init_wg_tree(void);
 
 /* Renders the UI widget tree. */
 void render_wg_tree(void);
+
+TileCoords window_pixel_to_tile_coords(WinCoords wc);
+WinCoords tile_coords_to_window_pixel(TileCoords tc);
 
 /* Inform the UI that a click occured.
  * Returns `true` iff the UI used a click (when it lands on a widget). */
@@ -45,7 +53,7 @@ struct Action {
 	ActionType type;
 	union {
 		struct ActionMove {
-			;
+			char _;
 		} move;
 		struct ActionBuild {
 			BuildingType building_type;
@@ -66,5 +74,7 @@ bool tile_is_available(TileCoords tc);
 void action_menu_refresh(void);
 void action_menu_scroll(int dy);
 Action const* action_menu_selection(void);
+
+void cycle_ent_sel_through_ents_in_tile(void);
 
 #endif /* WHEN_THE_FACTORY_UI_ */

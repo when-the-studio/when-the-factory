@@ -99,7 +99,7 @@ void remove_eid_from_tile_list(EntId eid, Tile* tile) {
 	//tile->ents.arr = realloc(tile->ents.arr, tile->ents.len * sizeof(Ent*));
 }
 
-static void remove_building_from_tile(Tile* tile) {
+void remove_building_from_tile(Tile* tile) {
 	free(tile->building);
 	tile->building = NULL;
 }
@@ -110,7 +110,7 @@ static void add_cable_to_tile_list(Cable* cable, Tile* tile) {
 	tile->cables[tile->cable_count-1] = cable;
 }
 
-static void remove_cable_from_tile_list(Cable* cable, Tile* tile) {
+void remove_cable_from_tile_list(Cable* cable, Tile* tile) {
 	int cable_index_in_tile = -1;
 	for (int i = 0; i < tile->cable_count; i++) {
 		if (tile->cables[i] == cable) {
@@ -260,4 +260,14 @@ bool tile_is_walkable(Tile const* tile) {
 		return false;
 	}
 	return true;
+}
+
+int get_tile_real_ent_count(Tile const* tile) {
+	int true_ent_count = 0;
+	for (int ent_i = 0; ent_i < tile->ents.len; ent_i++) {
+		if (get_ent(tile->ents.arr[ent_i]) != NULL) {
+			true_ent_count++;
+		}
+	}
+	return true_ent_count;
 }
